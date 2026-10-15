@@ -65,7 +65,6 @@ researched: 2026-10-01
 ## 개인·커리어·일정 (기한 있음)
 - [[ai-top-100]] — 신청 마감 10/21 18:00.
 - [[tally-nova-2026-medical-ai-contest]] — 의료 AI 에이전트 경진대회 신청서(제출은 하지 않은 상태).
-- [[toss-ai-platform-engineer-serving]] — 채용공고. 서빙(vLLM, Dynamo, Triton) 관련 용어 해설 포함.
 
 ## 아직 읽지 못한 것 (본문 수동 확보 필요)
 - [[reddit-why-not-microvm]], [[reddit-qwen36-27b-q40-mtp-gguf]], [[wikidocs-325677]] — 봇 차단. 본문을 붙여넣어 주면 채운다.

@@ -79,9 +79,6 @@ researched: 2026-10-01
 
 ## 관련 노트
 - [[hada-claude-opus-5-5-prompting]]
-- [[toss-ai-platform-engineer-serving]]
-- [[speechify-library]]
-- [[latex-resume-template-kor]]
 
 ## 출처
 - https://www.threads.com/@choi.openai/post/Ddb3m3aiTXQ (headless Chrome 렌더)

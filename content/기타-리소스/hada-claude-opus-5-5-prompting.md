@@ -86,7 +86,6 @@ GeekNews(news.hada.io)의 토픽 페이지(11 points, 조회 시점 "3일 전")�
 ## 관련 노트
 - [[ai-top-100]]
 - [[jina-ocr-v1-threads]]
-- [[github-donggyun112]]
 - [[tally-nova-2026-medical-ai-contest]]
 
 ## 출처

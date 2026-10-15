@@ -124,7 +124,6 @@ FAQ가 밝힌 차이는 명확하다. [2025]와 (CAMPUS)가 "AI 도구를 활용
 
 - [[tally-nova-2026-medical-ai-contest]]: 같은 시기의 에이전트 경진대회(의료, 팀전)
 - [[hada-claude-opus-5-5-prompting]]: 에이전트 프롬프트 설계 참고
-- [[github-donggyun112]]: 에이전트 런타임 작업 사례
 
 ## 출처
 

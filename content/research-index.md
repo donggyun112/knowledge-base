@@ -90,12 +90,9 @@ researched: 2026-10-01
 
 ## 기타-리소스 (10)
 - [[기타-리소스/ai-top-100|AI_TOP_100 [2026]]] (10,131자) — 카카오임팩트재단이 여는 국내 AI 활용 역량 경진대회의 2026년 회차 공식 사이트. 올해는 "문제를 빠르게 푸는 사람"이 아니라 "가상 인물과 인터뷰해 문제를 정의하고 AI 에이전트를 만들어 제출
-- [[기타-리소스/github-donggyun112|GitHub donggyun112 공개 레포 개요]] (11,306자) — 공개 레포 41개(직접 만든 것 약 30개) 중 최근 활동은 모두 "LLM agent를 장시간·위험한 환경에서 믿고 돌리기 위한 인프라"에 집중되어 있다: 연상 기억(keymem), 정적분석 MCP
 - [[기타-리소스/hada-claude-opus-5-5-prompting|GeekNews - Claude Opus 5.5 프롬프트 작성법]] (11,674자) — GeekNews가 소개한 Anthropic 공식 문서 "Prompting Claude Opus 5.5"의 요지: Opus 5 프롬프트는 대부분 그대로 쓰되, 기본 effort가 `medium`으로 
 - [[기타-리소스/jina-ocr-v1-threads|Threads - Jina AI jina-ocr-v1 소개 게시물]] (10,880자) — 게시물의 핵심 주장(총 3.4B/활성 570M, 25개 언어, OmniDocBench v1.6 91.14, L4급 GPU, 최고 페이지 처리 속도)은 Jina 공식 모델 페이지, Hugging Fa
-- [[기타-리소스/latex-resume-template-kor|latex_resume_template_kor]] (10,220자) — 한국어 이력서(CV)와 "경력기술서"를 LaTeX로 쓰기 위한 MIT 템플릿. 이력서용 `resume.tex`(284줄)와 프로젝트 서술 중심의 경력기술서용 `work_experience.tex`(
 - [[기타-리소스/tally-nova-2026-medical-ai-contest|N.O.V.A. 2026 대화형 의료 진단 AI 에이전트 개발 경진대회 신청 폼]] (9,541자) — 분당서울대학교병원 의료인공지능센터와 엘리스(elice)가 여는 "Doctor Agent" 개발 경진대회(N.O.V.A. 2026)의 Tally 참가 신청서. 신청서는 총 7페이지(개요 → 약관 동의
-- [[기타-리소스/toss-ai-platform-engineer-serving|토스 AI Platform Engineer (Serving) 채용공고]] (21,497자) — 토스 AI Platform 팀이 LLM·embedding 모델의 실시간 serving 인프라(vLLM, Dynamo, Triton 운영·튜닝, 장애 대응, 배포 자동화)를 맡을 정규직 엔지니어를 찾
 - [[기타-리소스/wikidocs-325677|WikiDocs 325677]] ⚠️ (1,109자) — 봇 차단(Cloudflare 챌린지)으로 열람 불가 — 사용자 수동 확보 필요. 제목·저자 등 메타 정보도 정상 경로로는 확인하지 못함.
 
 ## 직접 수행한 메모리 연구

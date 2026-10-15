@@ -1,3 +1,8 @@
 # File names or research-relative paths excluded from the public copy.
 non-research-links.md
 speechify-library.md
+
+# Personal career and profile material
+toss-ai-platform-engineer-serving.md
+latex-resume-template-kor.md
+github-donggyun112.md

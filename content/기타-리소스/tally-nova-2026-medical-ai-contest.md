@@ -93,7 +93,6 @@ Tally로 만든 참가 신청서다. 폼을 열어 안내문·질문 항목·동
 ## 관련 노트
 - [[ai-top-100]]
 - [[hada-claude-opus-5-5-prompting]]
-- [[github-donggyun112]]
 
 ## 출처
 - https://tally.so/r/J9QXY4 (headless Chrome 렌더 + 페이지 내장 폼 정의 읽기, 제출 없음, 2026-10-01)
