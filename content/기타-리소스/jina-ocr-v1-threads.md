@@ -65,7 +65,7 @@ researched: 2026-10-01
 | DeepSeek-OCR(베이스) | 3B | 확인 못함 | 76.0(Jina 표) / 75.7(HF) | MIT | DeepSeek-OCR-2는 OmniDocBench 90.25 |
 | chandra-ocr-2 | 4B | 확인 못함 | 85.8 | 저장소는 Apache-2.0(가중치는 확인 못함) | 0.38 pages/s로 느림 |
 | olmOCR-2 | 8B | 확인 못함 | 82.4 | 저장소 Apache-2.0 | |
-| Upstage Document Parse | 상용 API | 확인 못함 | 확인 못함 | 상용 | 제품 페이지에 한국어 버전 있음, API $0.01/페이지, 온프레미스 옵션(WebFetch 요약). TEDS 93.48 등 자사 수치 |
+| Upstage Document Parse | 상용 API | 확인 못함 | 확인 못함 | 상용 | 제품 페이지에 한국어 버전 있음, API \$0.01/페이지, 온프레미스 옵션(WebFetch 요약). TEDS 93.48 등 자사 수치 |
 수치는 Jina 블로그/논문 표와 각 공식 페이지에서 가져왔고, 서로 다른 설정에서 측정된 값이 섞여 있다. 같은 조건의 독립 재현은 확인하지 못했다. 한국어 문서에 한정한 비교는 어디서도 확인하지 못했다.
 
 ## 한계와 리스크

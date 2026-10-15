@@ -34,7 +34,14 @@ def sanitize_note(text: str) -> str:
             if '활용 아이디어' in title or re.match(r'^(?:\d+\.\s*)?우리 맥락\s*#*$', title):
                 hidden_depth = depth if hidden_depth is None else min(depth, hidden_depth)
         if hidden_depth is None:
-            output.append(line if fence else re.sub(r'\[\[INDEX(?=[#|\]])', '[[research-index', line).replace('인포뱅크', '소속 조직'))
+            if fence is None:
+                parts = re.split(r'(`+[^`]*`+)', line)
+                for i in range(0, len(parts), 2):
+                    part = re.sub(r'\[\[INDEX(?=[#|\]])', '[[research-index', parts[i]).replace('인포뱅크', '소속 조직')
+                    # Currency delimiters must not consume genuine formulae such as $1+T$.
+                    parts[i] = re.sub(r'(?<![\\\w])\$(\d+(?:\.\d+)?)(?=M\b|/|[\s,;)]|$)', r'\\$\1', part)
+                line = ''.join(parts)
+            output.append(line)
     return ''.join(output)
 
 

@@ -25,6 +25,14 @@ class ExportTests(unittest.TestCase):
         text = '# Note\n## 활용 아이디어\nportfolio strategy\n## 출처\nsource\n'
         self.assertNotIn('portfolio strategy', sanitize_note(text))
 
+    def test_currency_does_not_become_math(self):
+        text = 'Cost $0.34 and $28.17; formula $1+T$; command `$1`.\n'
+        actual = sanitize_note(text)
+        self.assertIn(r'\$0.34', actual)
+        self.assertIn(r'\$28.17', actual)
+        self.assertIn('$1+T$', actual)
+        self.assertIn('`$1`', actual)
+
     def test_export_exclusion_deletion_and_source_unchanged(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp); src = root/'source'; dst = root/'content'; src.mkdir(); dst.mkdir()

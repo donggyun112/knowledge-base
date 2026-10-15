@@ -168,7 +168,7 @@ Node 20 이상이 필요(`engines.node >= 20`). LangChain 제공자 패키지(`@
 - 모델 중립(Gemini/Claude/OpenAI/OpenAI 호환), 하위 레이어 재사용 가능(AI SDK 도구만 따로 사용 가능).
 
 단점·한계
-- **Firecrawl API 종속**: 모든 웹 접근(search/scrape/interact)이 Firecrawl 클라우드 크레딧을 소비한다. WebFetch로 확인한 공식 가격 페이지 요약(2026-10-01 조회): Free 1,000 크레딧/월, Hobby $16/월(5,000), Standard $83/월(100,000), Growth $333/월(500,000), Scale $599/월(1,000,000)(연간 결제 기준 표기), 크레딧 소비는 scrape·crawl·map 1/페이지, search 2/10 results, interact 2/브라우저 분, Agent(Preview)는 하루 5회 무료 후 동적 과금. 이 숫자는 요약 도구 출력이므로 계약 전 원 페이지 확인이 필요하다. 해당 페이지에서 self-host 언급은 확인하지 못했다.
+- **Firecrawl API 종속**: 모든 웹 접근(search/scrape/interact)이 Firecrawl 클라우드 크레딧을 소비한다. WebFetch로 확인한 공식 가격 페이지 요약(2026-10-01 조회): Free 1,000 크레딧/월, Hobby \$16/월(5,000), Standard \$83/월(100,000), Growth \$333/월(500,000), Scale \$599/월(1,000,000)(연간 결제 기준 표기), 크레딧 소비는 scrape·crawl·map 1/페이지, search 2/10 results, interact 2/브라우저 분, Agent(Preview)는 하루 5회 무료 후 동적 과금. 이 숫자는 요약 도구 출력이므로 계약 전 원 페이지 확인이 필요하다. 해당 페이지에서 self-host 언급은 확인하지 못했다.
 - `firecrawl-aisdk`가 `0.12.0-beta.2`로 고정된 베타 의존이고 agent-core 버전도 0.1.0. API 안정성 보장 없음.
 - 5개월 이상 push 정지(위 지표). 이슈 대응·업데이트 지속성이 불확실하다.
 - 워커는 `interact` 불가, 따라서 로그인/무한 스크롤이 필요한 병렬 작업은 구조상 제한된다.

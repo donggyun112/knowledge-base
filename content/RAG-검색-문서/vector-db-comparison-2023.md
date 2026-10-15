@@ -28,8 +28,8 @@ researched: 2026-10-01
 | 지연 시간 ms (Recall/95퍼센타일, nytimes-256-angular) | 1 (배치 검색, recall 0.99, 200k SBERT) | 2 | 1 | 4 | ? | ? | 8 |
 | 지원 인덱스 | ? | HNSW | 다수(총 11종) | HNSW | HNSW | HNSW | HNSW/IVFFlat |
 | 세그먼트 배치 방식 | ? | 정적 샤딩 | 동적 세그먼트 배치 | 정적 샤딩 | 동적 세그먼트 배치 | 정적 샤딩 | - |
-| 가격(5만 벡터, 1536차원) | $70 | $25부터 | $65부터 | 약 $9 | 다양 | $95 | 다양 |
-| 가격(2천만 벡터, 2천만 요청, 768차원) | $227 (고성능 구성 $2074) | $1536부터 | $309 (고성능 $2291)부터 | $281 (고성능 $820) | 다양 | 약 $1225 | 다양 |
+| 가격(5만 벡터, 1536차원) | \$70 | $25부터 | $65부터 | 약 \$9 | 다양 | \$95 | 다양 |
+| 가격(2천만 벡터, 2천만 요청, 768차원) | \$227 (고성능 구성 \$2074) | $1536부터 | \$309 (고성능 \$2291)부터 | \$281 (고성능 \$820) | 다양 | 약 \$1225 | 다양 |
 
 가격 행의 "부터(fr.)"와 "약(est.)" 표기와 열 대응은 텍스트 순서에서 복원한 것이라 일부 셀의 대응이 어긋났을 가능성이 있다. 무료 티어 행은 "(free self-hosted)", "(varies)" 같은 일부 문구만 남아 있다.
 
@@ -39,7 +39,7 @@ researched: 2026-10-01
 - **성능**: 초당 쿼리에서 Milvus가 선두, Weaviate와 Qdrant가 바로 뒤. 지연 시간에서는 Pinecone과 Milvus가 2ms 미만. Pinecone은 파드를 추가하면 QPS가 더 올라간다.
 - **커뮤니티**: Milvus가 가장 크고 Weaviate와 Elasticsearch가 뒤를 잇는다. 활발한 커뮤니티는 지원, 기능, 버그 수정에 유리하다.
 - **확장성, 고급 기능, 보안**: 역할 기반 접근 제어(RBAC)는 Pinecone, Milvus, Elasticsearch에서 제공. 확장성에서는 Milvus와 Chroma가 동적 세그먼트 배치를 제공해 변화하는 데이터셋에 적합. 인덱스 유형은 Milvus가 11가지로 독보적. 하이브리드 검색은 대체로 잘 지원되지만 Elasticsearch는 디스크 인덱스 지원이 약간 부족.
-- **가격**: 예산이 제한된 프로젝트·스타트업에는 Qdrant의 5만 벡터 $9 추정 가격이 매우 경쟁력 있음. 큰 규모·고성능에서는 Pinecone과 Milvus가 경쟁력 있는 가격.
+- **가격**: 예산이 제한된 프로젝트·스타트업에는 Qdrant의 5만 벡터 \$9 추정 가격이 매우 경쟁력 있음. 큰 규모·고성능에서는 Pinecone과 Milvus가 경쟁력 있는 가격.
 - **결론**: 모든 상황에 맞는 단 하나의 선택지는 없으며 프로젝트 요구사항, 예산, 개인 선호에 따라 다르다. 저자의 선택은 높은 성능, Milvus의 강한 커뮤니티, 규모에 따른 가격 유연성 때문에 Pinecone과 Milvus를 실환경에서 테스트하는 것.
 
 ## 3. 부가 섹션 옮김
@@ -84,7 +84,7 @@ researched: 2026-10-01
 | Milvus | Apache-2.0, LF AI & Data 소속 | 46,293 | v3.0.2 (2026-09-20) | README: Go/C++, 완전 분산·K8s 네이티브, Standalone과 `pip install`로 쓰는 Milvus Lite, 인덱스는 HNSW, IVF, FLAT, SCANN, DiskANN(양자화 변형·mmap 포함), GPU 인덱싱(CAGRA). 2023 글의 "인덱스 11종"보다 메이저 버전이 3.x로 올라갔다. |
 | Qdrant | Apache-2.0 | 34,891 | v1.19.1 (2026-09-04) | README: Rust, dense·sparse·multivector(ColBERT류) 검색, 하이브리드(RRF, DBSF 융합), 페이로드 필터링, 양자화(RAM 최대 97% 절감 주장), 분산 샤딩·복제, 멀티테넌시, GPU 인덱싱, 임베디드용 Qdrant Edge, Qdrant Cloud 무료 티어. Docker 기본 실행은 인증 없는 열린 배포라는 경고가 README에 있다. |
 | Weaviate | 혼합: 대부분 BSD-3-Clause, `wl` 디렉터리는 "Weaviate License" (LICENSE 파일 기준; GitHub은 NOASSERTION) | 16,860 | v1.39.7 (2026-09-25) | README: Go, BM25와 벡터를 한 질의로 하는 하이브리드, 내장 RAG·리랭킹, 멀티테넌시, 복제, RBAC, 벡터 압축, 객체 TTL, Weaviate Cloud. 2023 글은 RBAC를 Pinecone/Milvus/ES에서만 언급했는데, 현재 Weaviate README는 RBAC도 제공한다고 밝힌다. |
-| Chroma | Apache-2.0 | 29,418 | 1.5.9 (2026-05-05) | README: Python/JS 클라이언트, 클라이언트-서버 모드, "Chroma Cloud"(서버리스 벡터·하이브리드·전문 검색, $5 무료 크레딧). 2023 글의 "문서화 제한" 평가는 더는 맞지 않을 수 있으나 문서 자체는 이번에 열지 않았다. |
+| Chroma | Apache-2.0 | 29,418 | 1.5.9 (2026-05-05) | README: Python/JS 클라이언트, 클라이언트-서버 모드, "Chroma Cloud"(서버리스 벡터·하이브리드·전문 검색, \$5 무료 크레딧). 2023 글의 "문서화 제한" 평가는 더는 맞지 않을 수 있으나 문서 자체는 이번에 열지 않았다. |
 | Elasticsearch | 혼합: 기본이 AGPL-3.0 / SSPL-1 / Elastic License 2.0 3중 라이선스(LICENSE.txt 기준; GitHub은 NOASSERTION) | 78,169 | v9.5.4 (2026-09-15) | 공식 문서: `dense_vector`/`sparse_vector` 필드로 벡터 DB 기능, 전문 검색·필터·집계와 하이브리드 검색을 한 엔진에서 처리. 라이선스에 AGPL 선택지가 포함된 점이 2023 글과 다르다(변경 시점은 확인 못함). |
 | pgvector | PostgreSQL 라이선스(LICENSE 파일 본문; GitHub은 NOASSERTION) | 23,202 | 태그 v0.8.6 (2026-07-29, CHANGELOG), GitHub Releases 항목은 없음 | CHANGELOG: HNSW 추가는 0.5.0(2023-08-28), `halfvec`/`sparsevec`/`bit` 인덱싱과 `binary_quantize`는 0.7.0(2024-04-29), 병렬 HNSW 빌드는 0.6.0(2024-01-29), 반복 인덱스 스캔(필터링 시 결과 부족 완화)은 0.8.0(2024-10-30). 차원 한도는 vector 2,000, halfvec 4,000, bit 64,000, sparsevec 비영 원소 1,000. 하이브리드는 Postgres 전문 검색과 RRF 조합을 README가 안내. Postgres 13+ 지원. |
 | Pinecone | 상용 SaaS(클라이언트 SDK는 Apache-2.0, 파이썬 클라이언트 v10.0.0 2026-09-03) | 클라이언트 452 | - | 공식 문서(아키텍처): 서버리스 구조로 AWS/GCP/Azure에서 운영, 쓰기 경로(요청 로그→memtable→불변 slab 파일)와 읽기 경로 분리, 객체 스토리지 기반. 문서 목차에 전문 검색·시맨틱 검색·하이브리드·희소 벡터 검색, BYOC, 이전 파드 방식에서 서버리스로의 마이그레이션 가이드가 있다. 2023 글의 "파드(p2)" 기준 수치는 현재 주력 구조와 다르다. |
