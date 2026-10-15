@@ -97,3 +97,7 @@ researched: 2026-10-01
 - [[기타-리소스/tally-nova-2026-medical-ai-contest|N.O.V.A. 2026 대화형 의료 진단 AI 에이전트 개발 경진대회 신청 폼]] (9,541자) — 분당서울대학교병원 의료인공지능센터와 엘리스(elice)가 여는 "Doctor Agent" 개발 경진대회(N.O.V.A. 2026)의 Tally 참가 신청서. 신청서는 총 7페이지(개요 → 약관 동의
 - [[기타-리소스/toss-ai-platform-engineer-serving|토스 AI Platform Engineer (Serving) 채용공고]] (21,497자) — 토스 AI Platform 팀이 LLM·embedding 모델의 실시간 serving 인프라(vLLM, Dynamo, Triton 운영·튜닝, 장애 대응, 배포 자동화)를 맡을 정규직 엔지니어를 찾
 - [[기타-리소스/wikidocs-325677|WikiDocs 325677]] ⚠️ (1,109자) — 봇 차단(Cloudflare 챌린지)으로 열람 불가 — 사용자 수동 확보 필요. 제목·저자 등 메타 정보도 정상 경로로는 확인하지 못함.
+
+## 직접 수행한 메모리 연구
+
+[[메모리-연구/연구-안내|읽기 안내와 전체 연구 기록]]

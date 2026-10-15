@@ -1,0 +1,338 @@
+[
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "README.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "afb75adb09eeef33920768d9f9b17d103bc4f6e1648a066ea1360a51c43e0bb0",
+    "published_path": "content/메모리-연구/procedural-graphs/README.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "REVIEW.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "27cb74dad02e6151626441aa7eb292b2c71b6f86bd01bc80ccdc864977bbf015",
+    "published_path": "content/메모리-연구/procedural-graphs/REVIEW.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "docs/BENCHMARK.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "b1756c494f6815c1497bcb02ac0912f1117e44d69092dfc7a726d75d96c4b212",
+    "published_path": "content/메모리-연구/procedural-graphs/docs/BENCHMARK.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "docs/COMBINED_DESIGN.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "bb1175d62b2bab666d57e311d98cacc96442881d1bf2fea04663d720e64e5f20",
+    "published_path": "content/메모리-연구/procedural-graphs/docs/COMBINED_DESIGN.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "docs/DUAL_MEMORY.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "4a5c5d7cc29ae44a17d772c8b774a7e356d134c2b4a3078b8911df737bb1969a",
+    "published_path": "content/메모리-연구/procedural-graphs/docs/DUAL_MEMORY.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "docs/PAPER_NOTES.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "6d24bdf695ba149782d525f6c20ee8fd6d0e2b7aae26c6a865be99daf8d453da",
+    "published_path": "content/메모리-연구/procedural-graphs/docs/PAPER_NOTES.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "docs/REPRODUCTION_SPEC.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "18fbce6b5239728772d38ab8885cccd3c5d864f622d40df8bfd587f45c7b20e6",
+    "published_path": "content/메모리-연구/procedural-graphs/docs/REPRODUCTION_SPEC.md"
+  },
+  {
+    "source_repository": "procedural-graphs-lab",
+    "source_path": "results/EXPERIMENT_REPORT_KO.md",
+    "source_head": "2c265f7fb194627f1b39d90207e9dca03b6cee28",
+    "committed_copy": true,
+    "source_sha256": "3836102f112a92f143eeaccf45877bc95166e21da1a83774fc0e99e02bcd350b",
+    "published_path": "content/메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "README.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "b1d14c0aec3d55bef53891a390d6d57412f28850c2c95d51672be47a1185b007",
+    "published_path": "content/메모리-연구/neural-memory/README.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "FINDINGS.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "eef52e841c09e9b8f8d106cba4b0c88d4d78e36daeece8f1b40de4c5d97e1c54",
+    "published_path": "content/메모리-연구/neural-memory/FINDINGS.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/MEMORY_PATH_DIAGNOSTIC_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "00b6831d8beed75b834e9ea7e418d2f003280bd1dfc132c06a7d5bda0385fd45",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/MEMORY_PATH_DIAGNOSTIC_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/PAPER.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "ef26c3d693fe80be2e312564d9f9e5b93277a7ec2b9936cef9e9a041bb5d2a65",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/PAPER.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/README.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "a49b213427fe88905e11497cd909f2c983e0f72625421b7021e0a7d5a1a97a5e",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/README.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/RESEARCH.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "77a485a79236ac9476fb369a3dea8db01b3261694ea3c30333edf977396d37bf",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/RESEARCH.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/RESTART_EXPERIMENT_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "6e50e167767474487df1a96ee87cc74ea79e4f688246d61f90cd40499f658e84",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/RESTART_EXPERIMENT_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/RESTART_SPEC.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "ed0fb35d8e77fb80d9152ed187f665815c9c4e151eaf4ef8661569170cf3eca9",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/RESTART_SPEC.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/RESULTS.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "5279e0a0f63702c77fd8ac5942268d07818e2bf654fd136072d51c6d561ddf3d",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/RESULTS.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_ACQUISITION_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "6bea3a8acf32264e60107a3b175dd6a6492f1519da80cc34b73e123e12d5d75b",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_ACQUISITION_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_BALANCE_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "c0eaf9364b582f68ddc6b364208bc0beec15d92eee0739b99c71360d81663f55",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_BALANCE_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_COUNTERFACTUAL_LEARNING_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "6b986d559e709fd5cd6b2f1885c494a66145a18ca8dd7c35152a6846f0f1c4f7",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_COUNTERFACTUAL_LEARNING_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_EXPERIMENT_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "51d9cff36bb92732f1c7072d6098952a967ae9d6d1cabf266ecb89fd09cfc06f",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_EXPERIMENT_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_GENERALIZATION_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "277bfd9a93dc743eb4c67c98d37a6df67a797ba7ef95299012a41f7f43a14e64",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_GENERALIZATION_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_HUMAN_E2E_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "0b24ac956bd6527a04d2ce617ef537efa0e2f0352a80e6177b08e452b32550d4",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_HUMAN_E2E_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_HUMAN_FROZEN_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "efe49b90be4b04fcd338df9afa219d1df7e9ce1b222fce2ebcc3d61f275d1541",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_HUMAN_FROZEN_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_NEURAL_WRITER_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "7b4435541456fb1afc3950e3d3f9db5ab243fe8df22a107d979284c10baf4842",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_NEURAL_WRITER_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_OPEN_VOCAB_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "89b26237fdd735824f134a70db15637b64e48440a0aa3e380a20d3737affa18c",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_OPEN_VOCAB_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_READ_ADAPTER_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "90cf09a896d91e96470406ad82c3ef8c2d2ef3df85ec713b8e4550bdc1593fab",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_READ_ADAPTER_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_REGRESSION_REPAIR_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "ccef7fbcd7fce57802aac8ca16b0f7eadf4ef6bea74524ce02f3fd04cc6e89db",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_REGRESSION_REPAIR_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_RETENTION_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "b116be53ada1a9e04c62dfdb7a54fe19cec445a031b4e46bc932b021d99a6eb7",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_RETENTION_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_REVISION_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "1019df2a52361ebdef025125c39fc1469940405b25933f4542dcf7dbe6d646a1",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_REVISION_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_SPEC.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "0605aca55d37d730f698fb177511c17f03df74ab8f18e8d42ce9dcd86a3e80c5",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_SPEC.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_STATE_DIAGNOSTIC_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "86748ec1ce961ef577a175d4f57e3626a3284d735bcd52398a70bfa1808df05a",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_STATE_DIAGNOSTIC_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_TRANSFER_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "8fd88ac49dc141c7d7257b8248e9d083deb979f5a414d5471b2d360e2109c69e",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_TRANSFER_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "neural-memory/STREAM_MEMORY_UPDATE_REPORT.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": false,
+    "source_sha256": "bbc0dad00d03dd4952e9b68c6789d2803fe0a66811d7d8e4599e5c27c4d7f7c3",
+    "published_path": "content/메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_UPDATE_REPORT.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/001-valence-to-action.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "a87ca98712aef6f12709d92401bac1bea25f628cd929e4ebaba85708eb8d1101",
+    "published_path": "content/메모리-연구/neural-memory/board/001-valence-to-action.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/002-data-loss.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "1fa44cfea508c6a3352d65cc7dad8a2b12b9d3b884004232075feafa31f628fa",
+    "published_path": "content/메모리-연구/neural-memory/board/002-data-loss.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/003-write-time-selection.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "918ef1c25df5856f5396cbacfaad4ea9ee3e74128dba7a3d29968aa050ef4625",
+    "published_path": "content/메모리-연구/neural-memory/board/003-write-time-selection.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/004-harness-hazards.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "f5648a325030f0acec2f5a480f561404afc2245064445d21e2ba152e58532ad2",
+    "published_path": "content/메모리-연구/neural-memory/board/004-harness-hazards.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/README.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "0c61111c25860a46b09cb904a6a74b33634799d7ccf6fc8c1402537afff586e5",
+    "published_path": "content/메모리-연구/neural-memory/board/README.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/claims.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "aa0528b404ad521af455b4b5550589401efd1989c37d84c9d56a1728dd89d2b0",
+    "published_path": "content/메모리-연구/neural-memory/board/claims.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "board/open.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "c36a6f5e1a38235e5deefbccd8bd539cda2b15c28a8e19b43b89c08bbfae3449",
+    "published_path": "content/메모리-연구/neural-memory/board/open.md"
+  },
+  {
+    "source_repository": "neural-memory-research",
+    "source_path": "fly-connectome/README.md",
+    "source_head": "fd190b18f8e4113d7f451a7108911c1f89716b24",
+    "committed_copy": true,
+    "source_sha256": "796cc3061cfc6300fdf4d295c6d39d2a42372a62b6bcda53623ee3de6163c4a8",
+    "published_path": "content/메모리-연구/neural-memory/fly-connectome/README.md"
+  }
+]

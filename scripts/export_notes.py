@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path('/Users/dongkseo/Documents/Obsidian Vault/research')
 DEFAULT_EXCLUDES = {'non-research-links.md', 'speechify-library.md'}
 
 
@@ -98,9 +97,12 @@ def export_notes(source: Path, destination: Path) -> dict:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--source', type=Path, default=SOURCE)
+    parser.add_argument('--source', type=Path, required=True)
+    parser.add_argument('--destination', type=Path, required=True, help='Separate export directory; do not use the managed content directory')
     args = parser.parse_args()
-    report = export_notes(args.source, ROOT/'content')
+    if args.destination.resolve() == (ROOT/'content').resolve():
+        parser.error('content is managed directly; export to a separate directory and merge reviewed notes')
+    report = export_notes(args.source, args.destination)
     local = ROOT/'.local'; local.mkdir(exist_ok=True)
     (local/'export-report.json').write_text(json.dumps(report, ensure_ascii=False, indent=2))
     print(f"Exported {len(report['exported'])} notes; excluded {len(report['excluded'])}; sanitized {len(report['sanitized'])}")

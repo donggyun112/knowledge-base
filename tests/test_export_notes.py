@@ -1,4 +1,6 @@
 import hashlib
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,6 +8,13 @@ from scripts.export_notes import sanitize_note, export_notes
 
 
 class ExportTests(unittest.TestCase):
+    def test_cli_requires_explicit_export_target_and_rejects_managed_content(self):
+        root = Path(__file__).resolve().parents[1]
+        for args in [[], ['--source', str(root), '--destination', str(root/'content')]]:
+            result = subprocess.run([sys.executable, str(root/'scripts/export_notes.py'), *args], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 2)
+
+
     def test_private_section_preserves_source(self):
         text = '# Note\n## 8. 우리 맥락(인포뱅크) 활용 아이디어\nprivate\n### Detail\nsecret\n## 출처\nhttps://example.org\n'
         actual = sanitize_note(text)
