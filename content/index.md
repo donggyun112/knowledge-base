@@ -24,6 +24,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다. 각
 | 절차 그래프와 Grounded Memory | [구조·재현 결과·결합 실험](메모리-연구/절차-그래프-읽기) |
 | 신경 메모리 | [합성 회상·사람 대화·개입 대조](메모리-연구/신경-메모리-읽기) |
 | 초파리 커넥톰 | [실제 회로·용량·간섭 실험](메모리-연구/커넥톰-읽기) |
+| Harness² | [JobBench 4개 과제·PPC 결과·전이 미관찰](메모리-연구/harness2/RESULTS) |
 
 [[메모리-연구/연구-안내|연구 전체 안내와 결과 해석 기준]]
 
@@ -165,6 +166,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다. 각
 - [[논문-아티클/aces-agentic-continuous-evaluation-of-skills|Evaluating Skills, Not Just Agents: Agentic Continuous Evaluation of Skills (ACES)]]
 - [[논문-아티클/algorithmically-establishing-trust-in-evaluators|Algorithmically Establishing Trust in Evaluators]]
 - [[논문-아티클/context-fails-first-agent-reliability|AI Agents Do Not Fail Alone: The Context Fails First]]
+- [[논문-아티클/harness2|Harness²: 실행 하네스의 재귀적 개선과 JobBench 파일럿]]
 - [[논문-아티클/hyperagents|Hyperagents]]
 - [[논문-아티클/jev-as-a-judge-agent-evals|Jev-as-a-Judge for Agent Evals]]
 - [[논문-아티클/karpathy-llm-wiki|LLM Wiki (Karpathy gist)]]
@@ -193,3 +195,4 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다. 각
 ---
 
 [[READING-GUIDE|주제별 읽기 가이드]]
+

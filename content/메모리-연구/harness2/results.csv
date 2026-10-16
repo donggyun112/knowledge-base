@@ -1,0 +1,5 @@
+task_id,base_percent,ppc_percent,delta_percentage_points,base_sensitivity_percent,ppc_sensitivity_percent
+bookkeeping_accounting_and_auditing_clerks/task1,38.63636363636363,38.63636363636363,0.0,38.63636363636363,38.63636363636363
+bookkeeping_accounting_and_auditing_clerks/task2,34.61538461538461,11.538461538461538,-23.076923076923073,34.61538461538461,11.538461538461538
+computer_user_support_specialists/task1,67.85714285714286,67.85714285714286,0.0,67.85714285714286,67.85714285714286
+computer_user_support_specialists/task2,0.0,0.0,0.0,0.0,0.0
