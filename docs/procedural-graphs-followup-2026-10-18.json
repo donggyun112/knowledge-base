@@ -1,0 +1,1449 @@
+{
+  "checked_on": "2026-10-18",
+  "scope": "Local artifact summaries; no raw trajectories or dataset contents. Source artifacts were untracked at inspection.",
+  "poker": [
+    {
+      "source": "results/poker/poker_graph_prompt_memory_run0.json",
+      "sha256": "660aafe98bf00c5ac651e7a20af548318d0bf972e265b9364fff138ecd16605a",
+      "meta": {
+        "condition": "graph_prompt_memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 0,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": -0.95,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_graph_prompt_memory_run1.json",
+      "sha256": "872014eca331fc9ed035716c8acc8620cfb25def76cc20cc4011aff8d7ccd299",
+      "meta": {
+        "condition": "graph_prompt_memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 1,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 1.9916666666666667,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_graph_prompt_memory_run2.json",
+      "sha256": "0c3bb5f3291fe44222a97b1ecf3d83eb3be902a32d2d1d921ea5749d239c63f7",
+      "meta": {
+        "condition": "graph_prompt_memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 2,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": -0.5125,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_graph_prompt_run0.json",
+      "sha256": "ab0b96b5f0ce03c409db148bfd1c1ca1ccdab4b031f866fb5a8a2d2db0f3d041",
+      "meta": {
+        "condition": "graph_prompt",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 0,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 1.34,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_graph_prompt_run1.json",
+      "sha256": "db31ddac12e448c3823591f560474ea129f04f9e6e65ac039a80d9e5841daa14",
+      "meta": {
+        "condition": "graph_prompt",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 1,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 0.225,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_graph_prompt_run2.json",
+      "sha256": "0294cd1f599dd0fdb8124a29fb46abdd3afeef75fa7cc39df835efa41d6da435",
+      "meta": {
+        "condition": "graph_prompt",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 2,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 0.2375,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_memory_run0.json",
+      "sha256": "f930521f6332f7ee8b50b5a94c55d616f74f68f9ad9509991685c7888e1b428c",
+      "meta": {
+        "condition": "memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 0,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": -0.1875,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_memory_run1.json",
+      "sha256": "322f858b2ff495ea3f422aaf6b608f77f41bb07d2fb4135dd7cf2f2fae78f327",
+      "meta": {
+        "condition": "memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 1,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 0.6916666666666667,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_memory_run2.json",
+      "sha256": "d8d3414a0b585fe8781b9eea72d225aa561a73ab5eb64ee1acca207cdf49e9c7",
+      "meta": {
+        "condition": "memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 2,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 0.15833333333333333,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_pg_memory_run0.json",
+      "sha256": "58d701d0f879889a23005719d5c272c8578a9ac7dcf347a142e0e63b0d9e0e56",
+      "meta": {
+        "condition": "pg_memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 0,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 1.45,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_pg_memory_run1.json",
+      "sha256": "9b1bdffeccb571773e2a98aa433412d0e59a4afb41135b483533a1023bc29274",
+      "meta": {
+        "condition": "pg_memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 1,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 0.6,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_pg_memory_run2.json",
+      "sha256": "1912f685ee9c8cc6755acda5abfb6fe442c3d427cea13a5c92360fc4cbc74348",
+      "meta": {
+        "condition": "pg_memory",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 2,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 0.5083333333333333,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_stateless_run0.json",
+      "sha256": "47dc8cd6b2a65aa4c64faeeda0ac187cf6bad4800ffa685f75d3327b7270ad74",
+      "meta": {
+        "condition": "stateless",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 0,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 1.3958333333333335,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_stateless_run1.json",
+      "sha256": "aeb060a10f4bba289b7fa125c7aa8b0509bf9905e22fbbaee3869ade39e3a763",
+      "meta": {
+        "condition": "stateless",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 1,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 1.1416666666666666,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    },
+    {
+      "source": "results/poker/poker_stateless_run2.json",
+      "sha256": "def1727f59a66a3a3298486e11626c176d9ee47b97abc8c921ec5a7f94102cae",
+      "meta": {
+        "condition": "stateless",
+        "model": "~deepseek/deepseek-v4-flash-latest",
+        "run_index": 2,
+        "hands": null,
+        "memory_retriever": "lexical"
+      },
+      "bb_per_hand": 1.0833333333333335,
+      "hands_played": 120,
+      "opponent_policy": "loose_aggressive",
+      "schedule_id": "default"
+    }
+  ],
+  "multiturn": [
+    {
+      "source": "results/mt-evolve-v2/clbench_evolution_latest.json",
+      "sha256": "211c0d6d8c4c8ff0af95544e96e4831f8c72fb2016537b0ad9fa7174f7c47c03",
+      "meta": {
+        "timestamp_utc": "2026-10-06T13:41:58.266605+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "claude-cli:opus",
+        "refiner_reasoning": "medium",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 4.031234794595,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1,
+          6
+        ],
+        "test_index": 2,
+        "stride": 20,
+        "accept_margin": 0.05,
+        "gate_metric": "score",
+        "drift_guard": true,
+        "generations_requested": 1,
+        "generations_run": 1,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.46833,
+          "metrics": {
+            "accuracy": 0.65,
+            "correct": 26,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.0,
+            "first_half_accuracy": 0.65,
+            "second_half_accuracy": 0.65
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.535,
+          "metrics": {
+            "accuracy": 0.8,
+            "correct": 32,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.525,
+            "first_half_accuracy": 0.8,
+            "second_half_accuracy": 0.8
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-evolve-v2-agg/clbench_evolution_latest.json",
+      "sha256": "689a64bc273ed7992f96ee36285c07c7eefc8786b03148cf77ad981d5e357e4a",
+      "meta": {
+        "timestamp_utc": "2026-10-17T12:43:49.343192+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "claude-cli:opus",
+        "refiner_reasoning": "medium",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 3.7603797210550005,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1,
+          6
+        ],
+        "test_index": 3,
+        "stride": 5,
+        "accept_margin": 0.05,
+        "gate_metric": "score",
+        "drift_guard": true,
+        "generations_requested": 1,
+        "generations_run": 1,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.433335,
+          "metrics": {
+            "accuracy": 0.65,
+            "correct": 26,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.6,
+            "first_half_accuracy": 0.6,
+            "second_half_accuracy": 0.7
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.6066625,
+          "metrics": {
+            "accuracy": 0.85,
+            "correct": 34,
+            "total_questions": 40,
+            "avg_queries_per_question": 4.675,
+            "first_half_accuracy": 0.95,
+            "second_half_accuracy": 0.75
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-guided-idx1-a/clbench_evolution_latest.json",
+      "sha256": "6678c0bad6065c20bf45f3ed41834f2c521b32e97309c7db9a763c69a2cc90bd",
+      "meta": {
+        "timestamp_utc": "2026-10-02T13:14:31.445714+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.8195394913349999,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1
+        ],
+        "test_index": 1,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.5033299999999999,
+          "metrics": {
+            "accuracy": 0.7,
+            "correct": 28,
+            "total_questions": 40,
+            "avg_queries_per_question": 4.225,
+            "first_half_accuracy": 0.65,
+            "second_half_accuracy": 0.75
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.580005,
+          "metrics": {
+            "accuracy": 0.825,
+            "correct": 33,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.25,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-guided-idx1-b/clbench_evolution_latest.json",
+      "sha256": "082fabc4528fed0878669d4aa452878a1f807bd0cdd8f6f438863dd1e0e51e04",
+      "meta": {
+        "timestamp_utc": "2026-10-02T16:46:45.676650+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.9545252808349998,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1
+        ],
+        "test_index": 1,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4983275,
+          "metrics": {
+            "accuracy": 0.675,
+            "correct": 27,
+            "total_questions": 40,
+            "avg_queries_per_question": 4.65,
+            "first_half_accuracy": 0.65,
+            "second_half_accuracy": 0.7
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4883375,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.075,
+            "first_half_accuracy": 0.8,
+            "second_half_accuracy": 0.75
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-guided-idx1-c/clbench_evolution_latest.json",
+      "sha256": "2f71b7017d6251eb600b630c9797f918a39062b44e8effca05b6359197018bde",
+      "meta": {
+        "timestamp_utc": "2026-10-02T14:43:16.727212+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.9387074473949998,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1
+        ],
+        "test_index": 1,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.5066625,
+          "metrics": {
+            "accuracy": 0.75,
+            "correct": 30,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.175,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.75
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.49833,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.275,
+            "first_half_accuracy": 0.7,
+            "second_half_accuracy": 0.85
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-guided-idx2-a/clbench_evolution_latest.json",
+      "sha256": "d877d3096089a47c26ca77c912c71f17e341de09d3b14ee04dd1643888f6b232",
+      "meta": {
+        "timestamp_utc": "2026-10-02T17:57:39.243293+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.8877647280000001,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          2
+        ],
+        "test_index": 2,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.46833,
+          "metrics": {
+            "accuracy": 0.65,
+            "correct": 26,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.0,
+            "first_half_accuracy": 0.65,
+            "second_half_accuracy": 0.65
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.535,
+          "metrics": {
+            "accuracy": 0.8,
+            "correct": 32,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.525,
+            "first_half_accuracy": 0.8,
+            "second_half_accuracy": 0.8
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-guided-idx2-b/clbench_evolution_latest.json",
+      "sha256": "2e0da09798bca972eff78f315e060a8298febafd5af62f28ef10320d20d89a01",
+      "meta": {
+        "timestamp_utc": "2026-10-02T17:49:54.881298+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.8331101650000001,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          2
+        ],
+        "test_index": 2,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.5150025,
+          "metrics": {
+            "accuracy": 0.725,
+            "correct": 29,
+            "total_questions": 40,
+            "avg_queries_per_question": 4.6,
+            "first_half_accuracy": 0.6,
+            "second_half_accuracy": 0.85
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.516665,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.675,
+            "first_half_accuracy": 0.7,
+            "second_half_accuracy": 0.85
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-guided-idx2-c/clbench_evolution_latest.json",
+      "sha256": "da6d54456b832d7f699cc735cccc9ebcc37ccaa4256fb6da0979eb8c7b9dc02e",
+      "meta": {
+        "timestamp_utc": "2026-10-02T17:55:12.230887+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.8860677831999999,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          2
+        ],
+        "test_index": 2,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "pg_grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.5750025,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 4.05,
+            "first_half_accuracy": 0.85,
+            "second_half_accuracy": 0.7
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": true,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4983325,
+          "metrics": {
+            "accuracy": 0.75,
+            "correct": 30,
+            "total_questions": 40,
+            "avg_queries_per_question": 5.6,
+            "first_half_accuracy": 0.8,
+            "second_half_accuracy": 0.7
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-memonly-idx1-a/clbench_evolution_latest.json",
+      "sha256": "2e83eb317cf0f614d08ae26cdf702094651b9e3cc63bf5a4334dddedd57191a5",
+      "meta": {
+        "timestamp_utc": "2026-10-02T04:12:41.974345+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.7235847827999999,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1
+        ],
+        "test_index": 1,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4450025,
+          "metrics": {
+            "accuracy": 0.85,
+            "correct": 34,
+            "total_questions": 40,
+            "avg_queries_per_question": 7.45,
+            "first_half_accuracy": 0.9,
+            "second_half_accuracy": 0.8
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4450025,
+          "metrics": {
+            "accuracy": 0.85,
+            "correct": 34,
+            "total_questions": 40,
+            "avg_queries_per_question": 7.45,
+            "first_half_accuracy": 0.9,
+            "second_half_accuracy": 0.8
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-memonly-idx1-b/clbench_evolution_latest.json",
+      "sha256": "3cc6a61f1d82567f6ec881aa4c0eff5ffeae9e7551ee9df3afd8fd7d3666caca",
+      "meta": {
+        "timestamp_utc": "2026-10-02T04:33:07.111423+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.6760167882999999,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1
+        ],
+        "test_index": 1,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.476665,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.8,
+            "first_half_accuracy": 0.85,
+            "second_half_accuracy": 0.7
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.476665,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.8,
+            "first_half_accuracy": 0.85,
+            "second_half_accuracy": 0.7
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-memonly-idx1-c/clbench_evolution_latest.json",
+      "sha256": "3fa1d0627936515bb21aade6da1b83d8dbe03ab943032b23a4fff4a8baa3ca45",
+      "meta": {
+        "timestamp_utc": "2026-10-02T04:41:37.382380+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.7473300028000001,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          1
+        ],
+        "test_index": 1,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.40166999999999997,
+          "metrics": {
+            "accuracy": 0.7,
+            "correct": 28,
+            "total_questions": 40,
+            "avg_queries_per_question": 7.525,
+            "first_half_accuracy": 0.7,
+            "second_half_accuracy": 0.7
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.40166999999999997,
+          "metrics": {
+            "accuracy": 0.7,
+            "correct": 28,
+            "total_questions": 40,
+            "avg_queries_per_question": 7.525,
+            "first_half_accuracy": 0.7,
+            "second_half_accuracy": 0.7
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-memonly-idx2-a/clbench_evolution_latest.json",
+      "sha256": "fc046f46fc4dfb439ebabe22b1d8177e89082fc78ecde7a1cb9b8aa455435305",
+      "meta": {
+        "timestamp_utc": "2026-10-02T17:25:20.690319+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.6593883856,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          2
+        ],
+        "test_index": 2,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.41667,
+          "metrics": {
+            "accuracy": 0.7,
+            "correct": 28,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.35,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.65
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.41667,
+          "metrics": {
+            "accuracy": 0.7,
+            "correct": 28,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.35,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.65
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-memonly-idx2-b/clbench_evolution_latest.json",
+      "sha256": "8aec25027b77842e0991c4d30442abcddc1aa7ed8f99471dcee24eb2f675c253",
+      "meta": {
+        "timestamp_utc": "2026-10-02T17:22:11.532909+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.5548585748000001,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          2
+        ],
+        "test_index": 2,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4616675,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.775,
+            "first_half_accuracy": 0.8,
+            "second_half_accuracy": 0.75
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.4616675,
+          "metrics": {
+            "accuracy": 0.775,
+            "correct": 31,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.775,
+            "first_half_accuracy": 0.8,
+            "second_half_accuracy": 0.75
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-memonly-idx2-c/clbench_evolution_latest.json",
+      "sha256": "ce178e43b3dae055d96e584f67f0fb7c246af16250d3d9efde98cc3e923c3f8b",
+      "meta": {
+        "timestamp_utc": "2026-10-02T17:22:57.740282+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.6059962456000001,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          2
+        ],
+        "test_index": 2,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.36833,
+          "metrics": {
+            "accuracy": 0.625,
+            "correct": 25,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.85,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.5
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.36833,
+          "metrics": {
+            "accuracy": 0.625,
+            "correct": 25,
+            "total_questions": 40,
+            "avg_queries_per_question": 6.85,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "source": "results/mt-train-memonly-idx0/clbench_evolution_latest.json",
+      "sha256": "1be4bbe8ccb2ab1d6d94a1a0eff47175dd44bb7efb2006d39c8c38ff945f7bdb",
+      "meta": {
+        "timestamp_utc": "2026-10-02T07:46:14.098342+00:00",
+        "benchmark": "Continual Learning Bench/database_exploration",
+        "variant": "schema_drift",
+        "questions_per_condition": 40,
+        "model_requested": "deepseek/deepseek-v4.1-flash",
+        "refiner_model": "deepseek/deepseek-v4.1-flash",
+        "refiner_reasoning": "none",
+        "agent": "multiturn-v1",
+        "solver_reasoning": "medium",
+        "contrast_index": null,
+        "reported_cost_usd": 0.6767716344000001,
+        "comparison_protocol": "clbench-graph-evolution-v1",
+        "train_index": 0,
+        "val_index": [
+          0
+        ],
+        "test_index": 0,
+        "stride": 10,
+        "accept_margin": 0.0,
+        "gate_metric": "accuracy",
+        "drift_guard": false,
+        "generations_requested": 0,
+        "generations_run": 0,
+        "source_condition": "grounded_memory",
+        "recall_policy": "required",
+        "memory_retriever": "e5"
+      },
+      "conditions": [
+        {
+          "condition": {
+            "name": "fixed_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.39499999999999996,
+          "metrics": {
+            "accuracy": 0.75,
+            "correct": 30,
+            "total_questions": 40,
+            "avg_queries_per_question": 7.05,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.75
+          }
+        },
+        {
+          "condition": {
+            "name": "evolved_pg",
+            "use_memory": true,
+            "probing": true,
+            "use_pg": false,
+            "sibling_fusion": false,
+            "memory_source": null,
+            "curate_memory": true,
+            "anchor_learning": false,
+            "graph_as_prompt": false
+          },
+          "score": 0.39499999999999996,
+          "metrics": {
+            "accuracy": 0.75,
+            "correct": 30,
+            "total_questions": 40,
+            "avg_queries_per_question": 7.05,
+            "first_half_accuracy": 0.75,
+            "second_half_accuracy": 0.75
+          }
+        }
+      ]
+    }
+  ],
+  "evolution": {
+    "source": "results/mt-evolve-v2-agg/evolution_rounds.json",
+    "sha256": "9b8b49fe642115161dcda15cbae6b3fc205cc1b26a877a1cfd71f92278d8493e",
+    "evaluations": [
+      {
+        "generation": 1,
+        "round": 1,
+        "accuracy": 0.8125,
+        "score": 0.56750375,
+        "avg_queries": 5.15,
+        "per_stream": {
+          "1": 0.775,
+          "6": 0.85
+        },
+        "veto": null
+      },
+      {
+        "generation": 1,
+        "round": 2,
+        "accuracy": 0.8374999999999999,
+        "score": 0.6150012499999999,
+        "avg_queries": 4.3875,
+        "per_stream": {
+          "1": 0.85,
+          "6": 0.825
+        },
+        "veto": "mean post-drift accuracy fell 0.075 (limit 0.050); the edit breaks after the schema changes"
+      }
+    ],
+    "decisions": [
+      {
+        "accepted": true,
+        "candidate_score": 0.56750375,
+        "diagnostics": []
+      },
+      {
+        "accepted": false,
+        "candidate_score": 0.6150012499999999,
+        "diagnostics": [
+          "mean post-drift accuracy fell 0.075 (limit 0.050); the edit breaks after the schema changes"
+        ]
+      }
+    ]
+  }
+}
