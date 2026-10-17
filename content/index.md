@@ -37,6 +37,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다. 각
 > - [[메모리-연구/procedural-graphs/docs/PAPER_NOTES|Two-paper claim ledger]]
 > - [[메모리-연구/procedural-graphs/docs/REPRODUCTION_SPEC|Two-paper reproduction specification]]
 > - [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|Grounded Semantic Memory × Procedural Graph 재현 보고서]]
+> - [[메모리-연구/procedural-graphs/results/POKER_AND_EVOLVE_2026-10|포커 포트와 그래프 진화 추가 실행 — 2026-10]]
 
 > [!example]- 신경 메모리 — 모델과 실험 보고서
 > - [[메모리-연구/neural-memory/neural-memory/MEMORY_PATH_DIAGNOSTIC_REPORT|메모리 경로 원인 분리 실험 — 2026-09-26]]
