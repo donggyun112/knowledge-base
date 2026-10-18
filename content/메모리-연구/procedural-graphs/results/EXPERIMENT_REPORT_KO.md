@@ -11,6 +11,9 @@ tags:
 
 # Grounded Semantic Memory × Procedural Graph 재현 보고서
 
+> [!warning] 위키 편집자 주 (2026-10-18)
+> 이 보고서의 2×2 수치(memory 있음 행 62.5% / 57.5%, interaction −0.0%p)와 "결합 가설: 기각" 결론은 큐레이터 `max_tokens=450` 잘림 버그가 있던 시점의 값이다. [[메모리-연구/procedural-graphs/docs/COMBINED_DESIGN|COMBINED_DESIGN]]은 같은 버그를 고친 뒤 memory 있음 행을 60.0% / 62.5%(+2.5%p는 1문항 차이)로 재측정했고, 옛 2×2는 폐기했다고 적는다. [[메모리-연구/procedural-graphs/REVIEW|재현 후기]]의 2026-09-22 정정과도 같은 내용이다. 원문은 당시 기록으로 보존하되, 이 문서의 결합 가설 판정을 최종 결론으로 인용하지 않는다. 두 판정 사이를 가르는 추가 반복 실험은 하지 않았다.
+
 작성일: 2026-09-19
 공통 설정: temperature 0, 단일 run
 

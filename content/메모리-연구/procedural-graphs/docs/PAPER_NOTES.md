@@ -54,7 +54,7 @@ calling을 쓴다. 이는 solver가 보는 정보와 가능한 action은 바꾸�
 
 | ID | 가설 | 연결 방식 | 현재 관찰 |
 |---|---|---|---|
-| H1 | semantic fact와 procedural guidance가 상보적 | recalled records를 Guidance LLM semantic context로 전달 | 공식 CLBench 1-run에서 combined 37.5%, grounded 62.5%; 반증 방향 |
+| H1 | semantic fact와 procedural guidance가 상보적 | recalled records를 Guidance LLM semantic context로 전달 | 공식 CLBench 1-run에서 combined 37.5%, grounded 62.5%; 반증 방향 (위키 편집자 주: 이 수치는 [[메모리-연구/procedural-graphs/REVIEW|재현 후기]] 2026-09-22 정정에서 철회된 guidance interference 해석과 같은 실행에 기댄다. 최종 근거로 쓰지 않는다) |
 | H2 | probing이 더 정확하고 compact한 memory를 만든다 | 같은 curator schema에 probe tool만 추가 | 공식 CLBench 1-run에서 grounded 62.5%, trajectory 17.5%; answer caching 혼입 |
 | H3 | 두 external states가 같은 경험으로 self-improve할 수 있다 | task 후 memory curate, batch 후 PG refine | 실제 폐루프 1회 완료 |
 

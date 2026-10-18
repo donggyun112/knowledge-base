@@ -6,7 +6,7 @@ tags:
 ---
 
 > [!info] 범위
-> 초기 보고서 이후의 로컬 실행 폴더(`results/poker`, `results/mt-evolve-v2-agg`)를 읽은 기록이다. 결합모델의 입증 결과가 아니다. 기존 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|종합 보고서]] 수치와 합산하지 않는다.
+> 원 저장소 [procedural-graphs-lab](https://github.com/donggyun112/procedural-graphs-lab) 수집 커밋 `2c265f7` 이후의 로컬 상태를 2026-10-18에 재집계한 기록이다. [[메모리-연구/연구-안내|연구 안내와 해석 범위]]부터 읽는다. 초기 보고서 이후의 로컬 실행 폴더(`results/poker`, `results/mt-evolve-v2-agg`)를 읽은 기록이다. 결합모델의 입증 결과가 아니다. 기존 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|종합 보고서]] 수치와 합산하지 않는다.
 
 ## 왜 포커인가
 
@@ -58,7 +58,7 @@ CLBench `database_exploration`에서 관찰한 정확도만으로는 절차 그�
 
 이 조건에서는 정확도 차이보다 SQL 호출 수 감소가 두 stream에서 일관되게 관찰된다. 정확도 차이는 stream마다 다르며 유의성 검정은 하지 않았다. 이 guided 실행은 `generations_requested=0`이므로 evolved라는 행 이름이 있어도 각 실행 안에서 새로운 진화를 수행한 결과가 아니다. `mt-evolve-v2-agg`와는 stride와 비교 대상이 달라 같은 반복군으로 합산하지 않는다.
 
-`e0731-*` は今回確認した範囲では checkpoint ファイルのみで、完了した最終比較ファイルがなかった。途中経過をこの表に追加しない。
+`e0731-*`는 이번에 확인한 범위에서 checkpoint 파일만 있었고 완료된 최종 비교 파일이 없었다. 중간 결과는 이 표에 넣지 않는다.
 
 ## 확인하지 못한 것
 
