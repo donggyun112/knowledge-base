@@ -136,6 +136,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 - [[에이전트-스킬/neurons|Neurons]]
 - [[에이전트-스킬/nullclaw|NullClaw]]
 - [[에이전트-스킬/onyx|Onyx]]
+- [[에이전트-스킬/open-design|OpenDesign — 코딩 에이전트를 디자인 작업공간으로 확장하기]]
 - [[에이전트-스킬/openviking|OpenViking (volcengine)]]
 - [[에이전트-스킬/openworker|OpenWorker (Andrew Ng)]]
 - [[에이전트-스킬/pytorchkr-ag-ui-copilotkit|AG-UI feat. CopilotKit (PyTorchKR 포스트)]]
