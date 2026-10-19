@@ -66,15 +66,31 @@ CLBench `database_exploration`에서 관찰한 정확도만으로는 절차 그�
 
 이 조건에서는 정확도 차이보다 SQL 호출 수 감소가 두 stream에서 일관되게 관찰된다. 정확도 차이는 stream마다 다르며 유의성 검정은 하지 않았다. 이 guided 실행은 `generations_requested=0`이므로 evolved라는 행 이름이 있어도 각 실행 안에서 새로운 진화를 수행한 결과가 아니다. `mt-evolve-v2-agg`와는 stride와 비교 대상이 달라 같은 반복군으로 합산하지 않는다.
 
-`e0731-*`는 이번에 확인한 범위에서 checkpoint 파일만 있었고 완료된 최종 비교 파일이 없었다. 중간 결과는 이 표에 넣지 않는다.
+`e0731-*`는 2026-10-18 확인 시점에는 checkpoint 파일만 있었다. 이후 `deepseek-v4-flash-0731`로 2×2 네 조건을 stream 1에서 처음부터 3회씩 다시 돌렸다. 그 결과와 이어받기 실행이 결과를 바꾼 사례는 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|개정된 종합 보고서]] §1에 있으며, 이 표와는 모델이 달라 합산하지 않는다.
 
 ## 확인하지 못한 것
 
-현재 다음 판단을 가르는 것은 최고 점수의 재인용보다 실행 경로와 비교 조건의 확인이다. 포커에서는 그래프가 실제로 사용됐는지부터 확인해야 한다. DB 탐색에서는 동일 조건의 반복과 문항별 누출·비용 감사가 있어야 단일 20pt 차이를 일반적인 개선으로 해석할 수 있다.
+현재 다음 판단을 가르는 것은 최고 점수의 재인용보다 실행 경로와 비교 조건의 확인이다. DB 탐색에서는 동일 조건의 반복과 문항별 누출·비용 감사가 있어야 단일 20pt 차이를 일반적인 개선으로 해석할 수 있다.
 
-- 포커 `pg_memory`에서 그래프 노드가 실제로 활성화됐는지 로그를 확인하지 않았다. 이전에 STATUS 노드가 활성 노드가 되지 못하는 문제가 있었다.
+### 그래프 노드 활성화 확인 (2026-10-19)
+
+저장된 guidance 이벤트의 `active` 값을 집계했다. 과거에는 STATUS 노드가 활성 노드가 되지 못하는 문제가 있었지만, 이 실행들에서는 STATUS 노드도 활성화됐다.
+
+| 실행 | 활성 노드와 횟수 |
+|---|---|
+| 포커 `pg_memory` run0 | `read_known`(STATUS) 145, `Start` 104, `poker_action` 91, `read_unknown` 1 |
+| 포커 `pg_memory` run1 | `read_known` 137, `Start` 104, `poker_action` 77, `read_unknown` 1 |
+| 포커 `pg_memory` run2 | `read_known` 109, `Start` 104, `poker_action` 56, `read_unknown` 3 |
+| DB 진화 그래프 (8노드, `mt-guided-idx1-a`에 저장된 pass 1개) | `database_query` 62, `PriceSemanticsNeeded` 56, `TimeStatusSemanticsNeeded` 48, `memory_read` 40, `AttrTaxonomyNeeded` 38, `CandidateReady` 4 |
+
+- 포커에서 `read_unknown`은 run당 1~3회뿐이고 `hand_over`는 한 번도 활성화되지 않았다. 그래프의 이 분기가 거의 쓰이지 않았으므로, PG의 효과는 사실상 `read_known`과 `poker_action` 쪽 안내에서 나왔다. 상대 유형이 바뀔 때의 분기를 시험했다고 해석하지 않는다.
+- 노드가 활성화됐다는 것과 그 안내가 정확도에 도움이 됐다는 것은 다른 이야기다. 포커에서 결합은 stateless를 넘지 못했다.
+- 이 집계는 저장된 이벤트의 횟수 계산이며 안내 내용이 solver의 행동을 바꿨는지는 확인하지 않았다.
+
+### 남은 한계
+
 - 포커는 조건당 정확히 3회지만 상대 유형 하나만 대상으로 했다. 최종 진화 비교는 조건당 1회다.
-- 문항별 누출 감사, 실제 활성 노드 추적, 전체 비용 비교, 유의성 검정과 유료 재실행은 이번 갱신 범위에 포함하지 않았다. STATUS 노드 문제의 존재만으로 이 실행 전체가 무효라고 단정하지 않는다.
+- 문항별 누출 감사, 전체 비용 비교, 유의성 검정은 이번 갱신 범위에 포함하지 않았다.
 
 ## 출처와 재검산 범위
 
