@@ -16,8 +16,9 @@ Primary sources:
 - [Grounding Agent Memory, arXiv:2609.11060](https://arxiv.org/html/2609.11060v1)
 - [Procedural Graphs, arXiv:2609.09153](https://arxiv.org/html/2609.09153v1)
 
-이 문서는 논문의 역할·정보 경계·학습 절차가 코드와 benchmark adapter에 어떻게 대응하는지
-정의한다. Exact score replication과 공개 자료로 가능한 independent replication은 구분한다.
+이 명세는 ‘논문과 비슷해 보이는 프로그램’에서 한 걸음 더 나아가, 누가 어떤 정보를 보고 무엇을 바꿀 수 있는지까지 확인하기 위한 문서다. 예를 들어 답을 푸는 에이전트가 기억을 직접 쓰거나, 그래프 코드가 정답 행동을 강제한다면 이름은 같아도 검증하는 방법은 달라진다.
+
+아래 표는 논문의 역할·정보 경계·학습 절차를 코드와 benchmark adapter에 대응시킨다. Exact score replication은 원 논문의 모델·분할·실행 조건과 점수까지 맞추는 것을, independent replication은 공개된 자료로 핵심 방법을 별도로 구현해 시험하는 것을 가리킨다. 이 기록은 후자이며, 초기 adapter 설정 이후의 변경은 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|종합 보고서]]에서 확인한다.
 
 ## Grounding Agent Memory mapping
 
@@ -98,6 +99,8 @@ Combined:      Mᵢ → same recall → PG guidance + solver → no write
 recall, no-write, graph-core 불변식을 모두 검사한다.
 
 ## Training/test separation
+
+온라인 기억은 앞 문제의 경험을 다음 문제에 넘기는 것이 실험의 목적이다. 반면 PG의 수정안을 마지막 평가 문항을 보며 고르면, 그 문항에 맞춘 절차가 만들어져 평가가 오염된다. 따라서 기억의 순차 갱신과 그래프의 train/validation/test 분리를 같은 의미의 ‘학습’으로 뭉뚱그리지 않는다.
 
 - Grounded semantic memory는 CLBench stream에서 이전 task 경험만 다음 task에 전달한다.
 - PG self-evolution은 MultiChallenge train traces와 validation gate만 사용한다.

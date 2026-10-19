@@ -9,7 +9,9 @@ researched: 2026-10-01
 # Claw Code
 
 > [!summary] 한줄요약
-> Claude Code 형태의 CLI 에이전트 harness(`claw`)를 Rust 워크스페이스(crate 11개 디렉터리)로 구현한 MIT 저장소. 그러나 README 스스로 "serious production project가 아니라 museum exhibit"라고 선언하며, 진짜 가치는 코드보다 이 코드를 만들어 낸 "claw 에이전트 + Discord + clawhip" 자율 개발 시스템(PHILOSOPHY.md)에 있다고 주장한다.
+> Claude Code 형태의 에이전트 하니스를 Rust로 구현한 학습·비교용 저장소다. 저자도 운영 제품보다 자율 개발 시스템의 시연물로 소개한다.
+
+Claude Code 형태의 CLI 에이전트 harness(`claw`)를 Rust 워크스페이스(crate 11개 디렉터리)로 구현한 MIT 저장소. 그러나 README 스스로 "serious production project가 아니라 museum exhibit"라고 선언하며, 진짜 가치는 코드보다 이 코드를 만들어 낸 "claw 에이전트 + Discord + clawhip" 자율 개발 시스템(PHILOSOPHY.md)에 있다고 주장한다.
 
 > [!warning] 먼저 알아둘 것
 > 이 저장소는 (1) Anthropic과 무관하고, (2) 원본 Claude Code 소스의 소유권을 주장하지 않으며, (3) 저장소 대부분이 에이전트에 의해 자동 유지된다. "실제로 일을 시킬 것이면 LazyCodex나 Gajae-Code로 가라"는 안내가 README 맨 위에 있다. 사내 도입 후보라기보다 **학습·비교용 참조 구현**으로 읽는 것이 맞다.
@@ -25,7 +27,9 @@ README의 자기 서술은 이렇다. "Claw Code is the public Rust implementati
 1. **제품 층위**: Claude Code처럼 터미널에서 도구(bash, 파일 읽기/쓰기/편집, grep/glob, web fetch/search, subagent, todo, notebook 편집)를 호출하며 코딩 작업을 수행하는 에이전트 루프를, 단일 바이너리(Rust)로, 여러 모델 provider(Anthropic·OpenAI 호환·xAI·DashScope·로컬 Ollama)에서 돌릴 수 있게 하는 것.
 2. **방법론 층위**: PHILOSOPHY.md가 말하는 "사람은 방향만 주고(Discord 한 줄), claw들이 병렬로 계획·구현·테스트·재시도·push 한다"는 자율 개발 모델의 공개 시연. "Python rewrite도 부산물, Rust rewrite도 부산물이고, 연구할 가치가 있는 것은 그것을 만든 시스템"이라는 문장이 핵심이다.
 
-저장소 구조 자체가 이 이력을 보여 준다. 루트에는 `rust/`(정식 구현) 외에 `src/`(Python 참조 워크스페이스: `command_graph.py`, `execution_registry.py`, `cost_tracker.py`, `memdir`, `coordinator` 등 69개 항목)와 `tests/`가 남아 있는데, README는 "companion Python/reference workspace and audit helpers; not the primary runtime surface"라고 명시한다. 처음 Python으로 재작성한 뒤 Rust로 옮긴 흔적이 그대로 보존된 저장소다.
+저장소 구조 자체가 이 이력을 보여 준다. 루트에는 `rust/`(정식 구현) 외에 `src/`(Python 참조 워크스페이스: `command_graph.py`, `execution_registry.py`, `cost_tracker.py`, `memdir`, `coordinator` 등 69개 항목)와 `tests/`가 남아 있는데, README는 "companion Python/reference workspace and audit helpers; not the primary runtime surface"라고 명시한다.
+
+처음 Python으로 재작성한 뒤 Rust로 옮긴 흔적이 그대로 보존된 저장소다.
 
 ## 2. 아키텍처
 
@@ -47,7 +51,11 @@ README의 자기 서술은 이렇다. "Claw Code is the public Rust implementati
 | `telemetry` | 530 | 세션 트레이스 이벤트 |
 | `compat-harness` | 360 | upstream fixture와의 동작 비교 유틸 |
 
-특히 `runtime`이 크다. `src/` 목록을 보면 엔진이 단순 루프 이상이라는 걸 알 수 있다: `bash_validation.rs`, `sandbox.rs`, `permission_enforcer.rs`, `policy_engine.rs`, `hooks.rs`, `compact.rs`/`summary_compression.rs`, `mcp_stdio.rs`/`mcp_client.rs`/`mcp_lifecycle_hardened.rs`/`mcp_server.rs`, `lsp_client.rs`, `task_registry.rs`, `team_cron_registry.rs`, `worker_boot.rs`, `branch_lock.rs`, `stale_branch.rs`, `recovery_recipes.rs`, `green_contract.rs`, `lane_events.rs`, `trust_resolver.rs`, `oauth.rs`, `remote.rs` 등. 이 중 `lane_events`, `green_contract`, `branch_lock`, `stale_branch`, `worker_boot`은 PHILOSOPHY가 말한 "여러 claw가 병렬 lane으로 작업"하는 시스템을 뒷받침하는 조정(coordination) 프리미티브로 보인다. 다만 이 모듈들이 실제로 얼마나 깊게 구현됐는지까지는 모든 파일을 읽지 못했다(확인 못함).
+특히 `runtime`이 크다. `src/` 목록을 보면 엔진이 단순 루프 이상이라는 걸 알 수 있다: `bash_validation.rs`, `sandbox.rs`, `permission_enforcer.rs`, `policy_engine.rs`, `hooks.rs`, `compact.rs`/`summary_compression.rs`, `mcp_stdio.rs`/`mcp_client.rs`/`mcp_lifecycle_hardened.rs`/`mcp_server.rs`, `lsp_client.rs`, `task_registry.rs`, `team_cron_registry.rs`, `worker_boot.rs`, `branch_lock.rs`, `stale_branch.rs`, `recovery_recipes.rs`, `green_contract.rs`, `lane_events.rs`, `trust_resolver.rs`, `oauth.rs`, `remote.rs` 등.
+
+이 중 `lane_events`, `green_contract`, `branch_lock`, `stale_branch`, `worker_boot`은 PHILOSOPHY가 말한 "여러 claw가 병렬 lane으로 작업"하는 시스템을 뒷받침하는 조정(coordination) 프리미티브로 보인다.
+
+다만 이 모듈들이 실제로 얼마나 깊게 구현됐는지까지는 모든 파일을 읽지 못했다(확인 못함).
 
 ### 2.2 대화 루프 (`runtime/src/conversation.rs`)
 
@@ -78,7 +86,9 @@ flowchart TD
     R --> L
 ```
 
-핵심은 세 가지다. 첫째, `max_iterations` 가드가 있어 무한 도구 루프를 끊는다. 둘째, **도구 실행 전 PreToolUse hook이 권한 결정을 덮어쓸 수 있다**(`PermissionOverride::{Allow, Deny, Ask}`, 그리고 `updated_input`으로 입력 자체를 수정 가능). 셋째, auto-compaction은 입력 토큰 임계치(환경변수에서 읽는 `auto_compaction_input_tokens_threshold`)를 넘으면 다음 API 호출 전에 동작하고, compaction 이후 턴에서는 "session health probe"로 컨텍스트 무결성을 먼저 확인한다(ROADMAP #38 주석). Claude Code의 구조와 매우 유사하다. (PostToolUse 이후 단계는 위 코드 발췌 범위 밖이라 다이어그램은 README의 hook 설명을 근거로 그렸다.)
+핵심은 세 가지다. 첫째, `max_iterations` 가드가 있어 무한 도구 루프를 끊는다. 둘째, **도구 실행 전 PreToolUse hook이 권한 결정을 덮어쓸 수 있다**(`PermissionOverride::{Allow, Deny, Ask}`, 그리고 `updated_input`으로 입력 자체를 수정 가능). 셋째, auto-compaction은 입력 토큰 임계치(환경변수에서 읽는 `auto_compaction_input_tokens_threshold`)를 넘으면 다음 API 호출 전에 동작하고, compaction 이후 턴에서는 "session health probe"로 컨텍스트 무결성을 먼저 확인한다(ROADMAP #38 주석).
+
+Claude Code의 구조와 매우 유사하다. (PostToolUse 이후 단계는 위 코드 발췌 범위 밖이라 다이어그램은 README의 hook 설명을 근거로 그렸다.)
 
 ### 2.3 권한 모델
 
@@ -92,7 +102,9 @@ flowchart TD
 
 ### 2.4 Provider 라우팅
 
-USAGE.md의 provider matrix: Anthropic(`ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN`), xAI(`XAI_API_KEY`), OpenAI 호환(`OPENAI_API_KEY`, `OPENAI_BASE_URL`), DashScope(`DASHSCOPE_API_KEY`). 라우팅은 모델명 prefix 우선(`claude*`→Anthropic, `grok*`→xAI, `openai/`·`local/`·`gpt-`→OpenAI 호환, `qwen*`·`kimi*`→DashScope)이고, `OPENAI_BASE_URL`이 있으면 `llama3.2` 같은 로컬 이름은 OpenAI 호환 클라이언트로, 아무것도 없으면 환경의 자격증명 순서(Anthropic → OpenAI → xAI)로, 최종 기본은 Anthropic이다. 별칭은 `opus`→`claude-opus-4-7`, `sonnet`→`claude-sonnet-4-6`, `haiku`→`claude-haiku-4-5-20251213`이며 `~/.claw/settings.json`, `.claw/settings.json`, `.claw/settings.local.json`에서 사용자 별칭을 추가할 수 있다. 비-Claude provider는 "response-shape·tool-call 호환성 때문에 일부 workflow가 거칠 수 있다"고 FAQ가 직접 인정한다.
+USAGE.md의 provider matrix: Anthropic(`ANTHROPIC_API_KEY`/`ANTHROPIC_AUTH_TOKEN`), xAI(`XAI_API_KEY`), OpenAI 호환(`OPENAI_API_KEY`, `OPENAI_BASE_URL`), DashScope(`DASHSCOPE_API_KEY`). 라우팅은 모델명 prefix 우선(`claude*`→Anthropic, `grok*`→xAI, `openai/`·`local/`·`gpt-`→OpenAI 호환, `qwen*`·`kimi*`→DashScope)이고, `OPENAI_BASE_URL`이 있으면 `llama3.2` 같은 로컬 이름은 OpenAI 호환 클라이언트로, 아무것도 없으면 환경의 자격증명 순서(Anthropic → OpenAI → xAI)로, 최종 기본은 Anthropic이다.
+
+별칭은 `opus`→`claude-opus-4-7`, `sonnet`→`claude-sonnet-4-6`, `haiku`→`claude-haiku-4-5-20251213`이며 `~/.claw/settings.json`, `.claw/settings.json`, `.claw/settings.local.json`에서 사용자 별칭을 추가할 수 있다. 비-Claude provider는 "response-shape·tool-call 호환성 때문에 일부 workflow가 거칠 수 있다"고 FAQ가 직접 인정한다.
 
 ### 2.5 PHILOSOPHY의 3요소 시스템
 
@@ -116,10 +128,14 @@ clawhip은 commit, tmux 세션, GitHub issue/PR, 에이전트 lifecycle 이벤�
 `rust/README.md`의 기능표는 모두 체크로 표기돼 있으나 이는 자기 보고다. 주요 서브커맨드는 `prompt`, `status`, `sandbox`, `acp`, `dump-manifests`, `bootstrap-plan`, `agents`, `mcp`, `skills`, `system-prompt`, `init`, `doctor`다. 슬래시 명령은 `/compact`, `/diff`, `/commit`, `/pr`, `/issue`, `/review`, `/security-review`, `/subagent`, `/team`, `/cron`, `/plugin`, `/hooks` 등 Claude Code와 유사한 집합이고, 추가로 `/ultraplan`(심화 계획), `/teleport`(파일·심볼 점프), `/bughunter`(버그 스캔)가 USAGE.md에 설명돼 있다.
 
 ### 3.2 자동화 친화성
-눈에 띄는 설계 방향은 **거의 모든 상태가 JSON으로 노출**된다는 점이다. `--output-format json`, `CLAW_OUTPUT_FORMAT`, `claw version --output-format json`(`git_sha`, `is_dirty`, `rustc_version`, `binary_provenance`), `status`의 `workspace.memory_files[]`, `mcp_validation`, `hook_validation`, 오류에 typed `kind`(`invalid_tool_name`, `invalid_cwd`, `unsupported_acp_invocation` 등)가 붙는다. 다른 에이전트(claw)가 이 CLI를 도구로 호출하는 상황을 전제로 한 설계다.
+눈에 띄는 설계 방향은 **거의 모든 상태가 JSON으로 노출**된다는 점이다. `--output-format json`, `CLAW_OUTPUT_FORMAT`, `claw version --output-format json`(`git_sha`, `is_dirty`, `rustc_version`, `binary_provenance`), `status`의 `workspace.memory_files[]`, `mcp_validation`, `hook_validation`, 오류에 typed `kind`(`invalid_tool_name`, `invalid_cwd`, `unsupported_acp_invocation` 등)가 붙는다.
+
+다른 에이전트(claw)가 이 CLI를 도구로 호출하는 상황을 전제로 한 설계다.
 
 ### 3.3 설정과 프로젝트 메모리
-설정 우선순위(뒤가 앞을 덮어씀): `~/.claw.json` → `~/.config/claw/settings.json` → `<repo>/.claw.json` → `<repo>/.claw/settings.json` → `<repo>/.claw/settings.local.json`. 프로젝트 지침은 `CLAUDE.md` → `CLAW.md` → `AGENTS.md` 순으로 우선하며 git root까지로 탐색을 제한한다. `.claw/rules/`, `.claw/rules.local/`(gitignored)의 규칙 파일도 읽고, 기본값(`rulesImport: "auto"`)으로 Cursor(`.cursorrules`), GitHub Copilot(`.github/copilot-instructions.md`), Windsurf, Plandex, Crush의 규칙도 가져온다. 편리하지만 의도치 않은 외부 규칙이 system prompt에 섞일 수 있으므로 `"none"` 설정을 고려할 만하다.
+설정 우선순위(뒤가 앞을 덮어씀): `~/.claw.json` → `~/.config/claw/settings.json` → `<repo>/.claw.json` → `<repo>/.claw/settings.json` → `<repo>/.claw/settings.local.json`. 프로젝트 지침은 `CLAUDE.md` → `CLAW.md` → `AGENTS.md` 순으로 우선하며 git root까지로 탐색을 제한한다. `.claw/rules/`, `.claw/rules.local/`(gitignored)의 규칙 파일도 읽고, 기본값(`rulesImport: "auto"`)으로 Cursor(`.cursorrules`), GitHub Copilot(`.github/copilot-instructions.md`), Windsurf, Plandex, Crush의 규칙도 가져온다.
+
+편리하지만 의도치 않은 외부 규칙이 system prompt에 섞일 수 있으므로 `"none"` 설정을 고려할 만하다.
 
 ### 3.4 Hook
 `hooks.PreToolUse`/`PostToolUse`/`PostToolUseFailure`를 지원하며 `matcher`(대소문자 무시, `*` 와일드카드, 쉼표/파이프 대안)와 중첩 command hook 구조다.
@@ -138,13 +154,19 @@ clawhip은 commit, tmux 세션, GitHub issue/PR, 에이전트 lifecycle 이벤�
 문법 오류 항목이 있어도 유효한 hook은 유지하는 "partial success" 정책이 특징이며, 알 수 없는 이벤트 이름(`Stop`, `Notification` 등)은 invalid로 기록만 한다. 즉 Claude Code의 hook 이벤트 전체를 지원하는 것은 아니다.
 
 ### 3.5 MCP, LSP, Skills, Agents, Plugins
-MCP는 stdio client와 서버 모드(`mcp_server.rs`), lifecycle 브리지를 갖는다. PARITY.md는 MCP 레지스트리가 "연결 상태·리소스 목록·도구 디스패치 acknowledgement"를 추적하지만 "end-to-end 연결 채움과 transport 깊이는 더 넓은 MCP 런타임에 의존"한다고 단서를 단다. Skill은 `SKILL.md`가 있는 디렉터리를 `claw skills install <path>`로 설치한다(`.codex` 등 레거시 경로도 스캔). `claw agents create <name>`은 `.claw/agents/<name>.toml` 스캐폴드를 만든다. 플러그인은 `/plugin install|enable|disable|uninstall|update`.
+MCP는 stdio client와 서버 모드(`mcp_server.rs`), lifecycle 브리지를 갖는다. PARITY.md는 MCP 레지스트리가 "연결 상태·리소스 목록·도구 디스패치 acknowledgement"를 추적하지만 "end-to-end 연결 채움과 transport 깊이는 더 넓은 MCP 런타임에 의존"한다고 단서를 단다. Skill은 `SKILL.md`가 있는 디렉터리를 `claw skills install <path>`로 설치한다(`.codex` 등 레거시 경로도 스캔).
+
+`claw agents create <name>`은 `.claw/agents/<name>.toml` 스캐폴드를 만든다. 플러그인은 `/plugin install|enable|disable|uninstall|update`.
 
 ### 3.6 확장 실험: claw-analog, RAG 서비스, "Life OS"
-`docs/rag-web-ui.md`(러시아어)는 RAG를 별도 프로세스로 분리하는 설계를 설명한다. `claw-analog`의 `retrieve_context` 도구가 `POST {RAG_BASE_URL}/v1/query`를 호출하고, `claw-rag-service`는 SQLite + 임베딩 + 선형 스캔 코사인 유사도 MVP이며 `qdrant-index` feature가 선택 가능하다. `docs/personal-assistant-roadmap.md`는 `claw`를 Discord/Telegram 브리지, 음성, 개인 메모리(RAG), MCP 액션, 선제적 루프를 갖춘 개인 비서("Life OS")로 확장하는 구상을 담는다. 로드맵 성격이며 완성도는 확인하지 못했다.
+`docs/rag-web-ui.md`(러시아어)는 RAG를 별도 프로세스로 분리하는 설계를 설명한다. `claw-analog`의 `retrieve_context` 도구가 `POST {RAG_BASE_URL}/v1/query`를 호출하고, `claw-rag-service`는 SQLite + 임베딩 + 선형 스캔 코사인 유사도 MVP이며 `qdrant-index` feature가 선택 가능하다. `docs/personal-assistant-roadmap.md`는 `claw`를 Discord/Telegram 브리지, 음성, 개인 메모리(RAG), MCP 액션, 선제적 루프를 갖춘 개인 비서("Life OS")로 확장하는 구상을 담는다.
+
+로드맵 성격이며 완성도는 확인하지 못했다.
 
 ### 3.7 Mock parity harness
-`mock-anthropic-service`와 `rusty-claude-cli/tests/mock_parity_harness.rs`가 결정론적 시나리오(`streaming_text`, `read_file_roundtrip`, `grep_chunk_assembly`, `write_file_allowed/denied`, `multi_tool_turn_roundtrip`, `bash_stdout_roundtrip`, `bash_permission_prompt_approved/denied`, `plugin_tool_roundtrip`, `auto_compact_triggered`, `token_cost_reporting`)를 돌려 실 API 없이 CLI 동작을 end-to-end 검증한다. `./scripts/run_mock_parity_harness.sh`로 실행. 모델 호출을 mock으로 고정해 회귀 테스트하는 방식은 우리에게 가장 실용적으로 차용 가능한 부분이다.
+`mock-anthropic-service`와 `rusty-claude-cli/tests/mock_parity_harness.rs`가 결정론적 시나리오(`streaming_text`, `read_file_roundtrip`, `grep_chunk_assembly`, `write_file_allowed/denied`, `multi_tool_turn_roundtrip`, `bash_stdout_roundtrip`, `bash_permission_prompt_approved/denied`, `plugin_tool_roundtrip`, `auto_compact_triggered`, `token_cost_reporting`)를 돌려 실 API 없이 CLI 동작을 end-to-end 검증한다. `./scripts/run_mock_parity_harness.sh`로 실행.
+
+모델 호출을 mock으로 고정해 회귀 테스트하는 방식은 우리에게 가장 실용적으로 차용 가능한 부분이다.
 
 ## 4. 설치·사용
 
@@ -170,7 +192,9 @@ export OPENAI_BASE_URL=http://localhost:11434/v1
 ./target/debug/claw --model qwen2.5-coder:7b prompt "explain this repo"
 ```
 
-프롬프트 안에서 `@path/to/file`로 파일을 컨텍스트에 제출한다. 세션은 `.claw/sessions/`에 저장돼 `--resume`으로 이어간다. 프록시는 환경변수 또는 `proxy_url` config로 지정한다. 컨테이너 워크플로(`Containerfile`, `docker-compose.yml`, `docs/container.md`)와 Windows PowerShell 안내(`docs/windows-install-release.md`)도 있다. `claw acp`는 Zed용 ACP 지원이 **아직 없고** 상태만 보고하는 alias임을 명시한다.
+프롬프트 안에서 `@path/to/file`로 파일을 컨텍스트에 제출한다. 세션은 `.claw/sessions/`에 저장돼 `--resume`으로 이어간다. 프록시는 환경변수 또는 `proxy_url` config로 지정한다. 컨테이너 워크플로(`Containerfile`, `docker-compose.yml`, `docs/container.md`)와 Windows PowerShell 안내(`docs/windows-install-release.md`)도 있다.
+
+`claw acp`는 Zed용 ACP 지원이 **아직 없고** 상태만 보고하는 alias임을 명시한다.
 
 ## 5. 디렉터리·코드에서 직접 확인한 것
 
@@ -194,7 +218,9 @@ export OPENAI_BASE_URL=http://localhost:11434/v1
 
 ## 7. 장단점·한계·성숙도
 
-사실 지표(GitHub API 2026-10-01): stars 195,282 / forks 108,297 / open issues 48 / 라이선스 MIT / 주 언어 Rust / 생성 2026-03-31 / **마지막 push 2026-08-16** / 커밋 약 1,690개(commits API 마지막 페이지 번호) / **GitHub Release 없음**(latest release API 404). 로컬 클론의 최신 커밋 날짜도 2026-08-16이다. 6주 이상 활동이 멈춘 상태로, "agent가 계속 자동 유지"라는 서술과 최근 활동 사이에 간극이 있다. 원인은 확인하지 못했다.
+사실 지표(GitHub API 2026-10-01): stars 195,282 / forks 108,297 / open issues 48 / 라이선스 MIT / 주 언어 Rust / 생성 2026-03-31 / **마지막 push 2026-08-16** / 커밋 약 1,690개(commits API 마지막 페이지 번호) / **GitHub Release 없음**(latest release API 404). 로컬 클론의 최신 커밋 날짜도 2026-08-16이다.
+
+6주 이상 활동이 멈춘 상태로, "agent가 계속 자동 유지"라는 서술과 최근 활동 사이에 간극이 있다. 원인은 확인하지 못했다.
 
 장점
 - Claude Code 구조(대화 루프, 권한 3단계, hook, compaction, MCP, skill, subagent)를 **읽을 수 있는 Rust 코드**로 볼 수 있는 드문 공개 자료.

@@ -2,7 +2,11 @@
 title: Donggyun의 지식베이스
 ---
 
-AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다. 각 제목에서 바로 본문으로 이동할 수 있습니다.
+AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
+
+- **특정 자료를 찾을 때**: 아래 주제별 목차에서 제목을 선택합니다.
+- **읽는 순서를 정할 때**: [[READING-GUIDE|주제별 읽기 가이드]]를 참고합니다.
+- **직접 수행한 실험을 볼 때**: [[메모리-연구/연구-안내|메모리 연구 안내]]에서 연구별 질문과 결과 해석 범위를 확인합니다.
 
 ## 주제별 목차
 
@@ -46,6 +50,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다. 각
 > - [[메모리-연구/neural-memory/neural-memory/RESEARCH|Research reuse map]]
 > - [[메모리-연구/neural-memory/neural-memory/RESTART_EXPERIMENT_REPORT|메모리 모델 재설계 실험 보고 (2026-09-25 KST)]]
 > - [[메모리-연구/neural-memory/neural-memory/RESTART_SPEC|Neural memory restart: falsifiable design v0]]
+> - [[메모리-연구/신경-메모리-실험-흐름|신경 메모리 — 실험을 바꿔 간 과정]]
 > - [[메모리-연구/neural-memory/neural-memory/RESULTS|신경 메모리 실험 원장 — Phase 0–89]]
 > - [[메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_ACQUISITION_REPORT|기존 상태 이후 새 사실 획득 — 2026-09-27]]
 > - [[메모리-연구/neural-memory/neural-memory/STREAM_MEMORY_BALANCE_REPORT|정정·반복 간섭 균형 실험 — 2026-09-27]]

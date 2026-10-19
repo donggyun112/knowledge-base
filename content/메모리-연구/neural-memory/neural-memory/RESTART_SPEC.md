@@ -11,48 +11,30 @@ tags:
 
 # Neural memory restart: falsifiable design v0
 
-Status: research proposal, 2026-09-25. No model has passed these gates. This document
-does not replace the earlier experiment ledger or erase its negative results; it
-replaces the **architecture hypothesis** for the next experiment.
+이 문서는 2026-09-25에 작성한 연구 제안이다. 아래 합격 기준을 통과한 모델은 아직 없다. 앞선 실험 기록이나 부정적 결과를 지우는 문서가 아니라, **다음 실험에서 시험할 구조에 대한 가설**을 새로 세운다.
 
 ## Question and boundary
 
-Can a separately trained neural memory model receive a continuing dialogue token
-stream, start each new dialogue with no dialogue-specific information, change its
-own state as the stream arrives, and affect later output only when that history
-is useful?
+확인하려는 질문은 하나다. 별도로 학습한 신경망 메모리가 대화를 시간순으로 읽으면서 스스로 기억을 바꾸고, 나중에 그 과거가 필요할 때만 답변에 도움을 줄 수 있을까? 새 대화가 시작될 때는 그 대화에 대한 정보가 전혀 없는 상태여야 한다.
 
-The prior bounded-item model does **not** answer this. Its fixed four-token
-addresses, explicit item admission/replacement, and match-triggered readout
-hard-code much of the storage and retrieval strategy. The later MSC audit also
-found that a whole-token gain could coexist with harm on utterance-content
-tokens: format was the shortcut. Those results remain valid diagnostics of the
-old model, not evidence for the new one.
+이전의 항목 수가 제한된 메모리 모델로는 이 질문에 답할 수 없었다. 고정된 네 토큰 주소, 명시적인 항목 추가·교체 규칙, 일치하는 주소가 있을 때만 읽는 규칙이 이미 들어 있었기 때문이다. 무엇을 저장하고 언제 꺼낼지의 상당 부분을 모델 대신 사람이 정해 둔 셈이다.
 
-Constraints for this restart:
+이후 MSC 감사에서는 전체 토큰 점수가 좋아져도 실제 발화 내용의 점수는 나빠질 수 있음이 드러났다. 대화 내용을 기억하기보다 형식을 익혀 점수를 올린 것이다. 이 결과는 이전 모델의 문제를 보여 주는 유효한 진단으로 남긴다. 새 구조의 성능 근거로 옮겨 쓰지는 않는다.
 
-- Input is token IDs from human dialogue, in chronological order. Only turn and
-  session boundaries are supplied as structural markers; no tool syntax,
-  retrieved embeddings, external vector index, or key/value facts are inputs.
-- The shared, pretrained parameters `θ` may know how to learn. Episode-local
-  memory `M₀` contains no information about that dialogue. "Empty" refers to
-  the latter, not to an untrained network.
-- Internal real-valued activations are unavoidable in a neural network. They
-  are not an externally computed semantic embedding store or one key/value
-  record per utterance.
-- A model that always writes, always reads, or only learns formatting does not
-  satisfy the question, regardless of overall token likelihood.
+그래서 재설계에는 다음 경계를 둔다.
+
+- 입력은 사람 대화의 토큰 ID를 시간순으로 나열한 것이다. 구조 표식은 발화·세션 경계만 제공한다. 도구 문법, 검색한 임베딩, 외부 벡터 인덱스, key/value 사실 목록은 입력하지 않는다.
+- 사전학습된 공유 파라미터 `θ`는 기억하는 방법을 이미 알 수 있다. 하지만 대화별 기억 `M₀`에는 그 대화의 정보가 없어야 한다. 여기서 ‘빈 상태’는 대화별 기억이 비었다는 뜻이지, 신경망 전체가 학습되지 않았다는 뜻이 아니다.
+- 신경망 안의 실수값 표현은 내부 계산에 필요하다. 이를 외부에서 계산해 저장한 의미 임베딩이나 발화별 key/value 기록과 혼동하지 않는다.
+- 항상 저장하거나 항상 읽는 모델, 또는 대화 형식만 배운 모델은 전체 토큰 예측 점수가 좋아도 위 질문을 해결한 것으로 보지 않는다.
 
 ## Target interface versus first measurable interface
 
-The intended final memory model takes the prefix `x₁…xₜ` and returns updated
-memory plus either `NO_MEMORY` or a bounded sequence of memory text tokens.
-This is a **model output**, not an application-level retrieval call. Human
-dialogue alone does not label the exact text that ought to be returned at each
-moment, so claiming this final interface from next-token training would be
-premature.
+최종적으로 만들 인터페이스는 지금까지의 입력 `x₁…xₜ`를 받아 기억을 갱신하고, `NO_MEMORY` 또는 길이가 제한된 기억 텍스트를 반환하는 것이다. `NO_MEMORY`는 지금 내놓을 기억이 없다는 **모델의 출력**이다. 앱이 검색 도구를 호출하는 방식과는 다르다.
 
-The first experiment uses a dense, directly measurable surrogate:
+그러나 사람 대화 원문에는 ‘이 순간에는 이 기억 문장을 반환해야 한다’는 정답이 붙어 있지 않다. 다음 토큰을 잘 예측하도록 학습했다는 이유만으로 이 최종 인터페이스까지 구현했다고 주장할 수는 없다.
+
+첫 실험에서는 더 직접적으로 측정할 수 있는 중간 과제를 쓴다. 기억이 다음 토큰 예측을 얼마나 보정하는지, 그리고 그 보정이 필요한 때에만 나타나는지를 본다.
 
 ```text
 input:  previous memory M(t−1), recent tokens c(t) = window(x(<t))
@@ -61,133 +43,70 @@ write:  after prediction, observed token x(t) updates M(t) with strength w(t)
 output: token logits of a frozen short-context predictor + Δlogits(t)
 ```
 
-At a prediction step, read from `M(t−1)` **before** writing the gold `x(t)`.
-Otherwise the memory can echo the target token. At final-session evaluation,
-history writes are complete and writes are disabled while the clean final
-session is scored. Recent final-session tokens remain available equally to all
-conditions.
+순서가 중요하다. 정답 토큰 `x(t)`를 기억에 쓰기 **전에**, 이전 상태 `M(t−1)`를 읽어 예측해야 한다. 먼저 정답을 저장하면 모델은 기억에서 정답을 그대로 되읽을 수 있다.
 
-Passing this surrogate proves only that a learned memory state can supply
-useful information at the right time. A subsequent text-token decoder and
-`NO_MEMORY` decision must pass their own evidence-grounded tests before the
-final interface is claimed.
+마지막 세션을 평가할 때는 과거 기록의 저장을 끝낸 뒤, 평가 중의 쓰기를 끈다. 마지막 세션에서 직전에 관측한 토큰은 모든 비교 조건에 똑같이 제공한다.
+
+이 중간 과제를 통과해도 입증되는 것은 ‘학습된 기억 상태가 필요한 시점의 예측에 유용한 정보를 보탠다’는 것까지다. 기억을 문장으로 만드는 디코더와 `NO_MEMORY` 판단은 별도로 근거에 맞는지 검증해야 한다.
 
 ## First architecture hypothesis
 
-Use a **memory-only, RMT-inspired recurrent latent state** as the first arm.
-RMT passes learned memory-token representations across sequence segments and
-trains through that recurrence; it does not require a per-fact item schema
-([Bulatov et al., 2022](https://arxiv.org/html/2207.06881v2)). We borrow that
-principle, not its full language-model backbone.
+첫 후보는 **RMT의 원리를 빌린 기억 전용 순환 잠재 상태**다. ‘순환’은 한 구간을 읽고 만든 상태를 다음 구간으로 넘긴다는 뜻이다. RMT는 이렇게 기억 토큰의 표현을 구간 사이에 전달하고 그 연결을 통해 학습한다. 사실마다 별도 항목 형식을 만들 필요가 없다([Bulatov et al., 2022](https://arxiv.org/html/2207.06881v2)). 여기서는 이 원리만 빌리며 원 논문의 언어모델 본체 전체를 재현하지는 않는다.
 
-Let `M(t) ∈ R^(K×d)` be a bounded episode state and `M₀ = 0`. A short-context
-encoder processes a token block together with `M(t−1)`; its memory positions
-propose `M̃(t)`. A learned scalar or per-position write strength gives
-`M(t) = M(t−1) + w(t) ⊙ (M̃(t) − M(t−1))`. This is a continuous state update,
-not a slot containing a token key and token value. Test equal-capacity versions
-with `w = 1` and with learned `w`; sparse writing is a hypothesis, not a
-pre-imposed victory condition. Within a block, content prediction uses a causal
-mask and only the memory state from *before* that block; the proposed update
-is committed after those predictions, so future tokens cannot leak backward.
+대화별 상태 크기를 `M(t) ∈ R^(K×d)`로 제한하고 시작 상태는 `M₀ = 0`으로 둔다. 짧은 문맥 인코더가 현재 토큰 묶음과 이전 상태 `M(t−1)`를 함께 읽으면, 기억 위치에서 새 상태 후보 `M̃(t)`가 나온다.
 
-A read network sees `M(t−1)` and recent tokens `c(t)`. Its contribution is
-zero by construction when the memory is empty:
+실제 상태는 `M(t) = M(t−1) + w(t) ⊙ (M̃(t) − M(t−1))`로 바꾼다. 여기서 쓰기 강도는 학습되는 단일 값 또는 위치별 값이다. 즉 옛 상태에서 새 후보 쪽으로 얼마나 이동할지를 정한다. 토큰 key와 value를 저장하는 항목이 아니라 연속적인 수치 상태의 갱신이다.
+
+같은 용량에서 항상 교체하는 `w = 1`과 `w`를 학습하는 경우를 비교한다. 드물게 쓰는 방식이 좋다는 것은 시험할 가설이지, 미리 정해 놓은 성공 조건이 아니다. 구간 안의 내용 예측은 인과적 마스크를 쓰며 **그 구간을 읽기 전의** 기억만 본다. 새 상태는 예측이 끝난 다음 반영해 뒤의 토큰이 앞선 예측에 새어 들어가지 않게 한다.
+
+읽기 신경망은 이전 기억 `M(t−1)`와 최근 토큰 `c(t)`를 함께 본다. 빈 기억일 때는 예측에 보태는 값이 정확히 0이 되도록 다음처럼 구성한다.
 
 ```text
 r(t) = Readθ(M(t−1), c(t)) − Readθ(M₀, c(t))
 Δlogits(t) = a(t) · Projectθ(r(t))
 ```
 
-The subtraction is a null-state calibration, not a retrieval rule. It keeps
-an unobserved person's memory from inventing a prior fact. Read activation
-`a(t)` is learned; no exact-token match forces it on.
+같은 현재 문맥에서 빈 상태의 읽기 값을 빼는 이유는, 아직 관측하지 않은 사람에 대한 과거 사실을 기억이 만들어 내지 못하게 하기 위해서다. 이는 빈 상태 기준 보정이지 검색 규칙이 아니다. 읽기 강도 `a(t)`도 학습하며, 정확히 일치하는 토큰이 있다고 강제로 켜지지 않는다.
 
-The comparison arm is a TTT-style fast-weight state, trained and evaluated
-under the **same** token stream, frozen predictor, parameter/update budget,
-and controls. TTT makes an internal model's weights the changing state and
-learns its inner training task through an outer next-token objective
-([Sun et al., 2024/2025](https://arxiv.org/html/2407.04620v4)). Its published
-multi-view reconstruction objective is not adopted by default: it can optimize
-reconstruction without future conversational utility. Titans is a reference
-for persistent neural updates and forgetting, but its associative key/value
-loss and gradient-based surprise are not assumed to identify useful dialogue
-memories ([Behrouz et al., 2025](https://arxiv.org/html/2501.00663v1)).
+비교 후보는 TTT 방식의 빠른 가중치 상태다. 두 후보에 **동일한** 토큰 흐름, 고정 예측기, 파라미터·갱신 예산, 대조 조건을 적용한다. TTT는 내부 모델의 가중치 자체를 바뀌는 기억 상태로 사용하고, 바깥의 다음 토큰 예측 목표를 통해 안쪽 학습 과제를 배운다([Sun et al., 2024/2025](https://arxiv.org/html/2407.04620v4)).
+
+다만 원 논문의 여러 관점 재구성 목표를 기본값으로 가져오지는 않는다. 관측 내용을 잘 재구성해도 나중 대화에는 도움이 되지 않을 수 있기 때문이다. Titans는 지속적인 신경망 갱신과 망각을 참고하는 연구다. 그 연상 key/value 손실이나 기울기 기반 놀람 정도가 곧 유용한 대화 기억을 가려 준다고 전제하지 않는다([Behrouz et al., 2025](https://arxiv.org/html/2501.00663v1)).
 
 ## Training episode and loss
 
-One episode is one speaker pair across multiple sessions. Reset `M` between
-pairs, never between that pair's sessions. Group all sessions of a pair in the
-same split. The development corpus is human-human Multi-Session Chat (MSC),
-which uses role-played personas and therefore is not a sample of organic
-private chat ([Xu et al., 2022](https://aclanthology.org/2022.acl-long.356/)).
+한 에피소드는 같은 두 사람이 여러 세션에 걸쳐 나눈 대화다. 대화 상대 쌍이 바뀌면 `M`을 초기화하지만, 같은 쌍의 세션이 바뀔 때는 유지한다. 같은 쌍의 모든 세션은 같은 데이터 분할에 넣는다.
 
-History sessions update memory. A later clean session supplies the delayed
-learning signal. The frozen predictor sees only a fixed recent-token window;
-it cannot read the old sessions directly. Its parameters are identical in
-carried-memory, blank-memory, and swapped-memory conditions. Train only the
-memory module and its output adapter. Every target position is strictly
-causal, and only **human utterance content tokens** enter the primary loss:
+개발 자료는 사람끼리 대화한 Multi-Session Chat(MSC)이다. 단, 참가자가 주어진 페르소나를 연기한 자료이므로 자연스럽게 발생한 사적 대화의 표본은 아니다([Xu et al., 2022](https://aclanthology.org/2022.acl-long.356/)).
+
+과거 세션을 읽으며 기억을 갱신한 뒤, 나중 세션의 내용을 얼마나 잘 예측하는지로 앞선 저장을 학습한다. 고정 예측기는 길이가 정해진 최근 토큰 창만 보며 오래된 세션 원문은 직접 읽을 수 없다.
+
+자기 기억을 이어받는 조건, 빈 기억 조건, 다른 대화의 기억으로 바꾼 조건에서 예측기의 가중치는 같다. 학습하는 부분은 메모리 모듈과 출력 어댑터뿐이다. 모든 정답 위치에서 미래를 볼 수 없게 하고, 주요 손실에는 **사람 발화의 내용 토큰만** 넣는다.
 
 ```text
 L_content = mean_{t∈content} −log pθ(x(t) | c(t), M(t−1))
 L_train   = L_content + λread · mean a(t) + λwrite · mean w(t)
 ```
 
-The penalties give the model a reason to stay silent and conserve updates,
-but their weights are tuned on development data and compared against the
-unpenalized arm. Neither future recurrence nor a gold "store this" label is
-present at inference. Start with short cross-session gaps that fit full
-backpropagation through the memory updates; lengthen gaps only after the
-mechanism works. Detaching state before the relevant evidence would destroy
-the delayed learning signal.
+읽기와 쓰기에 비용을 주는 항은 불필요한 출력과 갱신을 줄일 이유를 제공한다. 비용의 세기는 개발 자료로 조정하고, 비용이 없는 조건과도 비교한다. 추론할 때 미래에 다시 등장할 정보나 ‘이것을 저장하라’는 정답 라벨은 주어지지 않는다.
 
-MSC has relatively sparse exact repetition. Therefore whole-session average
-loss is a safety metric, not the sole success metric. A diagnostic set must
-also cover references to earlier facts, paraphrases, corrections, unrelated
-interleaved turns, and cases where no prior fact is relevant. Evidence labels
-can define *evaluation strata*; they must not become write-time inputs. The
-previously inspected MSC test set is a legacy diagnostic, not a fresh final
-holdout for a new headline claim.
+먼저 세션 사이의 거리를 짧게 잡아, 뒤의 예측 오류가 앞선 기억 갱신까지 온전히 역전파되게 한다. 이 경로가 작동한 뒤에만 거리를 늘린다. 관련 근거를 읽은 시점과 손실 사이에서 상태의 학습 연결을 끊으면, 늦게 도착한 학습 신호가 저장 단계로 돌아가지 못한다.
+
+MSC에서는 과거 표현이 정확히 반복되는 일이 비교적 드물다. 따라서 세션 전체의 평균 손실은 전체 성능이 나빠지지 않는지 보는 안전 지표로 남기되, 성공 여부를 그것 하나로 판단하지 않는다.
+
+진단 자료에는 과거 사실을 다시 묻는 경우, 바꿔 말하기, 정정, 무관한 발화의 끼어들기, 과거 사실이 필요 없는 경우를 모두 넣어야 한다. 근거 라벨은 이처럼 **평가를 나누는 기준**으로만 쓸 수 있으며, 저장 시점의 입력이 되어서는 안 된다. 이미 확인한 MSC test는 기존 문제를 다시 검사하는 자료다. 새로운 핵심 주장을 위한 미사용 최종 평가 자료로 취급하지 않는다.
 
 ## Three predeclared falsification tests
 
-Use paired comparisons by speaker pair, not by token as if tokens were
-independent. Before each full run, estimate the number of pairs needed for a
-cluster-bootstrap interval narrow enough to distinguish the smallest useful
-effect. The provisional action threshold is **0.02 nats per content token**;
-if the 95% paired interval spans both material benefit and material harm,
-the result is inconclusive, not positive or negative.
+토큰 하나하나를 독립 표본으로 세지 않고, 같은 대화 상대 쌍끼리 조건을 짝지어 비교한다. 본 실행 전에는 작은 유용 효과를 구별할 만큼 신뢰구간을 좁히는 데 필요한 쌍 수를 추정한다. 신뢰구간은 대화 쌍 단위를 재표집하는 cluster bootstrap으로 구한다.
 
-1. **Causal, user-specific memory.** On the same future content tokens,
-   `carried` must beat both `blank` and `other-pair swapped` memory. Report
-   per-pair `NLL(blank) − NLL(carried)` and
-   `NLL(swapped) − NLL(carried)`, including intervals and the fraction of pairs
-   helped. A gain from any nonempty state is not personal memory. First verify
-   that the frozen predictor plus adapter can use an oracle evidence signal;
-   otherwise the instrument cannot judge memory quality.
-2. **No format shortcut.** Score utterance content and format/boundary tokens
-   separately. Randomize innocuous session/turn formatting at evaluation and
-   keep the content score paired. If total-token gain disappears on content,
-   or follows the formatting rather than the historical facts, the arm fails.
-   This is the direct guard against the previous MSC result. NoLiMa similarly
-   motivates removing easy lexical overlap in a separate paraphrase stratum
-   ([Modarressi et al., 2025](https://arxiv.org/abs/2502.05167)).
-3. **Write/read timing under interference.** For each history turn, compare
-   later content loss with its write enabled versus causally suppressed,
-   replaying the identical remaining stream. Useful interventions should be
-   enriched among high `w` decisions, harmful or irrelevant turns among low
-   ones. Suppress a read at the future point to check that high `a` actually
-   helps then. Repeat with intact unrelated-turn distractors and with an old
-   fact explicitly corrected; the model must not recover the obsolete fact
-   merely because it was repeated earlier. LongMemEval's update and abstention
-   categories are useful external checks, not proof of this neural mechanism
-   ([Wu et al., 2024](https://arxiv.org/abs/2410.10813)).
+잠정적인 최소 유용 효과는 **내용 토큰당 0.02 nats**다. nats는 여기서 예측 손실을 재는 단위다. 95% 짝지은 구간이 의미 있는 이득과 손해를 모두 포함하면 성공이나 실패로 단정하지 않고 ‘판단 불충분’으로 남긴다.
+
+1. **자기 대화의 기억이 실제로 도움을 주는가.** 같은 미래 내용 토큰에서 자기 기억 `carried`가 빈 기억 `blank`와 다른 쌍의 기억 `other-pair swapped`를 모두 이겨야 한다. 쌍별 `NLL(blank) − NLL(carried)`와 `NLL(swapped) − NLL(carried)`, 각 구간, 도움을 받은 쌍의 비율을 보고한다. 무엇이든 채운 상태가 좋다는 것만으로는 개인 기억이 아니다. 이에 앞서 고정 예측기와 어댑터가 정확한 과거 근거를 주는 오라클 신호를 활용할 수 있는지도 확인한다. 이 검사부터 실패하면 평가 경로로 기억 품질을 판단할 수 없다.
+2. **내용 대신 형식으로 점수를 올리지 않는가.** 발화 내용과 형식·경계 토큰을 따로 채점한다. 평가에서 의미를 바꾸지 않는 세션·발화 형식을 무작위화하고 같은 내용끼리 짝지어 점수를 비교한다. 전체 토큰의 이득이 내용에서는 사라지거나, 과거 사실보다 형식 변화에 따라 움직이면 실패다. 이는 이전 MSC 결과를 되풀이하지 않기 위한 검사다. NoLiMa를 참고해 쉽게 겹치는 단어에 기대지 못하는 바꿔 말하기 조건도 따로 둔다([Modarressi et al., 2025](https://arxiv.org/abs/2502.05167)).
+3. **방해 발화 속에서도 저장·읽기 시점이 맞는가.** 각 과거 발화에서 쓰기를 허용한 경우와 그 쓰기만 막은 경우를 비교한다. 나머지 대화는 똑같이 다시 흘려보내고 뒤의 내용 손실을 잰다. 높은 `w`를 준 발화에는 유용한 쓰기가 많고, 낮은 값에는 해롭거나 무관한 쓰기가 많아야 한다. 미래의 읽기를 끄는 대조로 높은 `a`가 실제 그 순간에 도움이 되는지도 본다. 무관한 발화를 그대로 끼워 넣거나 옛 사실을 명시적으로 정정한 상태에서도 반복한다. 과거에 여러 번 나왔다는 이유만으로 폐기된 사실을 되살리면 안 된다. LongMemEval의 갱신·응답 보류 항목은 외부 점검에 유용하지만 이 신경망 작동 원리를 입증해 주지는 않는다([Wu et al., 2024](https://arxiv.org/abs/2410.10813)).
 
 ## Decision gate
 
-Do not add a larger state, a text decoder, or a more elaborate forgetting rule
-until the first arm passes the content-only carried/blank/swapped test and the
-oracle instrument check on genuinely held-out people. If it fails, report
-which gate failed and compare the equally budgeted TTT arm before proposing
-another architecture. A result on the already-inspected MSC test split is
-exploratory; a confirmatory claim needs a new, untouched pair-level holdout.
+첫 후보가 정말로 학습에서 제외한 사람들의 내용 토큰 평가에서 자기/빈/교환 상태 비교와 오라클 경로 검사를 통과하기 전에는 상태를 키우거나, 텍스트 디코더나 더 복잡한 망각 규칙을 추가하지 않는다.
+
+실패하면 어느 기준에서 막혔는지 먼저 보고하고, 같은 예산의 TTT 후보와 비교한 뒤 다음 구조를 제안한다. 이미 들여다본 MSC test의 결과는 탐색적이다. 결론을 새로 확인하려면 대화 상대 쌍 단위로 완전히 남겨 둔 미사용 평가 자료가 필요하다.

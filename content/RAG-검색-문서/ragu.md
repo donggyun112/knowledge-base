@@ -9,13 +9,29 @@ researched: 2026-10-01
 # RAGU
 
 > [!summary] 한줄요약
-> 러시아 ITMO·NSU 연구진이 만든 MIT 라이선스 GraphRAG 엔진. 텍스트를 청킹하고 2단계(엔티티 → 관계) 타입 추출, DBSCAN 기반 중복 통합과 LLM 요약, Leiden 커뮤니티 탐지로 지식 그래프를 만든 뒤 Local/Global/Naive/Mix 검색과 QueryPlan으로 질의한다. 2026-07 arXiv 논문(2607.11683)이 나왔고 v0.1.0(2026-09)에서 온톨로지 검증 계층이 추가됐다. 다만 스타 135개의 소규모 알파 프로젝트이고, 평가 대부분이 저자 자체 수행이다.
+> 러시아 ITMO·NSU 연구진의 MIT 라이선스 GraphRAG 엔진. 추출과 통합을 분리해 지식 그래프를 만들고 여러 검색 방식으로 질의한다.
+
+텍스트 청킹 후 **2단계 타입 추출(엔티티 → 관계)**, DBSCAN 기반 중복 통합과 LLM 요약, Leiden 커뮤니티 탐지를 거친다. 검색은 Local/Global/Naive/Mix와 QueryPlan을 제공한다.
+
+2026-07 arXiv 논문(2607.11683)이 나왔고 v0.1.0(2026-09)에서 온톨로지 검증 계층이 추가됐다. 다만 스타 135개의 소규모 알파 프로젝트이며, 평가 대부분은 저자 자체 수행이다.
 
 ## 배경: 해결하려는 문제
 
-GraphRAG(Microsoft, LightRAG, HippoRAG 2 등)는 문서에서 지식 그래프를 만들어 청크 검색만으로는 어려운 "코퍼스 전체에 걸친 질문"이나 다중 홉 질문을 푼다. RAGU 논문은 현행 시스템의 세 가지 장애물을 든다. (1) 그래프 구축이 단일 LLM 추출 패스라서 중복되고 잡음 많은 엔티티가 생기고 청크 간 정보를 합치는 단계가 없다. (2) 추출 품질이 그래프 품질을 정하기 때문에 GPT-4급 대형 API 모델에 의존하게 된다. (3) 오픈소스 프레임워크의 공학적 미성숙(설치 실패, LLM 출력에 `eval()`을 쓰는 불안전 코드 경로 등).
+GraphRAG(Microsoft, LightRAG, HippoRAG 2 등)는 문서에서 지식 그래프를 만들어 청크 검색만으로는 어려운 "코퍼스 전체에 걸친 질문"이나 다중 홉 질문을 푼다. RAGU 논문은 현행 시스템의 세 가지 장애물을 든다.
 
-RAGU의 설계 주장은 "추출과 통합을 분리한다"는 것이다. 청크별로 엔티티를 먼저 뽑아 스키마로 검증하고, 그 엔티티를 제약으로 삼아 관계를 뽑는다. 그런 다음 동일 엔티티·관계를 모아 필요하면 군집화와 LLM 요약으로 하나의 설명으로 합친 후에야 커뮤니티 탐지를 한다. 논문은 또 "파이프라인 안의 LLM에 필요한 능력(이해, 추출, 문맥 추론)은 언어 능력이고 세계 지식보다 모델 크기에 따라 천천히 느는 능력"이라는 가설 아래, 작은 모델로도 추출이 가능하다고 주장한다. 이 가설은 Qwen2.5 계열에서 CheGeKa(세계 지식 퀴즈)가 0.5B→72B로 21.1배, MultiQ(모든 사실이 문맥에 있음)는 4배만 오른다는 그림으로 뒷받침되는데, 논문 스스로 "한 모델 패밀리에 근거한 가설이지 정리는 아니다"라고 한계에 적었다.
+1. 그래프 구축이 단일 LLM 추출 패스라서 중복되고 잡음 많은 엔티티가 생기고 청크 간 정보를 합치는 단계가 없다.
+
+2. 추출 품질이 그래프 품질을 정하기 때문에 GPT-4급 대형 API 모델에 의존하게 된다.
+
+3. 오픈소스 프레임워크의 공학적 미성숙(설치 실패, LLM 출력에 `eval()`을 쓰는 불안전 코드 경로 등).
+
+RAGU의 설계 주장은 "추출과 통합을 분리한다"는 것이다. 청크별로 엔티티를 먼저 뽑아 스키마로 검증하고, 그 엔티티를 제약으로 삼아 관계를 뽑는다.
+
+그런 다음 동일 엔티티·관계를 모아 필요하면 군집화와 LLM 요약으로 하나의 설명으로 합친 후에야 커뮤니티 탐지를 한다.
+
+논문은 또 "파이프라인 안의 LLM에 필요한 능력(이해, 추출, 문맥 추론)은 언어 능력이고 세계 지식보다 모델 크기에 따라 천천히 느는 능력"이라는 가설 아래, 작은 모델로도 추출이 가능하다고 주장한다.
+
+이 가설은 Qwen2.5 계열에서 CheGeKa(세계 지식 퀴즈)가 0.5B→72B로 21.1배, MultiQ(모든 사실이 문맥에 있음)는 4배만 오른다는 그림으로 뒷받침되는데, 논문 스스로 "한 모델 패밀리에 근거한 가설이지 정리는 아니다"라고 한계에 적었다.
 
 README는 "nano-graphrag에 부분적으로 기반한다"고 밝힌다. 이 저장소는 설계 아이디어와 인터페이스를 nano-graphrag에서 가져왔다는 뜻이다(코드 대조는 하지 않음).
 
@@ -23,7 +39,16 @@ README는 "nano-graphrag에 부분적으로 기반한다"고 밝힌다. 이 저�
 
 ### 인덱싱 파이프라인
 
-`AGENTS.md`(개발 가이드)의 처리 흐름은 다음과 같다. 문서 → Chunker → 청크 목록 → ArtifactExtractor(엔티티·관계) → EntitySummarizer/RelationSummarizer(병합과 선택적 LLM 요약) → 선택적 GraphBuilderModule(예: RemoveIsolatedNodes) → Leiden 커뮤니티 탐지 → CommunitySummarizer(커뮤니티 리포트) → Index(그래프+KV+벡터 영속화). 질의는 `SearchEngine.a_search()`(검색만) 또는 `a_query()`(검색+LLM 답변)로 진행한다.
+`AGENTS.md`(개발 가이드)가 설명하는 인덱싱 흐름은 다음과 같다.
+
+1. **문서 분할:** 문서 → Chunker → 청크 목록
+2. **추출:** ArtifactExtractor가 엔티티·관계를 추출
+3. **통합:** EntitySummarizer/RelationSummarizer가 병합하고 선택적으로 LLM 요약
+4. **그래프 보정:** 선택적 GraphBuilderModule 적용(예: RemoveIsolatedNodes)
+5. **커뮤니티 구성:** Leiden 커뮤니티 탐지 → CommunitySummarizer의 커뮤니티 리포트
+6. **영속화:** Index에 그래프+KV+벡터 저장
+
+질의는 `SearchEngine.a_search()`(검색만) 또는 `a_query()`(검색+LLM 답변)로 진행한다.
 
 ```mermaid
 flowchart TD
@@ -51,11 +76,23 @@ flowchart TD
 
 `TwoStageArtifactsExtractorLLM`은 먼저 엔티티를 뽑아 검증하고, 관계 단계에서 `source_entity`와 `target_entity`가 검증된 엔티티 이름과 일치해야 한다고 강제해 "엔티티-관계 불일치"를 줄인다. 단일 패스 `ArtifactsExtractorLLM`도 있다. 둘 다 few-shot ICL을 지원하며 선택 전략은 `semantic`, `bm25`, `hybrid`, `random`이고 `ICLConfig(enabled=True, num_examples=2)`로 켠다(1~3개 권장). ICL 예시를 직접 만드는 스크립트 `scripts/generate_icl_examples.py`와 설정 `config/icl_generation.yaml`도 있다.
 
-v0.1.0(CHANGELOG 표기 2026-09-08, GitHub 릴리스 게시 2026-09-07 UTC)의 가장 큰 변화는 온톨로지 계층(`ragu/triplet/ontology`)이다. 어휘(엔티티·관계 타입)와 이를 제약하는 규칙을 한 객체로 묶었다. 술어별 `domain`/`range`, 엔티티 타입 계층, 대칭·역관계, `aliases`, 끝점 타입에 따라 술어를 바꾸는 `retype_when` 규칙이 있다. `Ontology.builtin("nerel")`, `Ontology.from_yaml(path)`(다른 온톨로지를 `extends:` 가능), `Ontology.from_type_lists(entities, relations)`로 만든다. `OntologyValidator`는 어휘 밖 타입, domain/range 위반, 자기 루프, 청크에 없는 끝점을 검사하고, `ValidationPolicies`로 검사별 처리(`COERCE` 보정, `DROP`, `KEEP`, `RAISE`)를 선택한다. 프리셋은 `permissive()`, `strict()`, `failing()`이다. 즉 LLM 출력의 스키마 위반을 코드가 정리하는 방식이어서, 한국어/도메인 온톨로지를 YAML로 정의해 같은 구조를 쓸 수 있다는 점이 우리에게는 실용적이다. 반면 CHANGELOG에는 이것이 **Breaking change**로 기록됐다(`entity_types`/`relation_types` 인자가 `ontology` 하나로 대체). 소규모 알파 프로젝트에서 minor 단위 호환성 파괴가 잦다는 신호다.
+v0.1.0(CHANGELOG 표기 2026-09-08, GitHub 릴리스 게시 2026-09-07 UTC)의 가장 큰 변화는 온톨로지 계층(`ragu/triplet/ontology`)이다. 어휘(엔티티·관계 타입)와 이를 제약하는 규칙을 한 객체로 묶었다. 술어별 `domain`/`range`, 엔티티 타입 계층, 대칭·역관계, `aliases`, 끝점 타입에 따라 술어를 바꾸는 `retype_when` 규칙이 있다.
+
+`Ontology.builtin("nerel")`, `Ontology.from_yaml(path)`(다른 온톨로지를 `extends:` 가능), `Ontology.from_type_lists(entities, relations)`로 만든다.
+
+`OntologyValidator`는 어휘 밖 타입, domain/range 위반, 자기 루프, 청크에 없는 끝점을 검사하고, `ValidationPolicies`로 검사별 처리(`COERCE` 보정, `DROP`, `KEEP`, `RAISE`)를 선택한다. 프리셋은 `permissive()`, `strict()`, `failing()`이다.
+
+즉 LLM 출력의 스키마 위반을 코드가 정리하는 방식이어서, 한국어/도메인 온톨로지를 YAML로 정의해 같은 구조를 쓸 수 있다는 점이 우리에게는 실용적이다.
+
+반면 CHANGELOG에는 이것이 **Breaking change**로 기록됐다(`entity_types`/`relation_types` 인자가 `ontology` 하나로 대체). 소규모 알파 프로젝트에서 minor 단위 호환성 파괴가 잦다는 신호다.
 
 ### 통합(consolidation), 군집, 요약
 
-`EntitySummarizer`는 (이름, 타입)으로 엔티티를 묶는다. 논문과 코드(`ragu/graph/artifacts_summarizer.py`의 `DBSCAN(eps=0.5, min_samples=2)`)에 따르면 중복 언급이 많은 엔티티에 대해 임베딩 DBSCAN 군집화를 하고 LLM으로 요약을 만든다. `RelationSummarizer`도 같은 패턴이다. 설정은 `BuilderArguments`의 `use_llm_summarization`, `use_clustering`, `cluster_only_if_more_than`(기본 10000), `summarize_only_if_more_than`(7), `max_cluster_size`(128), `make_community_summary`, `remove_isolated_nodes`, `build_only_vector_context`(그래프 추출 없이 청크 임베딩만) 등이고 `min_cluster_size`가 v0.1.0에 추가됐다. 그래프는 방향성 멀티그래프로 영속화되고 커뮤니티 탐지는 내부적으로 무방향 투영에서 한다(공식 문서 기재). 커뮤니티 요약은 `title/summary/rating/rating_explanation/findings[]` 구조의 JSON이다. 의존성 `graspologic-native`가 Leiden을 제공한다.
+`EntitySummarizer`는 (이름, 타입)으로 엔티티를 묶는다. 논문과 코드(`ragu/graph/artifacts_summarizer.py`의 `DBSCAN(eps=0.5, min_samples=2)`)에 따르면 중복 언급이 많은 엔티티에 대해 임베딩 DBSCAN 군집화를 하고 LLM으로 요약을 만든다. `RelationSummarizer`도 같은 패턴이다.
+
+설정은 `BuilderArguments`의 `use_llm_summarization`, `use_clustering`, `cluster_only_if_more_than`(기본 10000), `summarize_only_if_more_than`(7), `max_cluster_size`(128), `make_community_summary`, `remove_isolated_nodes`, `build_only_vector_context`(그래프 추출 없이 청크 임베딩만) 등이고 `min_cluster_size`가 v0.1.0에 추가됐다.
+
+그래프는 방향성 멀티그래프로 영속화되고 커뮤니티 탐지는 내부적으로 무방향 투영에서 한다(공식 문서 기재). 커뮤니티 요약은 `title/summary/rating/rating_explanation/findings[]` 구조의 JSON이다. 의존성 `graspologic-native`가 Leiden을 제공한다.
 
 ### 검색 엔진 5종
 
@@ -71,7 +108,9 @@ Qdrant 어댑터를 쓰면 dense+sparse 하이브리드 질의가 가능하고, 
 
 ### 저장소 계층과 공학 요소
 
-저장은 3계층 추상화(그래프/KV/벡터)다. 개발용은 NetworkX+GML, JSON KV, NanoVectorDB이고 서버용은 Neo4j(그래프)와 Qdrant(dense/hybrid 벡터)다. 증분 upsert/update/delete, 결정론적 해시 ID(`ent-…`, `rel-…`), 교차 저장소 일관성 감사기, LLM 응답 디스크 캐시(`CachedAsyncOpenAI(cache='./llm_cache')`), 비동기+속도 제한(`rate_max_simultaneous`, `rate_max_per_minute`), Pydantic v2 구조화 출력, 쓰기 원자성(임시 파일+`os.replace`)이 갖춰져 있다. 테스트는 `tests/`에 약 46개 테스트 파일이 있고, 논문은 약 374개 테스트와 API 키 없이 CI를 돌리는 결정론적 mock LLM 서버를 언급한다(후자는 이번에 확인하지 않음). `mypy.ini`에서 `disallow_untyped_defs`를 켜고 타입 검사를 한다.
+저장은 3계층 추상화(그래프/KV/벡터)다. 개발용은 NetworkX+GML, JSON KV, NanoVectorDB이고 서버용은 Neo4j(그래프)와 Qdrant(dense/hybrid 벡터)다. 증분 upsert/update/delete, 결정론적 해시 ID(`ent-…`, `rel-…`), 교차 저장소 일관성 감사기, LLM 응답 디스크 캐시(`CachedAsyncOpenAI(cache='./llm_cache')`), 비동기+속도 제한(`rate_max_simultaneous`, `rate_max_per_minute`), Pydantic v2 구조화 출력, 쓰기 원자성(임시 파일+`os.replace`)이 갖춰져 있다.
+
+테스트는 `tests/`에 약 46개 테스트 파일이 있고, 논문은 약 374개 테스트와 API 키 없이 CI를 돌리는 결정론적 mock LLM 서버를 언급한다(후자는 이번에 확인하지 않음). `mypy.ini`에서 `disallow_untyped_defs`를 켜고 타입 검사를 한다.
 
 ## 설치와 사용법
 
@@ -113,11 +152,23 @@ local = LocalSearchEngine(llm=llm, knowledge_graph=kg, embedder=embedder)
 print((asyncio.run(local.a_query("질문", use_summary=True, use_chunks=True))).response)
 ```
 
-(위 코드는 README 예시를 줄여 옮긴 것이며 직접 실행하지는 않았다.) 이미 저장 폴더에 그래프가 있으면 자동으로 로드한다. 모든 LLM 사용 모듈은 `RaguGenerativeModule`을 상속해 `get_prompts()`, `get_prompt(name)`, `update_prompt(name, RAGUInstruction)`로 프롬프트를 확인·교체할 수 있다(Jinja2 템플릿 + Pydantic 응답 스키마). `DEFAULT_PROMPT_TEMPLATES`를 직접 수정하지 말라는 주의가 있다. 토큰 한도는 `Settings.embedder_token_limit`, `Settings.llm_context_token_limit` 등으로 설정하고 `Settings.save/load`로 JSON 직렬화한다. 예제는 `examples/`에 노트북 15개 안팎(배치 연산, Neo4j+Qdrant 구성, 하이브리드 검색, 증분 업데이트, 쿼리 플랜, 스트리밍, LLM-as-judge 등)이 있다.
+(위 코드는 README 예시를 줄여 옮긴 것이며 직접 실행하지는 않았다.) 이미 저장 폴더에 그래프가 있으면 자동으로 로드한다.
+
+모든 LLM 사용 모듈은 `RaguGenerativeModule`을 상속해 `get_prompts()`, `get_prompt(name)`, `update_prompt(name, RAGUInstruction)`로 프롬프트를 확인·교체할 수 있다(Jinja2 템플릿 + Pydantic 응답 스키마). `DEFAULT_PROMPT_TEMPLATES`를 직접 수정하지 말라는 주의가 있다.
+
+토큰 한도는 `Settings.embedder_token_limit`, `Settings.llm_context_token_limit` 등으로 설정하고 `Settings.save/load`로 JSON 직렬화한다. 예제는 `examples/`에 노트북 15개 안팎(배치 연산, Neo4j+Qdrant 구성, 하이브리드 검색, 증분 업데이트, 쿼리 플랜, 스트리밍, LLM-as-judge 등)이 있다.
 
 ## RAGU-lm과 Meno-Lite: 혼동 주의
 
-README와 `docs/en/ragu_lm.md`가 소개하는 RAGU-lm은 Qwen-3-0.6B를 NEREL 데이터로 미세조정한 러시아어 전용 추출 모델이다(엔티티 인식, 정규화, 설명 생성, 관계 설명의 4 태스크; vLLM으로 서빙 `vllm serve RaguTeam/ragu-lm --max_model_len 4096`). 문서의 비교표는 NEREL에서 엔티티 F1 0.60, 관계 F1 0.71(Qwen-2.5-14B-Instruct는 0.32/0.69, "small-model pipeline"은 0.74/0.75)이다. 그런데 CHANGELOG v0.1.0은 `RaguLmArtifactExtractor`를 **Deprecated**로 표시하고 `TwoStageArtifactsExtractorLLM`/`ArtifactsExtractorLLM`을 권고한다. 한편 2026-07 논문에서 새로 제시한 모델은 7B급 Meno-Lite-0.1(RuadaptQwen2.5-7B 기반, Apache-2.0, HF `bond005/meno-lite-0.1`)이다. 저장소의 README/문서는 아직 RAGU-lm 중심이고 Meno-Lite는 문서에서 찾지 못했다(`grep` 결과 ICL 예시 JSON 한 곳에만 문자열 등장). 정리하면 모델 계보가 RAGU-lm(0.6B) → Meno-Lite(7B)로 옮겨 가는 중이고 문서 정리는 아직이다. 두 모델 모두 러시아어/영어 중심이며 한국어 지원 근거는 없다.
+README와 `docs/en/ragu_lm.md`가 소개하는 RAGU-lm은 Qwen-3-0.6B를 NEREL 데이터로 미세조정한 러시아어 전용 추출 모델이다(엔티티 인식, 정규화, 설명 생성, 관계 설명의 4 태스크; vLLM으로 서빙 `vllm serve RaguTeam/ragu-lm --max_model_len 4096`). 문서의 비교표는 NEREL에서 엔티티 F1 0.60, 관계 F1 0.71(Qwen-2.5-14B-Instruct는 0.32/0.69, "small-model pipeline"은 0.74/0.75)이다.
+
+그런데 CHANGELOG v0.1.0은 `RaguLmArtifactExtractor`를 **Deprecated**로 표시하고 `TwoStageArtifactsExtractorLLM`/`ArtifactsExtractorLLM`을 권고한다.
+
+한편 2026-07 논문에서 새로 제시한 모델은 7B급 Meno-Lite-0.1(RuadaptQwen2.5-7B 기반, Apache-2.0, HF `bond005/meno-lite-0.1`)이다.
+
+저장소의 README/문서는 아직 RAGU-lm 중심이고 Meno-Lite는 문서에서 찾지 못했다(`grep` 결과 ICL 예시 JSON 한 곳에만 문자열 등장).
+
+정리하면 모델 계보가 RAGU-lm(0.6B) → Meno-Lite(7B)로 옮겨 가는 중이고 문서 정리는 아직이다. 두 모델 모두 러시아어/영어 중심이며 한국어 지원 근거는 없다.
 
 ## 논문(arXiv:2607.11683) 핵심 수치와 읽는 법
 
@@ -129,7 +180,11 @@ README와 `docs/en/ragu_lm.md`가 소개하는 RAGU-lm은 Qwen-3-0.6B를 NEREL �
 
 ## 디렉터리·코드 구조
 
-`ragu/` 아래에 `chunker/`, `common/`(Settings, 로깅, `prompts/`와 `icl_examples/`), `graph/`(knowledge_graph, graph_builder_pipeline, artifacts_summarizer, community_summarizer, index, builder_modules), `models/`(llm, embedder, sparse_embedder, scorer, openai 캐시 클라이언트), `search_engine/`(base_engine, local/global/naive/mix, query_plan), `storage/`(graph_storage_adapters: networkx·neo4j, vdb_storage_adapters: nano_vdb·qdrant, kv_storage_adapters), `triplet/`(extractors, ontology/builtin/nerel.yaml, prompts, validator), `utils/`가 있다. 파이썬 파일 약 70개다. 모듈마다 README(역할, 파이프라인상 위치, 핵심 컴포넌트, 코드 예)가 있어 문서화 수준이 높다. `docs/`는 영어/러시아어 대응. 핵심 의존성은 `openai`, `qdrant-client`, `neo4j`, `fastembed`, `networkx`, `graspologic-native`, `scikit-learn`, `pydantic`, `jinja2`, `diskcache`, `tiktoken`, `razdel`, `pymorphy3`, `lingua-language-detector`다.
+`ragu/` 아래에 `chunker/`, `common/`(Settings, 로깅, `prompts/`와 `icl_examples/`), `graph/`(knowledge_graph, graph_builder_pipeline, artifacts_summarizer, community_summarizer, index, builder_modules), `models/`(llm, embedder, sparse_embedder, scorer, openai 캐시 클라이언트), `search_engine/`(base_engine, local/global/naive/mix, query_plan), `storage/`(graph_storage_adapters: networkx·neo4j, vdb_storage_adapters: nano_vdb·qdrant, kv_storage_adapters), `triplet/`(extractors, ontology/builtin/nerel.yaml, prompts, validator), `utils/`가 있다.
+
+파이썬 파일 약 70개다. 모듈마다 README(역할, 파이프라인상 위치, 핵심 컴포넌트, 코드 예)가 있어 문서화 수준이 높다. `docs/`는 영어/러시아어 대응.
+
+핵심 의존성은 `openai`, `qdrant-client`, `neo4j`, `fastembed`, `networkx`, `graspologic-native`, `scikit-learn`, `pydantic`, `jinja2`, `diskcache`, `tiktoken`, `razdel`, `pymorphy3`, `lingua-language-detector`다.
 
 ## 비교 대상
 
@@ -144,7 +199,19 @@ README와 `docs/en/ragu_lm.md`가 소개하는 RAGU-lm은 Qwen-3-0.6B를 NEREL �
 
 장점: 모듈 구조가 깔끔하고 문서화가 좋다. 온톨로지 검증, 증분 업데이트, 비동기+레이트리밋, 캐시, Neo4j/Qdrant 같은 "운영에 가까운" 요소가 있다. 검색 엔진이 다양하고 프롬프트를 교체할 수 있다. MIT.
 
-한계: (1) 러시아어·NEREL 중심이다. NEREL 29/49 타입은 러시아 위키뉴스 계열 개체 체계이고 한국어 개체명 체계와 다르다. YAML 온톨로지로 대체할 수는 있으나 프롬프트(`Settings.language`가 english/russian만 문서화)와 도구(`razdel`, `pymorphy3`)는 한국어를 상정하지 않는다. (2) 소규모 프로젝트다. Stars 135, Forks 24, 오픈 이슈+PR 12건, 생성 2025-02-04, 최신 릴리스 v0.1.0(GitHub 릴리스 게시일 2026-09-07), 직전 v0.0.5(2026-08-12), v0.0.4(2026-07-25). CHANGELOG 표기는 각각 09-08, 08-13, 07-24로 하루 정도 어긋난다(시간대 차이로 보임). PyPI classifier는 "Development Status :: 3 - Alpha". (3) minor 릴리스에서 Breaking 변경이 잦다(0.0.4와 0.1.0의 CHANGELOG에 Breaking 다수). (4) 그래프 구축 비용이 크다. 청크마다 다단계 LLM 호출이 필요하고, 실패를 삼키지 않도록 바뀌어(0.0.4) 대규모 배치에서 중간 실패가 전체를 멈출 수 있다. (5) 기본 그래프 저장소가 NetworkX라 대규모에는 Neo4j 어댑터가 필요하다(논문도 인정). (6) 평가가 저자 중심이고 영어/의료·위키 계열 벤치다.
+한계:
+
+1. 러시아어·NEREL 중심이다. NEREL 29/49 타입은 러시아 위키뉴스 계열 개체 체계이고 한국어 개체명 체계와 다르다. YAML 온톨로지로 대체할 수는 있으나 프롬프트(`Settings.language`가 english/russian만 문서화)와 도구(`razdel`, `pymorphy3`)는 한국어를 상정하지 않는다.
+
+2. 소규모 프로젝트다. Stars 135, Forks 24, 오픈 이슈+PR 12건, 생성 2025-02-04, 최신 릴리스 v0.1.0(GitHub 릴리스 게시일 2026-09-07), 직전 v0.0.5(2026-08-12), v0.0.4(2026-07-25). CHANGELOG 표기는 각각 09-08, 08-13, 07-24로 하루 정도 어긋난다(시간대 차이로 보임). PyPI classifier는 "Development Status :: 3 - Alpha".
+
+3. minor 릴리스에서 Breaking 변경이 잦다(0.0.4와 0.1.0의 CHANGELOG에 Breaking 다수).
+
+4. 그래프 구축 비용이 크다. 청크마다 다단계 LLM 호출이 필요하고, 실패를 삼키지 않도록 바뀌어(0.0.4) 대규모 배치에서 중간 실패가 전체를 멈출 수 있다.
+
+5. 기본 그래프 저장소가 NetworkX라 대규모에는 Neo4j 어댑터가 필요하다(논문도 인정).
+
+6. 평가가 저자 중심이고 영어/의료·위키 계열 벤치다.
 
 참고 사실: 이전 노트에서 불명이던 README의 `AsphodelRem/RAGU` clone URL은 GitHub API 조회 시 `RaguTeam/RAGU`로 해석된다(같은 저장소, 스타 135로 동일). 소유자 이전/개명으로 보이며 사유는 확인하지 못했다.
 

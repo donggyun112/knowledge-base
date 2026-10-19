@@ -9,7 +9,10 @@ researched: 2026-10-01
 # AG-UI feat. CopilotKit (PyTorchKR)
 
 > [!summary] 한줄요약
-> PyTorchKR의 9bow(박정환)가 2025-05-15에 올린 한국어 소개글로, CopilotKit이 공개한 AG-UI를 "백엔드 에이전트와 프론트엔드를 단일 이벤트 스트림으로 잇는 개방형 프로토콜"로 설명한다. 글 자체는 입문용 개념 요약이고, 이 노트는 글의 주장을 AG-UI 공식 저장소(2026-10-01 clone)의 스펙·문서·SDK 코드와 대조해 현재(1.0) 기준으로 바로잡고 깊이를 더한 것이다.
+> AG-UI를 소개한 PyTorchKR 한국어 포스트를 공식 1.0 스펙과 대조해, 이벤트 스트림과 UI 연결 방식을 정리한 노트다.
+
+- **원문**: PyTorchKR의 9bow(박정환)가 2025-05-15에 게시한 입문용 개념 요약이다. CopilotKit이 공개한 AG-UI를 "백엔드 에이전트와 프론트엔드를 단일 이벤트 스트림으로 잇는 개방형 프로토콜"로 설명한다.
+- **이 노트의 범위**: AG-UI 공식 저장소(2026-10-01 clone)의 스펙·문서·SDK 코드와 포스트의 주장을 대조해, 조사 시점의 1.0 기준으로 정정하고 설명을 보강했다.
 
 > [!warning] 포스트 자체의 전제
 > 글 말미에 "이 글은 GPT 모델로 정리한 글을 바탕으로 한 것으로, 원문의 내용 또는 의도와 다르게 정리된 내용이 있을 수 있다"는 고지가 있다. 즉 1차 자료가 아니라 2차 요약이다. 특히 포스트가 나열한 이벤트 이름 중 `LIFECYCLE_SIGNAL`은 현재 스펙에 존재하지 않는다(아래 3.3 참조).
@@ -95,7 +98,12 @@ sequenceDiagram
 
 문서가 정리한 이벤트 흐름 패턴은 세 가지다.
 
-첫째 Start-Content-End는 텍스트와 도구 호출에 쓰인다. `messageId`/`toolCallId`로 같은 논리 스트림을 묶고 `delta`를 순서대로 이어 붙인다. 편의용 `TEXT_MESSAGE_CHUNK`/`TOOL_CALL_CHUNK`는 클라이언트 변환기가 Start→Content→End 3종으로 펼친다(ID가 바뀌거나 스트림이 끝나면 End 자동 방출). 둘째 Snapshot-Delta는 상태 동기화용이다. `STATE_SNAPSHOT`은 전체 상태로 교체하고, `STATE_DELTA`는 RFC 6902 JSON Patch 배열이며 순서대로 적용한다. 불일치가 감지되면 새 스냅샷을 요청할 수 있다고 문서는 적는다. 포스트의 "차이점만 스트리밍"이 바로 이것이다. 셋째 Lifecycle은 `RunStarted`로 시작해 `RunFinished` 또는 `RunError`로 반드시 끝나며 Step 이벤트는 선택이다.
+1. **Start-Content-End: 텍스트와 도구 호출**
+   `messageId`/`toolCallId`로 같은 논리 스트림을 묶고 `delta`를 순서대로 이어 붙인다. 편의용 `TEXT_MESSAGE_CHUNK`/`TOOL_CALL_CHUNK`는 클라이언트 변환기가 Start→Content→End 3종으로 펼친다. ID가 바뀌거나 스트림이 끝나면 End를 자동 방출한다.
+2. **Snapshot-Delta: 상태 동기화**
+   `STATE_SNAPSHOT`은 전체 상태를 교체한다. `STATE_DELTA`는 RFC 6902 JSON Patch 배열이며 순서대로 적용한다. 문서에 따르면 불일치가 감지될 때 새 스냅샷을 요청할 수 있다. 포스트의 "차이점만 스트리밍"이 이 패턴이다.
+3. **Lifecycle: 실행의 시작과 종료**
+   `RunStarted`로 시작하고 `RunFinished` 또는 `RunError`로 반드시 끝난다. Step 이벤트는 선택 사항이다.
 
 실제 이벤트 예시(문서 `tools.mdx`):
 
@@ -115,7 +123,19 @@ JSON 조각이 스트리밍되므로 UI는 인자를 점진적으로 보여줄 �
 
 하나는 프론트엔드 정의 도구다. `RunAgentInput.tools`에 클라이언트가 JSON Schema 기반 도구(예: `confirmAction`)를 실어 보내면, 에이전트가 그 도구를 호출하는 순간 UI가 확인 다이얼로그를 띄우는 human-in-the-loop 패턴이 가능하다. 문서는 "민감한 작업은 에이전트가 아니라 애플리케이션이 통제한다"는 이점을 든다. 다만 `tools`는 클라이언트 제공 도구용이며 백엔드 도구 전체를 담는 용도가 아니라고 못박는다.
 
-다른 하나는 interrupt-aware 라이프사이클(`docs/concepts/interrupts.mdx`)이다. 실행이 `RUN_FINISHED { outcome: { type: "interrupt", interrupts: [...] } }`로 끝나면, 클라이언트는 같은 `threadId`로 새 run을 시작하며 `resume: [{interruptId, status: "resolved"|"cancelled", payload?}]`를 보낸다. 계약 규칙은 같은 스레드 사용, 모든 open interrupt를 한 번에 응답(부분 resume 불가), 대기 중 interrupt가 있으면 새 입력은 resume 필수, 동일 요청 재전송은 idempotent, `expiresAt` 이후 resume은 `RunError`, `responseSchema`로 payload 검증 가능이다. interrupt 시점에 재개에 필요한 `StateSnapshot`/`MessagesSnapshot`을 `RunFinished` 앞에 방출해야 한다. events.mdx에서는 이 확장이 "DRAFT" 배지 아래에도 표시돼 있어 문서 내부에서 확정 여부 표기가 엇갈린다.
+다른 하나는 **interrupt-aware 라이프사이클**(`docs/concepts/interrupts.mdx`)이다. 실행이 `RUN_FINISHED { outcome: { type: "interrupt", interrupts: [...] } }`로 끝나면, 클라이언트는 같은 `threadId`로 새 run을 시작하며 `resume: [{interruptId, status: "resolved"|"cancelled", payload?}]`를 보낸다.
+
+재개 계약은 다음과 같다.
+
+- 같은 스레드를 사용한다.
+- 모든 open interrupt에 한 번에 응답한다. 부분 resume은 불가하다.
+- 대기 중 interrupt가 있으면 새 입력에 resume을 포함해야 한다.
+- 동일 요청 재전송은 idempotent하다.
+- `expiresAt` 이후 resume은 `RunError`가 된다.
+- `responseSchema`로 payload를 검증할 수 있다.
+- interrupt 시점에는 재개에 필요한 `StateSnapshot`/`MessagesSnapshot`을 `RunFinished`보다 먼저 방출해야 한다.
+
+단, events.mdx에서는 이 확장이 "DRAFT" 배지 아래에도 표시된다. 문서 내부에서 확정 여부 표기가 엇갈린다는 점에 주의해야 한다.
 
 ```mermaid
 sequenceDiagram
@@ -179,7 +199,16 @@ agent.runAgent({ tools: [...], context: [...] }).subscribe({
   error: (e) => console.error(e), complete: () => console.log("done") });
 ```
 
-패키지는 npm `@ag-ui/core`, `@ag-ui/client`(저장소 `package.json` 버전 1.0.1), Python `ag-ui-protocol`(`pyproject.toml` 버전 1.0.0, pydantic>=2.11.2 의존, Python >=3.9)이다. 서버 퀵스타트 요구사항은 Python 3.12+, Poetry, OpenAI 키이며 protobuf/nx/pnpm 설치를 요구한다. 클라이언트 퀵스타트는 Node.js 22.13.0 이상을 요구한다(모두 문서 기재, 실제 실행은 하지 않았다).
+패키지 자체의 요구사항과 퀵스타트의 요구사항을 구분해야 한다.
+
+| 구분 | 패키지·버전 또는 요구사항 |
+|---|---|
+| TypeScript 패키지 | npm `@ag-ui/core`, `@ag-ui/client`. 저장소 `package.json` 버전 1.0.1 |
+| Python 패키지 | `ag-ui-protocol`. `pyproject.toml` 버전 1.0.0, pydantic>=2.11.2 의존, Python >=3.9 |
+| 서버 퀵스타트 | Python 3.12+, Poetry, OpenAI 키. protobuf/nx/pnpm 설치 필요 |
+| 클라이언트 퀵스타트 | Node.js 22.13.0 이상 |
+
+모두 문서에 기재된 조건이며 실제 실행은 하지 않았다.
 
 ## 5. 저장소 구조에서 확인한 것
 

@@ -34,7 +34,10 @@ researched: 2026-10-01
 | 7 | 크레덴셜 발급 허들 | 보안 검토 + 비용 승인을 거쳐야 키 발급 → PoC에서 "첫 호출조차 못 해본다" |
 | 8 | 보안·개인정보 | 이름·연락처·계좌번호·주민등록번호가 필터 없이 외부 벤더로 전송될 위험 |
 
-서비스 개발자 인터뷰 우선순위: **프롬프트 관리 91%**, **Trace 수집·가시성(Observability) 45%**. 프롬프트 요구는 모델 간 비교, 버전별 변경 추적, 변경 이력 메모.
+서비스 개발자 인터뷰에서는 두 가지 요구가 우선순위로 나타났다.
+
+- **프롬프트 관리 91%**: 모델 간 비교, 버전별 변경 추적, 변경 이력 메모
+- **Trace 수집·가시성(Observability) 45%**
 
 ## 3. 해결 전략과 컴포넌트 매핑
 | 문제 | 전략 | 컴포넌트 |
@@ -72,13 +75,23 @@ flowchart LR
 - Pezzo: 프롬프트 관리·API 배포는 유용하나 모니터링·피드백 없음.
 - OpenPrompt: 학계용, 로깅·버전·권한 부족.
 
-**Langfuse 선택 이유**: 프롬프트 관리(텍스트 + 변수 placeholder + config, 라벨/버전)와 Trace 기반 Observability가 처음부터 핵심. 입력·출력·재시도·지연·비용을 Trace 단위로 기록. 토큰·비용 대시보드. A/B, 사용자 피드백, 커스텀 평가, 데이터셋 관리. 주요 프레임워크 통합과 self-hosted 지원. 오픈소스 생태계.
+**Langfuse 선택 이유**
+
+프롬프트 관리와 Trace 기반 Observability가 처음부터 핵심 기능이라는 점을 높게 평가했다.
+
+- **프롬프트**: 텍스트 + 변수 placeholder + config, 라벨/버전 관리
+- **관측**: 입력·출력·재시도·지연·비용을 Trace 단위로 기록하고 토큰·비용 대시보드 제공
+- **평가·실험**: A/B, 사용자 피드백, 커스텀 평가, 데이터셋 관리
+- **통합·운영**: 주요 프레임워크 통합, self-hosted 지원, 오픈소스 생태계
 
 **감수한 부담**: self-host하면 ClickHouse, Redis 같은 운영 컴포넌트가 늘어난다. Langfuse의 확장 아키텍처("From Zero to Scale" 블로그)를 근거로 장기 안정성에서 오히려 이득이라 판단.
 
 **자주 쓰는 4가지 기능**
 1. **프롬프트 관리** — 버전 저장·변경 이력·모델 간 비교·롤백, 운영 배포 버전 지정.
-2. **Observability** — 요청 Trace로 지연·비용·오류 지점·토큰 확인. 3계층 파이프라인: Application(Studio가 LLM 응답 수집) → Collection(Traces는 ClickHouse, 서비스·시스템 메트릭은 Prometheus) → 분석·모니터링. 기존 Grafana 서빙 모니터링은 평균 응답 시간 변동이 크고 Max에서 클라이언트 타임아웃이 나는데 원인을 못 찾았으나, Langfuse 도입 후 모델별 Percentile 분석과 Trace로 병목을 확인. ClickHouse + Superset으로 프로젝트별 비용 모니터링·알림.
+2. **Observability** — 요청 Trace로 지연·비용·오류 지점·토큰 확인.
+   - 수집·분석은 3계층 파이프라인: Application(Studio가 LLM 응답 수집) → Collection(Traces는 ClickHouse, 서비스·시스템 메트릭은 Prometheus) → 분석·모니터링.
+   - 기존 Grafana 서빙 모니터링에서는 평균 응답 시간 변동이 크고 Max에서 클라이언트 타임아웃이 나도 원인을 찾지 못했다. Langfuse 도입 후 모델별 Percentile 분석과 Trace로 병목을 확인했다.
+   - ClickHouse + Superset으로 프로젝트별 비용 모니터링·알림.
 3. **크레덴셜 관리** — Studio에 provider 키를 등록해 두면 SDK는 Studio 단일 API Key로 프로젝트의 모든 모델 호출. 과거의 AWS Secret Manager/ENV 분산 관리를 대체. 유출 위험 축소, 팀·프로젝트별 사용 추적.
 4. **Evaluation** — 사람이 검수한 소규모 고신뢰 **Golden Dataset**(기준선)과 실제 서비스 데이터로 확장한 **Evaluation Dataset**(넓은 커버리지). 실험별 응답 속도·비용·정확도 비교. Manual Annotation, User Feedback, LLM-as-a-Judge.
 
@@ -95,9 +108,22 @@ flowchart LR
 - OpenWebUI, Langfuse Playground, LangChain, LlamaIndex를 추가 개발 없이 연동. Non-Python·Web/Mobile도 REST로 사용.
 
 ### 4.4 GenAI Labs (직접 개발)
-**직접 만든 이유**: 신기능 즉시 실험, Studio와 한 흐름(프롬프트·데이터셋·결과), 코드 레벨 Custom Evaluation, Prompt Variables 기반 Context Engineering. Studio UI만으로는 Context Engineering이 어렵고, 당시 Langfuse Playground가 멀티모달 입력을 지원하지 않았다.
+**직접 만든 이유**
 
-**모드**: 단일 테스트(Studio 프롬프트 로드, 모델·파라미터, 이미지 입력, 스트리밍) / 배치 실험(Golden Dataset 연동, 평가 함수·커스텀 로직) / 데이터셋 업로드(입력·출력·메타 매핑 후 프로젝트별 Studio 업로드). 출력은 응답 속도·비용·스코어.
+- 신기능을 즉시 실험할 수 있는 환경
+- 프롬프트·데이터셋·결과를 Studio와 한 흐름으로 연결
+- 코드 레벨 Custom Evaluation
+- Prompt Variables 기반 Context Engineering
+
+Studio UI만으로는 Context Engineering이 어렵고, 당시 Langfuse Playground가 멀티모달 입력을 지원하지 않았다.
+
+**세 가지 모드**
+
+- **단일 테스트**: Studio 프롬프트 로드, 모델·파라미터, 이미지 입력, 스트리밍
+- **배치 실험**: Golden Dataset 연동, 평가 함수·커스텀 로직
+- **데이터셋 업로드**: 입력·출력·메타 매핑 후 프로젝트별 Studio 업로드
+
+출력은 응답 속도·비용·스코어.
 
 ## 5. 문제별 해결 사례 요약
 - **멀티 Provider** → SDK 단일 인터페이스 + Gateway의 OpenAI 호환 API.

@@ -11,7 +11,9 @@ tags:
 
 # Grounded Memory × Procedural Graphs
 
-두 논문의 agent 구조를 각각 원 benchmark에서 검증한 뒤 하나의 agent로 결합하는 재현 레포다.
+출발 질문은 **“지난 작업에서 배운 사실”과 “다음에 할 일을 안내하는 절차”를 함께 주면 에이전트가 더 잘 일할까?**다. Grounded Memory는 작업이 끝난 뒤 실제 환경을 다시 확인해 재사용할 지식을 남긴다. Procedural Graph(PG)는 작업 순서를 그래프로 적어 두고, 현재 단계에서 참고할 조언을 만든다. 이 저장소는 두 방법을 먼저 각각 시험한 다음, 같은 에이전트에서 함께 썼을 때의 추가 효과를 확인한다.
+
+이 README는 초기의 저비용 실행을 요약한다. 아래의 낮은 점수와 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|후속 종합 보고서]]의 높은 점수는 같은 실행의 모순된 집계가 아니다. 구현 결함을 고치고 실행 계약·표본 크기를 바꾸며 다시 측정한 기록이다. 결합 효과에 관한 정정은 [[메모리-연구/procedural-graphs/docs/COMBINED_DESIGN|재설계 문서]]에서, 10월 후속 실행은 [[메모리-연구/procedural-graphs/results/POKER_AND_EVOLVE_2026-10|추가 실행 기록]]에서 확인한다.
 
 - [Grounding Agent Memory](https://arxiv.org/html/2609.11060v1)
 - [Procedural Graphs](https://arxiv.org/html/2609.09153v1)
@@ -19,7 +21,9 @@ tags:
 
 ## 현재 결과
 
-Grounding 논문은 공식 CLBench `database_exploration/schema_drift` 40문항에서 독립 실행했다.
+Grounding 논문은 공식 CLBench `database_exploration/schema_drift` 40문항에서 독립 실행했다. 에이전트는 SQL로 데이터베이스를 탐색해 답한다. 중간에 DB 구조가 바뀌므로, 앞에서 만든 기억을 그대로 믿는지 현재 환경에 맞춰 고치는지를 볼 수 있다.
+
+세 조건의 차이는 기억을 만드는 방식이다. Stateless는 이전 작업의 기억이 없다. Trajectory memory는 과거 실행 기록만 보고 기억을 만든다. Grounded memory는 기억을 정리하는 별도 역할이 현재 DB까지 조회해 그 내용을 검증한다. 마지막 두 조건을 비교해야 ‘기억을 붙인 효과’와 ‘기억의 근거를 확인한 효과’를 구별할 수 있다.
 
 | condition | pass | SQL/question |
 |---|---:|---:|
@@ -31,8 +35,7 @@ Grounding 논문은 공식 CLBench `database_exploration/schema_drift` 40문항�
 대조한 결과 unsupported generalization, terminal-answer 누출, 불완전한 lemma, 올바른 memory를
 무시한 solver 오류가 모두 발견됐다.
 
-PG 논문은 공개 MultiChallenge에서 deterministic train 8 / validation 8 / test 16 subset으로
-독립 실행했다.
+PG 논문은 공개 MultiChallenge에서 deterministic train 8 / validation 8 / test 16 subset으로 독립 실행했다. 이 과제에서는 대화 속 지시와 제약을 끝까지 지키는지가 중요하다. 기본 에이전트, 사람이 만든 expert graph, 최소 그래프에서 수정해 나간 scratch graph를 비교해 ‘절차를 알려 주는 것’과 ‘경험으로 절차를 고치는 것’의 기여를 나눈다.
 
 | condition | pass | mean solver steps |
 |---|---:|---:|
@@ -43,7 +46,7 @@ PG 논문은 공개 MultiChallenge에서 deterministic train 8 / validation 8 / 
 PG가 한 문항 더 맞혔지만 paired McNemar `p=1.0`이다. Candidate graph는 validation 3/8 대
 3/8 동률로 commit됐고 test에서 expert graph 이상의 추가 이득은 없었다.
 
-최종 CLBench 2×2 factorial도 같은 40문항에서 완료했다.
+이 초기 실행군의 최종 CLBench 2×2 factorial도 같은 40문항에서 완료했다. 2×2란 메모리 유무와 PG 유무를 교차한 네 조건이다. 결합 조건만 기본 조건과 비교하면 어느 구성요소가 효과를 냈는지 알 수 없다. 네 조건을 모두 두어, 메모리가 있을 때 PG의 효과가 달라지는지까지 확인한다.
 
 ```text
 Baseline             = no semantic memory, no PG
@@ -61,7 +64,7 @@ Semantic + PG        = PG + exact same frozen Mᵢ
 
 Semantic+PG는 Semantic-only가 질문 `i` 직전에 가진 store와 실제 recalled record를 그대로 replay하며
 자체 memory write를 하지 않는다. Snapshot, recall, graph core, write-disable 검사는 모두 통과했다.
-관측된 factorial interaction은 `+12.5%p`였지만 Semantic-only 대비 paired McNemar는 `p=0.453`,
+관측된 factorial interaction, 즉 메모리 유무에 따른 PG 효과의 차이는 `+12.5%p`였다. 하지만 Semantic-only 대비 paired McNemar는 `p=0.453`,
 baseline 대비 정확도는 동률이다. 따라서 결합의 상호보완 신호는 있으나 성능 향상이 입증됐다고
 말할 수는 없다.
 

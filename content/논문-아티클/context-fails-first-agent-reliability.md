@@ -8,15 +8,25 @@ researched: 2026-10-01
 ---
 # AI Agents Do Not Fail Alone: The Context Fails First
 
-> [!summary] 한줄요약
-> 에이전트의 context(지시·도구 스키마·grounding·가드레일·메모리)의 품질을 7개 기준(role clarity, guardrail coverage, instruction consistency, tool schema quality, grounding sufficiency, injection hardening, token efficiency)으로 점수화하고, 모델을 고정한 채 context만 Poor/Structured/Hardened로 바꿔 행동 지표와의 상관을 보였다. 핵심 주장은 "context 점수는 행동 점수와 분리된 선행 지표(preflight signal)로 쓸 수 있다"이다. 다만 결과는 단일 저자·자사 하네스·LLM 심사 기반이라 방향성 증거로 읽는 것이 맞다.
+> [!summary] 핵심 요약
+> 에이전트의 **context 품질을 행동 점수와 분리해 측정**하고, 실행 전 선행 지표(preflight signal)로 쓸 수 있는지 살핀 논문이다. 모델은 고정하고 context만 Poor/Structured/Hardened로 바꿔 행동 지표와의 상관을 보였다.
+>
+> 지시·도구 스키마·grounding·가드레일·메모리의 품질을 7개 기준으로 점수화한다: role clarity, guardrail coverage, instruction consistency, tool schema quality, grounding sufficiency, injection hardening, token efficiency.
+>
+> 단일 저자·자사 하네스·LLM 심사 기반이므로 결과는 **방향성 증거**로 읽는 것이 맞다.
 
 > [!info] 열람 범위
-> arXiv HTML 전문(https://arxiv.org/html/2607.14275v1, 2026-07-15)을 초록부터 결론, 표 1-8까지 읽었다. 참고문헌 목록은 훑기만 했다. 공식 하네스 저장소 https://github.com/ProofAgent-ai/proofagent-harness 를 clone해 context 평가 모듈(`src/proofagent_harness/context_engineering.py`)의 구조와 README를 확인했다(clone 시점 최신 커밋 2026-08-14). 심사 프롬프트, 심사자(juror) 수, 신뢰구간, 통계 검정 세부는 논문 본문에서 확인하지 못했다.
+> arXiv HTML 전문(https://arxiv.org/html/2607.14275v1, 2026-07-15)을 초록부터 결론, 표 1-8까지 읽었다. 참고문헌 목록은 훑기만 했다. 공식 하네스 저장소 https://github.com/ProofAgent-ai/proofagent-harness 를 clone해 context 평가 모듈(`src/proofagent_harness/context_engineering.py`)의 구조와 README를 확인했다(clone 시점 최신 커밋 2026-08-14).
+>
+> 심사 프롬프트, 심사자(juror) 수, 신뢰구간, 통계 검정 세부는 논문 본문에서 확인하지 못했다.
 
 ## 1. 문제의식·배경
 
-에이전트는 단일 프롬프트가 아니라 시스템 지시, 도구 정의, 검색된 지식, 메모리, 이전 턴, 가드레일, 신뢰할 수 없는 외부 입력이 쌓인 **context** 위에서 동작한다. 이 층이 부실하면 에이전트는 역할에서 벗어나고(drift), 환각하고, 도구를 오용하고, 제약을 무시하고, injection에 취약하며, 토큰을 낭비한다. 저자의 진단은 "context engineering은 중요하다고들 하지만 거의 측정되지 않는다"는 것이다. 팀들은 프롬프트를 눈으로 검토하고, 배포 후 디버깅하고, 행동 평가로 실패 여부만 확인한다. 행동 평가는 "실패했다"는 알려주지만 원인이 grounding 부족인지, 모호한 역할인지, 충돌하는 지시인지, 부실한 도구 스키마인지 분리하지 못한다는 것이 논문이 말하는 "운영상 사각지대"다.
+에이전트는 단일 프롬프트가 아니라 시스템 지시, 도구 정의, 검색된 지식, 메모리, 이전 턴, 가드레일, 신뢰할 수 없는 외부 입력이 쌓인 **context** 위에서 동작한다. 이 층이 부실하면 에이전트는 역할에서 벗어나고(drift), 환각하고, 도구를 오용하고, 제약을 무시하고, injection에 취약하며, 토큰을 낭비한다.
+
+저자의 진단은 "context engineering은 중요하다고들 하지만 거의 측정되지 않는다"는 것이다. 팀들은 프롬프트를 눈으로 검토하고, 배포 후 디버깅하고, 행동 평가로 실패 여부만 확인한다.
+
+행동 평가는 "실패했다"는 알려주지만 원인이 grounding 부족인지, 모호한 역할인지, 충돌하는 지시인지, 부실한 도구 스키마인지 분리하지 못한다는 것이 논문이 말하는 "운영상 사각지대"다.
 
 ### 배경 정리 (2절)
 
@@ -56,17 +66,23 @@ researched: 2026-10-01
 | Injection hardening | 신뢰 지시와 비신뢰 입력(사용자·검색·도구 출력)의 분리 | prompt injection |
 | Token efficiency | 중복 boilerplate 없이 신뢰도에 기여하는 정보에 토큰을 쓰는가 | context bloat |
 
-종합 점수는 가중 평균 Q_CE = Σ w_k q_k / Σ w_k 이고 기본은 균등 가중이다. 도메인 프로필로 가중치를 바꿀 수 있다(예: 의료 청구는 guardrail, grounding, injection 가중 증가. 개발도구 에이전트는 tool schema와 instruction consistency 강조). 점수는 임계 τ_s, τ_a에 따라 Strong/Adequate/Weak로 매핑하며, 저자는 "진단용이지 인증이 아니다"라고 명시한다.
+종합 점수는 가중 평균 Q_CE = Σ w_k q_k / Σ w_k 이고 기본은 균등 가중이다. 도메인 프로필로 가중치를 바꿀 수 있다(예: 의료 청구는 guardrail, grounding, injection 가중 증가. 개발도구 에이전트는 tool schema와 instruction consistency 강조).
+
+점수는 임계 τ_s, τ_a에 따라 Strong/Adequate/Weak로 매핑하며, 저자는 "진단용이지 인증이 아니다"라고 명시한다.
 
 ### 2.2 ProofAgent-Harness와 multi-juror 합의 (3.3)
 
 구현체는 오픈소스 ProofAgent-Harness다. Human-on-the-Bridge(HOB) 평가 패러다임(사람이 정의한 평가 자산·rubric·함정을 재사용 가능한 평가 절차로 변환)을 운영화하며, context 평가 모드에서 다음 5가지를 낸다. (1) 기준별 점수 7개 (2) 종합 Q_CE (3) 등급 (4) 근거 연결 findings (5) token-impact 주석(유용한 context 추가/낭비 제거/중립).
 
-**multi-juror consensus**: 같은 context에 여러 juror 관점을 만들고 기준별 점수 s_{j,k}를 합의 연산자 Γ(중앙값, debate-and-revote, Delphi 등)로 q̂_k = Γ(s_{1,k},...,s_{m,k})로 합친다. 정당화는 세 가지다. 맹점 완화, 불일치를 증거로 해소하게 하는 감사 가능성, 점수를 실행 가능한 근거와 연결하는 것. 객체가 단일 출력이 아니라 "설계 산출물"이므로 점수가 감성 평점보다 엔지니어링 리뷰처럼 구조화·증거 기반이어야 한다는 설명이다.
+**multi-juror consensus**: 같은 context에 여러 juror 관점을 만들고 기준별 점수 s_{j,k}를 합의 연산자 Γ(중앙값, debate-and-revote, Delphi 등)로 q̂_k = Γ(s_{1,k},...,s_{m,k})로 합친다.
+
+정당화는 세 가지다. 맹점 완화, 불일치를 증거로 해소하게 하는 감사 가능성, 점수를 실행 가능한 근거와 연결하는 것. 객체가 단일 출력이 아니라 "설계 산출물"이므로 점수가 감성 평점보다 엔지니어링 리뷰처럼 구조화·증거 기반이어야 한다는 설명이다.
 
 ### 2.3 격리(isolation)와 매핑 (3.4, 3.5)
 
-Q_CE는 행동 지표 B(A,X)에 포함되지 않으며 최종 점수·인증·릴리스 결정에도 들어가지 않는다. 이를 통해 "Q_CE가 B를 예측하되 B의 일부가 아니다"를 검증해 순환성을 피한다. 매핑은 사전에 가설로 선언된다(표 2): role clarity -> task success, guardrail -> safety/manipulation resistance, instruction consistency -> instruction following, tool schema -> tool use, grounding -> hallucination resistance, injection hardening -> safety, token efficiency -> 토큰당 신뢰성(단일 행동 지표 예측 대상 아님).
+Q_CE는 행동 지표 B(A,X)에 포함되지 않으며 최종 점수·인증·릴리스 결정에도 들어가지 않는다. 이를 통해 "Q_CE가 B를 예측하되 B의 일부가 아니다"를 검증해 순환성을 피한다.
+
+매핑은 사전에 가설로 선언된다(표 2): role clarity -> task success, guardrail -> safety/manipulation resistance, instruction consistency -> instruction following, tool schema -> tool use, grounding -> hallucination resistance, injection hardening -> safety, token efficiency -> 토큰당 신뢰성(단일 행동 지표 예측 대상 아님).
 
 ```mermaid
 flowchart LR
@@ -98,7 +114,13 @@ flowchart LR
 | C2 Structured | 5.49 | 4.95 | 5.61 | 6.25 | 8.08 | 1.33 | 1,118,836 |
 | C3 Hardened | 5.16 | 4.80 | 5.40 | 5.82 | 8.68 | 1.56 | 1,139,202 |
 
-C1->C2에서 Final +2.34, Halluc. +2.40, Tool +2.79, critical failures 4.11 -> 1.33(약 68% 감소, 논문 4.6절). 반면 **C2->C3에서는 context 점수가 8.08 -> 8.68로 오르는데도 Final은 5.49 -> 5.16으로 하락**, critical failure는 1.33 -> 1.56으로 증가한다. 저자는 하드닝이 에이전트를 더 보수적으로 만들어 경계 사례에서 과제 완료나 도구 사용이 줄 수 있다는 trade-off로 해석한다. 이 결과는 논문의 가장 정직한 부분이다. "규칙을 더하면 항상 좋아진다"는 단순 가설이 지지되지 않는다.
+C1->C2에서 Final +2.34, Halluc. +2.40, Tool +2.79, critical failures 4.11 -> 1.33(약 68% 감소, 논문 4.6절).
+
+반면 **C2->C3에서는 context 점수가 8.08 -> 8.68로 오르는데도 Final은 5.49 -> 5.16으로 하락**, critical failure는 1.33 -> 1.56으로 증가한다.
+
+저자는 하드닝이 에이전트를 더 보수적으로 만들어 경계 사례에서 과제 완료나 도구 사용이 줄 수 있다는 trade-off로 해석한다.
+
+이 결과는 논문의 가장 정직한 부분이다. "규칙을 더하면 항상 좋아진다"는 단순 가설이 지지되지 않는다.
 
 ### 4.2 context 점수가 의도한 변화를 추적 (표 5)
 
@@ -155,7 +177,11 @@ C1/C2/C3에서 Final 2.86/10.0/10.0, Halluc. 2.0/10.0/10.0, CE grounding 4.0/8.0
 4. **이해충돌과 자기검증**: 저자는 ProofAgent.ai 소속이고 자사 오픈소스 하네스의 구성개념을 자사 하네스로 타당화한다. 서문 말미에 ProofAI LLC 지원이 명시돼 있다. 공식 저장소 README는 이 논문을 Q 축의 근거로 인용한다. 독립 재현이 필요하다.
 5. **Poor 조건이 지푸라기 인형**: C1은 "모호한 역할, 도구 안내 없음, 가드레일 없음"으로 일부러 나쁘게 만든 것이다. 실무에서 흔한 "중간 품질" context에서의 민감도는 검증되지 않았다.
 6. **C2->C3 역전의 함의**: Q 점수는 상승했는데 행동은 하락했다. 즉 Q는 "행동의 선행 지표"라기보다 "설계 속성의 지표"에 가깝다. 그리고 저자 해석(보수성 증가)은 가설일 뿐 거절률/과잉거절 분석이 제시되지 않았다.
-7. **저장소가 스스로 보여주는 반례 신호(내 관찰, 논문 외)**: 공식 저장소의 `context_engineering.py`는 `instruction_consistency`와 `token_efficiency`를 **headline Q 점수에서 제외**하는 `NON_SCORING_CRITERIA`로 둔다. 주석에 따르면 "프롬프트가 작아질수록 두 기준이 오히려 높아져서" 450자짜리 얇은 프롬프트가 1,033자짜리 더 나은 프롬프트보다 높게 나오는 순위 역전이 측정되었기 때문이다. 반면 논문은 7개 기준을 모두 균등 가중 종합 점수에 넣는다고 쓴다(기본 구성). 논문과 현재 구현 사이에 점수 정의 차이가 있음을 시사하며, 논문의 표 5의 Overall CE(균등 평균)를 구현 기본값과 같다고 가정하면 안 된다. 또한 이 사실은 "짧고 빈 context가 높은 점수를 받는" 구성개념 타당도 위험을 저자 스스로 발견했다는 뜻이다.
+7. **저장소가 스스로 보여주는 반례 신호(내 관찰, 논문 외)**: 공식 저장소의 `context_engineering.py`는 `instruction_consistency`와 `token_efficiency`를 **headline Q 점수에서 제외**하는 `NON_SCORING_CRITERIA`로 둔다. 주석에 따르면 "프롬프트가 작아질수록 두 기준이 오히려 높아져서" 450자짜리 얇은 프롬프트가 1,033자짜리 더 나은 프롬프트보다 높게 나오는 순위 역전이 측정되었기 때문이다.
+
+   반면 논문은 7개 기준을 모두 균등 가중 종합 점수에 넣는다고 쓴다(기본 구성). 논문과 현재 구현 사이에 점수 정의 차이가 있음을 시사하며, 논문의 표 5의 Overall CE(균등 평균)를 구현 기본값과 같다고 가정하면 안 된다.
+
+   또한 이 사실은 "짧고 빈 context가 높은 점수를 받는" 구성개념 타당도 위험을 저자 스스로 발견했다는 뜻이다.
 8. **토큰 결과의 외적 타당성**: 총 토큰이 C1 대비 C2에서 약 10% 늘어난 정도라서 "약한 context도 비슷한 비용"일 뿐, 비용 우위를 주장하는 결과로 읽기 어렵다.
 
 종합: 아이디어(context를 별도 감사 대상으로 측정)와 실무적 체크리스트로서의 가치는 크다. 반면 "타당화(validated)"라는 단어는 강하다. 증거는 한 팀·한 하네스·세 조건·LLM 심사의 상관 수준이다.
@@ -169,7 +195,12 @@ C1/C2/C3에서 Final 2.86/10.0/10.0, Halluc. 2.0/10.0/10.0, CE grounding 4.0/8.0
 
 ## 8. 관련 노트
 
-[[aces-agentic-continuous-evaluation-of-skills]] [[new-sdlc-with-vibe-coding]] [[jev-as-a-judge-agent-evals]] [[algorithmically-establishing-trust-in-evaluators]] [[llm-agent-skill-memory-without-finetuning]] [[llm-online-deanonymization]]
+- [[aces-agentic-continuous-evaluation-of-skills]]
+- [[new-sdlc-with-vibe-coding]]
+- [[jev-as-a-judge-agent-evals]]
+- [[algorithmically-establishing-trust-in-evaluators]]
+- [[llm-agent-skill-memory-without-finetuning]]
+- [[llm-online-deanonymization]]
 
 ## 9. 출처
 

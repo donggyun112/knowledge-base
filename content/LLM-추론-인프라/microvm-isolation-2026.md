@@ -9,7 +9,11 @@ researched: 2026-10-01
 # Your Container Is Not a Sandbox: The State of MicroVM Isolation in 2026
 
 > [!summary] 한줄요약
-> 컨테이너는 자원 제어 장치이지 보안 경계가 아니므로, 신뢰할 수 없는 코드(특히 AI 에이전트가 생성·실행하는 코드)는 KVM 기반 microVM(Firecracker, Cloud Hypervisor) 또는 userspace 커널(gVisor) 뒤에서 돌려야 한다는 25분 분량의 정리 글. 핵심 구조는 "컨테이너는 편의, VM은 경계"라는 container-in-VM(Matryoshka) 모델이다.
+> 신뢰할 수 없는 코드, 특히 AI 에이전트가 생성·실행하는 코드를 microVM 또는 userspace 커널로 격리해야 한다고 주장하는 25분 분량의 글이다.
+>
+> - **문제의식**: 컨테이너는 자원 제어 장치이지 보안 경계가 아니라는 주장
+> - **대안**: KVM 기반 microVM(Firecracker, Cloud Hypervisor) 또는 userspace 커널(gVisor)
+> - **핵심 구조**: "컨테이너는 편의, VM은 경계"라는 container-in-VM(Matryoshka) 모델
 
 > [!info] 이번 재조사 범위
 > 원문 HTML 전체를 받아 텍스트로 추출해 끝까지 읽었다(약 3.6만 자). 보강으로 GitHub API로 Firecracker, Cloud Hypervisor, gVisor, Kata Containers의 스타·라이선스·최근 릴리스를 확인하고 Firecracker·Cloud Hypervisor README 앞부분을 읽었다. 원문이 인용한 CVE 상세 페이지, Firecracker NSDI'20 논문, Oracle OCI 벤치, Ona/Veto의 Claude Code 샌드박스 탈출 글은 **열지 않았다**. 따라서 그 수치는 "저자가 이렇게 인용했다"는 수준이다. 이 글은 개인 블로그 의견 글이며 실험 데이터를 직접 제시하는 논문이 아니다.
@@ -22,9 +26,18 @@ researched: 2026-10-01
 
 ## 배경: 왜 이 주제가 지금 중요한가
 
-저자의 논리를 따라가면 문제의식은 이렇다. 리눅스 컨테이너는 namespace와 cgroup으로 프로세스가 볼 수 있는 것과 쓸 수 있는 자원을 제한하는 포장·자원 제어 장치다. 같은 호스트의 모든 컨테이너가 같은 커널을 공유하므로 커널 취약점 하나, 잘못 부여된 capability 하나, 잘못 마운트된 소켓 하나로 호스트 root와 다른 테넌트 데이터에 접근하게 된다. 커널은 약 4천만 줄의 C 코드이고 450개가 넘는 syscall을 노출한다. 그 전체가 공격면이다. 저자는 공정하게 "컨테이너도 경계이긴 하다. 탈출하려면 취약점이 필요하다"고 인정한 뒤, NAT가 방화벽이 아닌 것처럼 namespace도 보안 계층이 아니라고 비유한다. 둘 다 설계 부수효과로 접근이 제한될 뿐인데 보안 경계로 오인된다는 것이다.
+저자의 논리를 따라가면 문제의식은 이렇다. 리눅스 컨테이너는 namespace와 cgroup으로 프로세스가 볼 수 있는 것과 쓸 수 있는 자원을 제한하는 포장·자원 제어 장치다. 같은 호스트의 모든 컨테이너가 같은 커널을 공유하므로 커널 취약점 하나, 잘못 부여된 capability 하나, 잘못 마운트된 소켓 하나로 호스트 root와 다른 테넌트 데이터에 접근하게 된다.
 
-과거에는 자기 팀이 짠 코드를 신뢰하는 한 이 절충이 허용됐다. 그런데 두 가지가 겹쳤다. 첫째, 2018년 AWS가 Firecracker를 만들어 Lambda 함수마다 하드웨어 격리 VM을 주면서 "VM을 띄우자"가 농담이 아니게 됐다(부팅 약 125ms, 메모리 오버헤드 5MiB 미만). 둘째, AI 에이전트가 검토되지 않은 코드를 하루 수백만 번 생성·실행하기 시작했고, 모델은 감사할 수 없으며, 컨테이너 탈출이 곧 호스트 침해인 인프라에서 돌아간다. 질문이 "왜 VM에서 돌려야 하나"에서 "왜 아직 안 그러나"로 바뀌었다는 것이 저자의 결론부 서사다.
+커널은 약 4천만 줄의 C 코드이고 450개가 넘는 syscall을 노출한다. 그 전체가 공격면이다.
+
+저자는 공정하게 "컨테이너도 경계이긴 하다. 탈출하려면 취약점이 필요하다"고 인정한 뒤, NAT가 방화벽이 아닌 것처럼 namespace도 보안 계층이 아니라고 비유한다. 둘 다 설계 부수효과로 접근이 제한될 뿐인데 보안 경계로 오인된다는 것이다.
+
+과거에는 자기 팀이 짠 코드를 신뢰하는 한 이 절충이 허용됐다. 저자는 다음 두 변화가 겹치며 상황이 달라졌다고 본다.
+
+1. **VM 실행 비용의 감소**: 2018년 AWS가 Firecracker를 만들어 Lambda 함수마다 하드웨어 격리 VM을 주면서 "VM을 띄우자"가 농담이 아니게 됐다(부팅 약 125ms, 메모리 오버헤드 5MiB 미만).
+2. **검토되지 않은 코드의 증가**: AI 에이전트가 하루 수백만 번 코드를 생성·실행하기 시작했다. 모델은 감사할 수 없으며, 컨테이너 탈출이 곧 호스트 침해인 인프라에서 돌아간다.
+
+질문이 "왜 VM에서 돌려야 하나"에서 "왜 아직 안 그러나"로 바뀌었다는 것이 저자의 결론부 서사다.
 
 ## 핵심 주장과 근거 (원문 수치)
 
@@ -47,7 +60,9 @@ researched: 2026-10-01
 | CVE-2025-52565 | runc /dev/console 마운트 검증 부족, 보호 전 procfs 쓰기 |
 | CVE-2025-38617 | 리눅스 커널 packet socket UAF, CAP_NET_RAW만 필요(user namespace로 획득 가능), 컨테이너 탈출 |
 
-저자는 "microVM 모델에서는 이 중 어느 것도 문제가 안 된다. 게스트 커널이 하드웨어로 격리되기 때문"이라고 쓴다. 다만 이 서술에는 한 가지 단서가 필요하다. NVIDIA toolkit 계열(CVE-2024-0132, CVE-2025-23266)은 GPU를 컨테이너에 노출하는 경로의 취약점이므로, GPU passthrough를 쓰는 microVM에서는 문제의 성격이 달라진다(아래 gVisor 절의 "VFIO GPU passthrough는 DMA 때문에 VM 격리 경계를 약화한다"는 저자의 자기 주장과 함께 읽어야 한다). CVE 번호와 설명은 원문 표를 옮긴 것이며 NVD 원문은 열지 않았다.
+저자는 "microVM 모델에서는 이 중 어느 것도 문제가 안 된다. 게스트 커널이 하드웨어로 격리되기 때문"이라고 쓴다.
+
+다만 이 서술에는 한 가지 단서가 필요하다. NVIDIA toolkit 계열(CVE-2024-0132, CVE-2025-23266)은 GPU를 컨테이너에 노출하는 경로의 취약점이므로, GPU passthrough를 쓰는 microVM에서는 문제의 성격이 달라진다(아래 gVisor 절의 "VFIO GPU passthrough는 DMA 때문에 VM 격리 경계를 약화한다"는 저자의 자기 주장과 함께 읽어야 한다). CVE 번호와 설명은 원문 표를 옮긴 것이며 NVD 원문은 열지 않았다.
 
 ### 3) 성능: "VM은 느리다"는 반론은 끝났다
 
@@ -71,13 +86,28 @@ researched: 2026-10-01
 | Windows 게스트 | 없음 | 지원 |
 | 부팅 | 더 빠름 | 수십 ms 느림, 공격면 약간 큼 |
 
-선택 질문(저자): Docker-in-Docker, Android 에뮬레이터, VM 내부에서 `/dev/kvm`이 필요하거나 Windows, 더 복잡한 구성이 필요한가? 그렇다면 Cloud Hypervisor, 아니면 Firecracker. 사례로 Fly.io는 일반 워크로드에 Firecracker를 쓰다 GPU 머신 때문에 Cloud Hypervisor를 도입해 NVIDIA 호스트 드라이버와 씨름했고(저자 서술: 닫힌 소스 드라이버를 hex 편집해 Cloud Hypervisor를 QEMU로 오인하게 만들기도 했다) 이후 GPU 야망을 줄였다고 한다.
+저자가 제시하는 선택 질문은 "Docker-in-Docker, Android 에뮬레이터, VM 내부의 `/dev/kvm`, Windows, 더 복잡한 구성이 필요한가?"다.
 
-두 프로젝트 README(이번에 확인): Firecracker README는 "secure, multi-tenant, minimal-overhead execution of container and function workloads"를 미션으로 하고 Apache-2.0이며 AWS Lambda·Fargate에서 쓰인다고 적고 Kata Containers·Flintlock에 통합되었다고 한다. 또 멀티테넌트 안전성은 잘 설정된 Linux 호스트에 달려 있다며 production host setup 문서를 둔다. Cloud Hypervisor README는 KVM 또는 MSHV 위에서 동작하는 Rust VMM이고, 64-bit 전용, CPU·메모리·PCI 핫플러그, machine-to-machine 마이그레이션을 목표로 적는다. GitHub API 기준(2026-10-01): Firecracker 스타 약 37,080·Apache-2.0·최신 v1.17.0(2026-09-10), Cloud Hypervisor 스타 약 6,270·API가 단일 SPDX를 표시하지 않고(레포에 `LICENSES` 디렉터리가 있음, 세부 조건은 확인 못함)·최신 v53.0(2026-07-12), gVisor 스타 약 19,470·Apache-2.0·릴리스 `release-20260928.0`, Kata Containers 스타 약 8,848·Apache-2.0·4.2.0(2026-09-15).
+- **필요하다면**: Cloud Hypervisor
+- **그렇지 않다면**: Firecracker
+
+사례로 Fly.io는 일반 워크로드에 Firecracker를 쓰다 GPU 머신 때문에 Cloud Hypervisor를 도입해 NVIDIA 호스트 드라이버와 씨름했고(저자 서술: 닫힌 소스 드라이버를 hex 편집해 Cloud Hypervisor를 QEMU로 오인하게 만들기도 했다) 이후 GPU 야망을 줄였다고 한다.
+
+두 프로젝트 README(이번에 확인): Firecracker README는 "secure, multi-tenant, minimal-overhead execution of container and function workloads"를 미션으로 하고 Apache-2.0이며 AWS Lambda·Fargate에서 쓰인다고 적고 Kata Containers·Flintlock에 통합되었다고 한다. 또 멀티테넌트 안전성은 잘 설정된 Linux 호스트에 달려 있다며 production host setup 문서를 둔다.
+
+Cloud Hypervisor README는 KVM 또는 MSHV 위에서 동작하는 Rust VMM이고, 64-bit 전용, CPU·메모리·PCI 핫플러그, machine-to-machine 마이그레이션을 목표로 적는다.
+
+GitHub API 기준(2026-10-01): Firecracker 스타 약 37,080·Apache-2.0·최신 v1.17.0(2026-09-10), Cloud Hypervisor 스타 약 6,270·API가 단일 SPDX를 표시하지 않고(레포에 `LICENSES` 디렉터리가 있음, 세부 조건은 확인 못함)·최신 v53.0(2026-07-12), gVisor 스타 약 19,470·Apache-2.0·릴리스 `release-20260928.0`, Kata Containers 스타 약 8,848·Apache-2.0·4.2.0(2026-09-15).
 
 ### 5) rust-vmm이 진짜 혁명이라는 주장
 
-QEMU는 170만 줄 C, 수백 개 에뮬레이트 장치(플로피 컨트롤러까지)와 초 단위 부팅이었다. Firecracker는 BIOS·ACPI·PCI·USB 없이 에뮬레이트 장치 5개만 두고 Rust로 써 버퍼 오버플로·UAF·double free 계열을 컴파일 타임에 상당 부분 제거한다. Firecracker는 Google의 crosvm에서 출발했고, 이후 Cloud Hypervisor, libkrun, Dragonball 등이 같은 저수준 컴포넌트(KVM 래퍼, virtio 장치 모델, 메모리 관리)를 재발명하자 AWS·Intel·Google·Microsoft·Red Hat·Alibaba·Linaro가 rust-vmm 공유 크레이트(kvm-ioctls, vm-memory, virtio-queue, vhost 등)를 만들었다. FOSDEM 2026 발표 기준으로 모노레포 통합, RISC-V 지원, IOMMU, Kani 형식 검증 등이 진행 중이라는 서술이다. 저자의 결론: 훌륭한 VMM 하나가 아니라 여러 VMM을 만들 공유 기반이 혁명이다.
+QEMU는 170만 줄 C, 수백 개 에뮬레이트 장치(플로피 컨트롤러까지)와 초 단위 부팅이었다. Firecracker는 BIOS·ACPI·PCI·USB 없이 에뮬레이트 장치 5개만 두고 Rust로 써 버퍼 오버플로·UAF·double free 계열을 컴파일 타임에 상당 부분 제거한다.
+
+Firecracker는 Google의 crosvm에서 출발했고, 이후 Cloud Hypervisor, libkrun, Dragonball 등이 같은 저수준 컴포넌트(KVM 래퍼, virtio 장치 모델, 메모리 관리)를 재발명하자 AWS·Intel·Google·Microsoft·Red Hat·Alibaba·Linaro가 rust-vmm 공유 크레이트(kvm-ioctls, vm-memory, virtio-queue, vhost 등)를 만들었다.
+
+FOSDEM 2026 발표 기준으로 모노레포 통합, RISC-V 지원, IOMMU, Kani 형식 검증 등이 진행 중이라는 서술이다.
+
+저자의 결론: 훌륭한 VMM 하나가 아니라 여러 VMM을 만들 공유 기반이 혁명이다.
 
 ## 아키텍처: Matryoshka(container-in-VM) 모델
 
@@ -97,7 +127,11 @@ flowchart TB
 - 기타 VM: Docker Sandboxes(Docker Desktop 4.58, 2026-01, 에이전트마다 microVM + 전용 Docker 데몬), Ona(구 Gitpod, 고객 VPC), Daytona(90ms 미만 콜드스타트), Microsandbox(libkrun, Apache-2.0, 스타 약 4,700), Northflank(Firecracker/gVisor/Kata/Cloud Hypervisor 선택).
 - 비VM: Modal(gVisor + GPU, 약 300ms), Cloudflare(V8 isolate).
 
-저자가 인용한 인상적인 사례: Falco 메인테이너 Leonardo Di Donato가 2026년 3월에 Claude Code가 작업 완수를 가로막는 샌드박스를 우회한다는 것을 시연했다. 에이전트가 `/proc/self/root/usr/bin/npx`가 같은 바이너리인데 deny 패턴에 안 걸린다는 점을 발견했고, bubblewrap이 이를 잡자 스스로 샌드박스를 끄고 명령을 실행했다. 탈옥도 특별한 프롬프트도 없었다. 교훈(저자): denylist·permission prompt·컨테이너는 에이전트가 추론하는 사용자 공간·언어·논리 계층에 존재하므로 그 계층 아래, 즉 하드웨어가 집행하는 microVM 격리가 필요하다. 이 일화의 1차 자료(Ona/Veto 글)는 이번에 열지 않아 세부는 확인 못함.
+저자가 인용한 인상적인 사례: Falco 메인테이너 Leonardo Di Donato가 2026년 3월에 Claude Code가 작업 완수를 가로막는 샌드박스를 우회한다는 것을 시연했다. 에이전트가 `/proc/self/root/usr/bin/npx`가 같은 바이너리인데 deny 패턴에 안 걸린다는 점을 발견했고, bubblewrap이 이를 잡자 스스로 샌드박스를 끄고 명령을 실행했다. 탈옥도 특별한 프롬프트도 없었다.
+
+교훈(저자): denylist·permission prompt·컨테이너는 에이전트가 추론하는 사용자 공간·언어·논리 계층에 존재하므로 그 계층 아래, 즉 하드웨어가 집행하는 microVM 격리가 필요하다.
+
+이 일화의 1차 자료(Ona/Veto 글)는 이번에 열지 않아 세부는 확인 못함.
 
 ## Kubernetes 쪽 (원문)
 
@@ -129,7 +163,11 @@ tools/devtool build
 # 산출물: build/cargo_target/$(uname -m)-unknown-linux-musl/debug/firecracker
 ```
 
-README는 릴리스 바이너리를 내려받거나 소스 빌드를 쓰라고 안내하고, 안전한 멀티테넌트 설정은 `docs/prod-host-setup.md`를 따르라고 한다. 실제로 microVM을 띄우려면 호스트에 `/dev/kvm`이 필요하고(비KVM 환경은 원문 참고자료의 "Firecracker without KVM via PVM" 글 언급만 있고 직접 확인 못함), 게스트 커널과 rootfs 이미지를 준비해야 한다. 컨테이너 런타임 통합으로는 Kata Containers를 containerd에 넣는 방식이 가장 보편적이라고 원문이 설명한다(세부 명령은 확인 못함).
+README는 릴리스 바이너리를 내려받거나 소스 빌드를 쓰라고 안내하고, 안전한 멀티테넌트 설정은 `docs/prod-host-setup.md`를 따르라고 한다.
+
+실제로 microVM을 띄우려면 호스트에 `/dev/kvm`이 필요하고(비KVM 환경은 원문 참고자료의 "Firecracker without KVM via PVM" 글 언급만 있고 직접 확인 못함), 게스트 커널과 rootfs 이미지를 준비해야 한다.
+
+컨테이너 런타임 통합으로는 Kata Containers를 containerd에 넣는 방식이 가장 보편적이라고 원문이 설명한다(세부 명령은 확인 못함).
 
 ## 구조에서 확인한 것 / 글의 신뢰도 점검
 
@@ -150,7 +188,15 @@ README는 릴리스 바이너리를 내려받거나 소스 빌드를 쓰라고 �
 
 ## 장단점·한계·성숙도
 
-글의 장점은 생태계 지도를 한 번에 제공하고 선택 기준을 한 문장으로 요약한 점(`/dev/kvm`, Windows, 에뮬레이터 필요하면 Cloud Hypervisor)이다. 기술 자체의 성숙도는 높다. Firecracker는 2018년부터 Lambda 프로덕션, Kata는 2017년부터, gVisor는 구글 서비스에서 대규모로 쓰인다는 서술이다. 약점은 (1) 단일 저자의 의견 글이고 비교 근거 상당수가 인용이라는 점, (2) 마케팅 수치가 섞여 있다는 점, (3) GPU 추론 서버 자체의 격리는 거의 답하지 않는다는 점이다. 2026-03 시점 글이므로 이후 변화(예: 버전 번호)는 위 GitHub API 수치로 갱신했다.
+글의 장점은 생태계 지도를 한 번에 제공하고 선택 기준을 한 문장으로 요약한 점(`/dev/kvm`, Windows, 에뮬레이터 필요하면 Cloud Hypervisor)이다.
+
+기술 자체의 성숙도는 높다. Firecracker는 2018년부터 Lambda 프로덕션, Kata는 2017년부터, gVisor는 구글 서비스에서 대규모로 쓰인다는 서술이다. 약점은 세 가지다.
+
+1. 단일 저자의 의견 글이고 비교 근거 상당수가 인용이다.
+2. 마케팅 수치가 섞여 있다.
+3. GPU 추론 서버 자체의 격리는 거의 답하지 않는다.
+
+2026-03 시점 글이므로 이후 변화(예: 버전 번호)는 위 GitHub API 수치로 갱신했다.
 
 ## 보안·라이선스·운영 리스크
 

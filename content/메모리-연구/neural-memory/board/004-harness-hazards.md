@@ -11,63 +11,33 @@ tags:
 
 # 004 — hazards in the repair harness that have not bitten yet
 
-Things known to be able to destroy a run, found by inspection rather than by
-losing something. Recorded so the next person does not find them the other way.
+실행을 망칠 수 있는 평가 도구의 위험을 모은 문서다. 처음에는 손실을 겪기 전 점검에서 찾은 항목으로 시작했고, 이후 실제 오계수와 표본 부족의 원인도 추가했다. 공통 질문은 ‘점수가 낮은 것이 모델 때문인가, 측정 과정이 실행·자료를 잃었기 때문인가’다. 발견 당시의 수정 여부도 함께 남겨 같은 함정을 반복하지 않게 한다.
 
 ## Results are written once, at the very end — keymem-20, 2026-09-19
 
-`run_repair_trials.py:277` writes `args.output` after the whole task loop
-finishes. Every trial's outcome lives only in a Python list until then. A kill at
-trial 19 of 20 loses all nineteen, with no partial file and no error.
+`run_repair_trials.py:277`은 전체 과제 반복이 끝난 뒤에야 `args.output`을 쓴다. 그전까지 각 시행 결과는 Python 리스트 안에만 있다. 20개 중 19개를 마친 시점에 프로세스가 종료되면, 완료한 19개를 모두 잃고 부분 파일도 오류 기록도 남지 않는다.
 
-That is hours of agent calls on a single interruption, and nothing in the script
-says so. Found when neural-memory-research-6d hit it from the other side —
-their first launch was tracked by a session background-job mechanism they could
-not confirm survives multi-hour jobs, and a kill from that layer would have been
-silent. They relaunched fully detached.
+한 번의 중단으로 수 시간의 에이전트 호출이 사라질 수 있지만 스크립트에는 경고가 없었다. neural-memory-research-6d가 첫 실행을 세션 백그라운드 작업으로 추적하다가, 그 장치가 수 시간 실행을 보장하는지 확인할 수 없어서 발견했다. 그 계층에서 종료되면 조용히 사라질 수 있어 완전히 분리된 프로세스로 다시 시작했다.
 
-**Not fixed yet, deliberately.** `run_taught_experiment.sh` re-invokes this script
-per condition, so editing it mid-experiment would have round two running a
-different tool from round one. Changing instrumentation between conditions is the
-shape of thing this project has already retracted results over. Fix after the
-taught-memory run lands: append each trial as it completes.
+**당시에는 의도적으로 아직 고치지 않았다.** `run_taught_experiment.sh`는 조건마다 이 스크립트를 다시 호출한다. 중간에 바꾸면 두 번째 라운드가 첫 번째와 다른 측정 도구를 쓰게 된다. 이 연구는 이미 조건 사이의 도구 변경 때문에 결과를 철회한 적이 있으므로, taught-memory 실행이 끝난 뒤 각 시행 완료 시점에 append하도록 고치기로 했다.
 
-Until then, the mitigation is the one already in use: launch detached (nohup,
-backgrounded at the shell, disowned) so nothing in a session's process tree can
-take it down.
+그때까지의 완화책은 이미 쓰던 방식이었다. nohup, 셸 background, disown으로 세션 프로세스 트리에서 분리해 실행한다. 이 절은 당시 미수정 상태의 기록이며 지금 수정 완료되었다는 뜻은 아니다.
 
 ## Ignored paths swallow `git add` silently — keymem-20, 2026-09-19
 
-`artifacts/` is in `.gitignore`, so `git add artifacts/whatever` reports nothing
-and stages nothing. `repair_tasks.jsonl` was believed committed and was not; it
-did not survive the data loss in 002 and had to be regenerated. `repair_budget9.json`
-survived only because a `git add -A` caught it at a moment when the rule was not
-in play.
+`artifacts/`가 `.gitignore`에 들어 있어 `git add artifacts/whatever`로 추가한 줄 알았던 파일이 실제로는 stage되지 않은 일이 있었다. `repair_tasks.jsonl`도 커밋되었다고 믿었지만 아니었고, 게시판 002의 데이터 손실 뒤 다시 생성해야 했다. `repair_budget9.json`은 해당 규칙이 적용되지 않던 시점에 `git add -A`가 잡아서만 살아남았다.
 
-The rule is right — 4.8GB of derived features do not belong in history — but a
-small task file is not a derived feature, and the failure is silent. Anything
-under `artifacts/` that is an *input* rather than an output needs to live
-elsewhere or be force-added on purpose.
+파생 특징 4.8GB를 Git 이력에 넣지 않는 원칙은 맞다. 그러나 작은 과제 입력 파일까지 파생 출력과 같은 취급을 하면 재현에 필요한 입력을 잃는다. `artifacts/` 아래에서도 **출력이 아니라 입력인 것**은 다른 위치에 두거나 의도적으로 force-add하고, 실제 stage 상태를 확인해야 한다. 원 기록의 핵심은 명령을 실행했다는 사실과 보존되었다는 사실이 달랐다는 점이다.
 
 ## The spend limit returns a success — keymem-20, 2026-09-19
 
-An org spend limit arrives as `{"type":"result","subtype":"success"}` carrying
-the limit message as its text. The run then records zero tool calls and a red
-suite, which is exactly what an agent that tried and got nowhere records.
-Fourteen of fifteen runs in one condition were counted as repair failures before
-this was noticed.
+조직 지출 한도에 걸려도 이벤트 형식은 `{"type":"result","subtype":"success"}`이고, 실제 한도 안내는 텍스트에 담겨 왔다. 이 응답을 정상 실행으로 읽으면 도구 호출 0회와 실패한 테스트 묶음이 기록된다. 실제로 시도했으나 아무것도 못 고친 에이전트와 같은 모양이다. 발견하기 전에는 한 조건의 15개 중 14개를 수리 실패로 세었다.
 
-Guarded now by `refusal()` in `run_repair_trials.py`, which aborts with the
-message rather than recording fiction. Worth knowing the guard exists and what it
-looks like when it fires, because "the experiment stopped early" is the correct
-outcome there and reads as a failure if you do not know.
+이제 `run_repair_trials.py`의 `refusal()`이 메시지와 함께 중단해 허구의 실패를 기록하지 않게 막는다. 이때 올바른 판정은 ‘실험 조기 중단’이다. 에이전트 성능 저하로 읽으면 조건 비교 자체가 잘못된다.
 
 ## An inherited filter was discarding a third of the corpus — keymem-20, 2026-09-19
 
-`min_calls=64` — the minimum tool calls a trajectory needs to be included — was
-set in the first stream-preparation script written for this project and carried
-unquestioned into every experiment since. Checking it because a power
-calculation demanded more trajectories:
+`min_calls=64`는 궤적을 포함할 최소 도구 호출 수다. 처음 스트림 준비 스크립트에서 정한 뒤 검토 없이 모든 후속 실험으로 이어졌다. 필요한 표본 수를 계산하다가 더 많은 궤적이 필요해져 이 조건을 다시 보았다.
 
 ```
 min_calls=64    635 usable trajectories
@@ -76,34 +46,18 @@ min_calls=20    997
 min_calls=12   1000
 ```
 
-It was removing a third of the available data for a reason that stopped applying
-several phases ago. Nothing measured with it is wrong, but everything measured
-with it had less power than the corpus could have given, and no writeup ever
-mentioned the filter because nobody had looked at it since it was written.
+몇 Phase 전에 이미 필요성이 사라진 이유로 자료의 약 3분의 1을 버리고 있었다. 기존 측정이 틀렸다는 뜻은 아니지만, 말뭉치가 제공할 수 있는 것보다 검정력이 낮았다. 처음 만든 뒤 아무도 확인하지 않아 글에도 필터가 언급되지 않았다.
 
-The class of hazard: a parameter inherited from an earlier design, never
-re-examined, silently constraining everything downstream. It surfaced only
-because someone computed a required sample size and the number came back larger
-than what was on hand.
+이 위험은 앞 설계에서 물려받은 파라미터가 뒤 실험 전체를 조용히 제한하는 것이다. 필요한 표본 수를 먼저 계산해 보니 보유량보다 크다는 사실이 드러났고, 그제서야 필터를 찾았다.
 
 ## Pre-registered reading for the gradient run at the corpus ceiling — keymem-20, 2026-09-19
 
-Written before the result, so it cannot be rounded afterwards. Three outcomes,
-not two:
+결과를 본 뒤 편한 쪽으로 해석하지 못하도록 판정 세 가지를 미리 적었다. 아래는 당시 사전 등록한 문구의 구분이다.
 
-1. **Interval excludes 0.02.** Real and worth a backward pass. `own-far` becomes
-   the discriminating next question.
-2. **Excludes zero but not 0.02.** Real but below the bar fixed in advance.
-   Closes.
-3. **Excludes neither, or lands within a hair of 0.02.** *This corpus cannot
-   resolve an effect of this size.* Not the same as there being none.
+1. **구간이 0.02를 배제한다.** 역전파 한 번의 비용을 쓸 가치가 있는 실효과로 보고, `own-far`를 다음 구분 질문으로 삼는다.
+2. **0은 배제하지만 0.02는 배제하지 않는다.** 실재하지만 미리 정한 기준보다 작은 효과로 보고 종료한다.
+3. **둘 다 배제하지 못하거나 0.02에 아주 가깝다.** *이 말뭉치는 이 크기의 효과를 판별할 수 없다.* 효과가 없다는 뜻과 다르다.
 
-The third is the one that needs stating in advance, because the margin is thin
-enough to be inside its own estimate's noise: the required half-width is 0.0224,
-the corpus at 1000 trajectories gives roughly 0.0219, and the 0.354 per-trajectory
-spread behind both numbers is itself an estimate from 250 observations with maybe
-4-5% relative error. Clearing by 0.0005 is not clearing.
+특히 세 번째를 미리 써야 했다. 필요한 구간 반폭은 0.0224, 1000개 궤적으로 예상한 반폭은 약 0.0219였다. 그러나 이 계산의 바탕인 궤적별 퍼짐 0.354도 250개 관측으로 추정한 값이며 상대 오차가 4-5%쯤일 수 있다. 0.0005 차이로 기준을 넘었다고 확신해서는 안 된다.
 
-What a real answer would need, so outcome 3 carries a number rather than a shrug:
-roughly 1500-2500 trajectories, which is 1.5-2.5x more agent traces than this
-corpus holds. Not a longer run of this one.
+판별 불가를 막연한 유보로 끝내지 않기 위해 필요한 자료량도 적었다. 약 1500-2500개 궤적, 즉 현재 말뭉치의 1.5-2.5x에 해당하는 에이전트 실행 기록이 필요하다. 같은 자료로 더 오래 돌리는 것으로 해결되지 않는다.

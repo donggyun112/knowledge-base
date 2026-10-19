@@ -9,7 +9,11 @@ researched: 2026-10-01
 # insane-search
 
 > [!summary] 한줄요약
-> 일반 fetch가 403/WAF에 막힐 때 "플랫폼 공식 공개 경로(Phase 0) → 경량 probe → `curl_cffi` TLS impersonation 격자 → 실제 Chrome 브라우저" 순으로 escalation 하며 공개 페이지를 읽어오는 Claude Code 플러그인(MIT, Python 엔진 약 4,500줄). API 키가 필요 없고 로그인/페이월에서는 `authentication required`로 멈추도록 설계됐지만, 본질적으로 anti-bot 우회 성격의 dual-use 도구이므로 사내 도입에는 정책·법무 검토가 선행되어야 한다.
+> 일반 fetch가 차단된 공개 페이지에 대해 단계별 수집 경로를 시도하는 Claude Code 플러그인이다. 도입 전 정책·법무 검토가 필요한 dual-use 도구다.
+
+- **시도 순서**: 플랫폼 공식 공개 경로(Phase 0) → 경량 probe → `curl_cffi` TLS impersonation 격자 → 실제 Chrome 브라우저. 403/WAF 차단 상황을 대상으로 한다.
+- **구성**: MIT, Python 엔진 약 4,500줄. API 키 없이 사용할 수 있다.
+- **설계상 경계**: 로그인/페이월에서는 `authentication required`로 멈추도록 설계됐다. 다만 anti-bot 우회 성격은 남아 있으므로 사내 도입 시 검토가 선행되어야 한다.
 
 ## 배경 — 해결하려는 문제
 
@@ -60,7 +64,13 @@ SKILL.md와 코드 구조에서 확인한 단계는 다음과 같다.
 
 ### 콘텐츠 후처리와 학습
 
-HTML 성공 응답은 `markdownify`로 구조 보존 마크다운(표→파이프표, `<pre>`→펜스)으로 변환되는 것이 기본이다(`extraction_source=raw+md`, `--no-markdown`으로 끔). `resiliparse` 본문 추출은 opt-in(`--maincontent`). PDF는 `pdfplumber` 우선, 없으면 `pypdf`이며, SKILL.md는 AGPL인 `pymupdf4llm`/`PyMuPDF`를 "사용 금지"로 못 박는다(라이선스 오염 방지). 얇은 SPA 셸은 JSON-LD `articleBody`나 렌더된 innerText로 구제하는 content-rescue 경로가 있다. 응답 전체는 OGP/JSON-LD도 스캔해 부분 페이지에서도 제목·가격을 확보한다. `learning.py`는 호스트별로 마지막에 성공한 경로(impersonate x referer x 변환 x phase)를 `~/.insane_search/learned.json`에 기록해 다음 방문 때 앞에 둔다. TTL 30일, 최대 500개, 실제 차단으로 2회 연속 실패 시 항목 삭제(429나 404는 감점하지 않음). `INSANE_LEARN=0`으로 끈다.
+후처리는 콘텐츠 형식별로 나뉜다.
+
+- **HTML**: 기본은 `markdownify`로 구조를 보존한 마크다운으로 변환한다. 표는 파이프표, `<pre>`는 펜스로 바꾼다. 설정은 `extraction_source=raw+md`이며 `--no-markdown`으로 끈다. `resiliparse` 본문 추출은 opt-in(`--maincontent`)이다.
+- **PDF**: `pdfplumber`를 우선 사용하고 없으면 `pypdf`를 쓴다. SKILL.md는 라이선스 오염 방지를 이유로 AGPL인 `pymupdf4llm`/`PyMuPDF`를 "사용 금지"로 명시한다.
+- **불완전한 페이지**: 얇은 SPA 셸에는 JSON-LD `articleBody`나 렌더된 innerText를 이용하는 content-rescue 경로가 있다. 응답 전체의 OGP/JSON-LD도 스캔해 부분 페이지에서 제목·가격을 확보한다.
+
+**경로 학습**은 `learning.py`가 담당한다. 호스트별 마지막 성공 경로(impersonate x referer x 변환 x phase)를 `~/.insane_search/learned.json`에 기록하고 다음 방문에서 먼저 시도한다. TTL은 30일, 최대 항목 수는 500개다. 실제 차단으로 2회 연속 실패하면 항목을 삭제하며 429나 404는 감점하지 않는다. `INSANE_LEARN=0`으로 끌 수 있다.
 
 ## 핵심 기능 상세
 
@@ -102,7 +112,12 @@ if r.ok:
     agent_text = r.to_untrusted_text()   # LLM 컨텍스트에는 raw content가 아니라 이것을 전달
 ```
 
-의존성은 첫 사용 시 자동 설치된다: `curl_cffi>=0.15.0`, `beautifulsoup4`, `pyyaml`, `pypdf`, `markdownify`, 필요 시 `yt-dlp`, `feedparser`. 브라우저 폴백은 `nodriver`/`patchright` 설치에 `INSANE_AUTO_INSTALL=1`이 필요하며, Node 의존성은 `~/.insane-search/node`에 한 번 설치한다(번들 Chromium은 받지 않고 시스템 Chrome 사용). 주요 환경변수: `INSANE_AUTO_INSTALL`, `INSANE_LEARN`, `INSANE_LEARN_TTL_DAYS`, `INSANE_ALLOW_PRIVATE`, `INSANE_SEARCH_XAI`, `INSANE_NO_SESSION_POOL`, `INSANE_OBSERVATIONS_DIR`.
+설치 동작은 일반 의존성과 브라우저 폴백을 구분해야 한다.
+
+- **첫 사용 시 자동 설치**: `curl_cffi>=0.15.0`, `beautifulsoup4`, `pyyaml`, `pypdf`, `markdownify`. 필요하면 `yt-dlp`, `feedparser`도 설치한다.
+- **브라우저 폴백**: `nodriver`/`patchright` 설치에는 `INSANE_AUTO_INSTALL=1`이 필요하다. Node 의존성은 `~/.insane-search/node`에 한 번 설치하며, 번들 Chromium 대신 시스템 Chrome을 사용한다.
+
+주요 환경변수는 `INSANE_AUTO_INSTALL`, `INSANE_LEARN`, `INSANE_LEARN_TTL_DAYS`, `INSANE_ALLOW_PRIVATE`, `INSANE_SEARCH_XAI`, `INSANE_NO_SESSION_POOL`, `INSANE_OBSERVATIONS_DIR`다.
 
 ## 디렉터리·코드에서 확인한 설계 철학
 
@@ -124,9 +139,20 @@ if r.ok:
 
 확인한 사실(GitHub API, 2026-10-01): 스타 약 2.5k(2,531), fork 296, 라이선스 MIT, 생성 2026-04-07, 마지막 push 2026-09-28, 최신 릴리스 v0.16.3(2026-09-08), 최근 릴리스 v0.16.2(09-06), v0.16.1(09-04), v0.16.0(08-27), v0.15.0(08-24)로 개발이 빠르다. 열린 이슈 1개(#11 Windows에서 `UnicodeEncodeError`로 성공한 수집 결과가 print 단계에서 폐기됨). 언어는 Python.
 
-장점: (1) 에이전트가 실패 선언을 서둘러 하지 못하게 하는 실패 게이트와 `untried_routes`. (2) 응답 검증을 4계층으로 하는 점이 "200이면 성공" 오판을 막는다. (3) SSRF 차단, URL 마스킹, 비신뢰 콘텐츠 경계 등 에이전트용 fetch 도구로서의 안전장치가 비교적 갖춰져 있다. (4) 한국 서비스 대응(네이버 블로그 모바일 변환, 네이버 금융 JSON).
+**장점**
 
-한계: (1) 방어 시스템은 계속 바뀌므로 "뚫린다"는 보장이 없고 지문 목록은 분기마다 갱신이 필요하다(프로파일 주석에도 quarterly refresh). (2) headful Chrome이 기본이라 서버/CI 환경에서 쓰기 어렵다. (3) 단일 개발자 중심 프로젝트로 보이며, README 홍보 문구와 실제 기능(hidden API)이 불일치. (4) Windows 호환 이슈 열림. (5) `curl_cffi` 등 의존성 자동 설치 동작.
+- **실패 판단**: 실패 게이트와 `untried_routes`가 에이전트의 성급한 실패 선언을 막는다.
+- **응답 검증**: 4계층 검증으로 "200이면 성공"이라는 오판을 줄인다.
+- **안전장치**: SSRF 차단, URL 마스킹, 비신뢰 콘텐츠 경계 등 에이전트용 fetch 도구의 방어 장치가 비교적 갖춰져 있다.
+- **한국 서비스 대응**: 네이버 블로그 모바일 변환, 네이버 금융 JSON 경로를 다룬다.
+
+**한계**
+
+- 방어 시스템이 계속 바뀌므로 성공을 보장할 수 없다. 지문 목록은 분기마다 갱신해야 하며 프로파일 주석도 quarterly refresh를 명시한다.
+- headful Chrome이 기본이라 서버/CI 환경에서 쓰기 어렵다.
+- 단일 개발자 중심 프로젝트로 보이며 README 홍보 문구와 실제 기능(hidden API)에 불일치가 있다.
+- Windows 호환 이슈가 열려 있다.
+- `curl_cffi` 등 의존성을 자동 설치하는 동작이 있다.
 
 ## 보안·라이선스·운영 리스크
 

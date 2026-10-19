@@ -9,13 +9,21 @@ researched: 2026-10-01
 # MarkItDown
 
 > [!summary] 한줄요약
-> Microsoft가 관리하는 경량 Python 변환 라이브러리/CLI로, PDF·Word·PowerPoint·Excel·HTML·이미지·오디오·ZIP·EPUB 등을 LLM 입력용 Markdown으로 바꾼다. "converter 레지스트리 + 우선순위 + 플러그인" 구조라 확장이 쉽고, 기본 변환은 포맷별 라이브러리로 오프라인에서 돌지만 이미지 설명·OCR·일부 클라우드 변환은 LLM 또는 Azure에 위임하는 하이브리드다. 사람이 읽는 고충실도 변환용이 아니라고 README가 스스로 선을 긋는다. 2026-10-01 기준 v0.1.8, 스타 약 18.8만.
+> Microsoft의 경량 Python 라이브러리/CLI. 여러 문서 포맷을 LLM 입력용 Markdown으로 변환하며, 사람이 읽는 고충실도 변환용은 아니라고 README가 명시한다.
+
+입력은 PDF·Word·PowerPoint·Excel·HTML·이미지·오디오·ZIP·EPUB 등이다. **converter 레지스트리 + 우선순위 + 플러그인** 구조라 확장이 쉽다.
+
+기본 변환은 포맷별 라이브러리로 오프라인에서 돌고, 이미지 설명·OCR·일부 클라우드 변환은 LLM 또는 Azure에 위임하는 하이브리드 방식이다. 2026-10-01 기준 v0.1.8, 스타 약 18.8만이다.
 
 ## 1. 배경 / 해결하는 문제
 
-README의 설명에 따르면 MarkItDown은 `textract`와 가장 비슷한 도구이되, 제목·목록·표·링크 같은 문서 구조를 Markdown으로 보존하는 데 초점을 둔다. 출력은 사람이 보기에도 괜찮은 경우가 많지만 텍스트 분석 도구가 소비하는 것을 전제로 하며, 사람이 읽는 고충실도 변환에는 최선이 아닐 수 있다고 명시한다. Markdown을 고른 이유로 README가 드는 논리는 두 가지다. 주요 LLM이 학습 데이터에서 Markdown을 많이 봤기 때문에 구조를 잘 이해하고, 마크업이 최소라 토큰 효율이 높다는 것이다.
+README의 설명에 따르면 MarkItDown은 `textract`와 가장 비슷한 도구이되, 제목·목록·표·링크 같은 문서 구조를 Markdown으로 보존하는 데 초점을 둔다. 출력은 사람이 보기에도 괜찮은 경우가 많지만 텍스트 분석 도구가 소비하는 것을 전제로 하며, 사람이 읽는 고충실도 변환에는 최선이 아닐 수 있다고 명시한다.
 
-RAG에서 해결하는 문제는 "여러 포맷을 한 줄 API로 텍스트화"하는 인제스트 전처리다. 직접 Word/Excel/PowerPoint 파서를 조합하는 수고를 없애고, 이미지 설명이나 스캔 문서 OCR이 필요하면 LLM 클라이언트나 Azure 서비스를 꽂을 수 있게 해 둔다. 2024-11-13 공개 이후 GitHub 스타가 18만을 넘겼고, 저장소는 모노레포이며 코어 패키지, MCP 서버, OCR 플러그인, 샘플 플러그인 네 개 패키지로 이뤄진다.
+Markdown을 고른 이유로 README가 드는 논리는 두 가지다. 주요 LLM이 학습 데이터에서 Markdown을 많이 봤기 때문에 구조를 잘 이해하고, 마크업이 최소라 토큰 효율이 높다는 것이다.
+
+RAG에서 해결하는 문제는 "여러 포맷을 한 줄 API로 텍스트화"하는 인제스트 전처리다. 직접 Word/Excel/PowerPoint 파서를 조합하는 수고를 없애고, 이미지 설명이나 스캔 문서 OCR이 필요하면 LLM 클라이언트나 Azure 서비스를 꽂을 수 있게 해 둔다.
+
+2024-11-13 공개 이후 GitHub 스타가 18만을 넘겼고, 저장소는 모노레포이며 코어 패키지, MCP 서버, OCR 플러그인, 샘플 플러그인 네 개 패키지로 이뤄진다.
 
 이번 조사는 2026-10-01에 저장소를 클론해 `_markitdown.py`, `__main__.py`, `converters/*.py`, `pyproject.toml`, MCP·OCR·샘플 플러그인 패키지의 코드와 README를 직접 열람하고 GitHub API로 릴리스·메트릭을 확인했다. 변환 성능과 품질은 직접 실행해 측정하지 않았다.
 
@@ -68,9 +76,13 @@ flowchart TD
 | Wikipedia / Bing SERP | WikipediaConverter / BingSerpConverter | 해당 도메인 HTML 전용 본문 추출 | 범용 HTML보다 먼저 시도 |
 | 클라우드 | DocumentIntelligenceConverter / ContentUnderstandingConverter | Azure SDK 호출(아래 5절) | 선택 설치 |
 
-**구형 포맷.** 이슈 목록에 legacy `.doc` 변환기 추가 PR(#1710)과 ".doc 확장자 지원" 요청(#23)이 열려 있어 `.doc`는 내장 지원이 아니다. 한글(HWP/HWPX) 변환기도 없다. 형제 도구 [[anydoc]]의 벤치표에서도 markitdown의 doc 칸은 비어 있다.
+### 구형 포맷
 
-**PDF 세부.** `_extract_form_content_from_words`가 단어의 x 좌표 정렬로 열 구조를 추정하는데, 코드 주석상 인치당 열 밀도가 너무 높으면(10 초과) 폼이 아니라고 보고 단일 열이면 폼이 아니라고 본다. 즉 선(line) 없는 표를 휴리스틱으로 잡는 방식이다. 이 방식은 규칙이 맞는 문서에서는 표가 살지만 다단 논문, 병합 셀이 많은 표, 도장·스캔본에서는 틀리기 쉽다. 테스트 디렉터리에 `test_pdf_tables.py`, `test_pdf_masterformat.py`, `test_pdf_memory.py`가 있어 표·번호·메모리가 알려진 취약 지점임을 보여 준다.
+이슈 목록에 legacy `.doc` 변환기 추가 PR(#1710)과 ".doc 확장자 지원" 요청(#23)이 열려 있어 `.doc`는 내장 지원이 아니다. 한글(HWP/HWPX) 변환기도 없다. 형제 도구 [[anydoc]]의 벤치표에서도 markitdown의 doc 칸은 비어 있다.
+
+### PDF 세부
+
+`_extract_form_content_from_words`가 단어의 x 좌표 정렬로 열 구조를 추정하는데, 코드 주석상 인치당 열 밀도가 너무 높으면(10 초과) 폼이 아니라고 보고 단일 열이면 폼이 아니라고 본다. 즉 선(line) 없는 표를 휴리스틱으로 잡는 방식이다. 이 방식은 규칙이 맞는 문서에서는 표가 살지만 다단 논문, 병합 셀이 많은 표, 도장·스캔본에서는 틀리기 쉽다. 테스트 디렉터리에 `test_pdf_tables.py`, `test_pdf_masterformat.py`, `test_pdf_memory.py`가 있어 표·번호·메모리가 알려진 취약 지점임을 보여 준다.
 
 ## 4. 설치 · 사용법 (CLI / Python)
 
@@ -90,7 +102,13 @@ docker build -t markitdown:latest .
 docker run --rm -i markitdown:latest < ~/your-file.pdf > output.md
 ```
 
-`__main__.py`의 인자는 `-v`(버전), `-o`(출력 파일), 확장자 힌트(`-x`), MIME 힌트(`-m`), charset 힌트(`-c`), `-d`/`-e`(Document Intelligence와 endpoint), `--use-cu`/`--cu-endpoint`/`--cu-analyzer`/`--cu-file-types`(Content Understanding), `-p`/`--use-plugins`, `--list-plugins`, `--keep-data-uris`다. 중요한 점은 이 CLI에 `--llm-client`, `--llm-model` 같은 옵션이 없다는 것이다. 그런데 OCR 플러그인 README는 `markitdown document.pdf --use-plugins --llm-client openai --llm-model gpt-4o`라는 CLI 예시를 싣고 있다. 클론한 커밋의 `__main__.py`에서 `llm`을 검색해도 일치가 없어서, 해당 예시는 이 커밋 기준으로 동작하지 않거나 문서가 앞서 간 것으로 보인다(확인한 사실은 코드에 옵션이 없다는 것까지). LLM 기반 기능은 Python API로 쓰는 것이 확실하다.
+`__main__.py`의 인자는 `-v`(버전), `-o`(출력 파일), 확장자 힌트(`-x`), MIME 힌트(`-m`), charset 힌트(`-c`), `-d`/`-e`(Document Intelligence와 endpoint), `--use-cu`/`--cu-endpoint`/`--cu-analyzer`/`--cu-file-types`(Content Understanding), `-p`/`--use-plugins`, `--list-plugins`, `--keep-data-uris`다.
+
+중요한 점은 이 CLI에 `--llm-client`, `--llm-model` 같은 옵션이 없다는 것이다.
+
+그런데 OCR 플러그인 README는 `markitdown document.pdf --use-plugins --llm-client openai --llm-model gpt-4o`라는 CLI 예시를 싣고 있다. 클론한 커밋의 `__main__.py`에서 `llm`을 검색해도 일치가 없어서, 해당 예시는 이 커밋 기준으로 동작하지 않거나 문서가 앞서 간 것으로 보인다(확인한 사실은 코드에 옵션이 없다는 것까지).
+
+LLM 기반 기능은 Python API로 쓰는 것이 확실하다.
 
 ```python
 from markitdown import MarkItDown
@@ -110,13 +128,27 @@ md = MarkItDown(docintel_endpoint="<endpoint>")
 
 ## 5. 클라우드·LLM 옵션
 
-**LLM 이미지 설명.** `llm_client`/`llm_model`/`llm_prompt`. 현재 pptx 안의 이미지와 이미지 파일에 적용된다(README). 코드는 이미지를 base64 data URI로 만들어 `client.chat.completions.create`에 보낸다. 즉 OpenAI 호환 `chat.completions`와 `image_url` 형식을 받는 모델이면 사내 호스팅 모델도 연결할 수 있다(비전 모델이어야 함).
+### LLM 이미지 설명
 
-**Azure Document Intelligence.** `-d -e <endpoint>` 또는 `MarkItDown(docintel_endpoint=...)`. 코드상 `prebuilt-layout` 모델을 호출하고, PDF와 이미지(JPEG, PNG, BMP, TIFF)에는 수식 추출(FORMULAS), 고해상도 OCR(OCR_HIGH_RESOLUTION), 폰트 스타일(STYLE_FONT) 기능을 켠다. DOCX, PPTX, XLSX, HTML은 OCR 기능 없이 호출한다. 결과의 주석(`<!-- ... -->`)은 제거한다. 인증은 API 키(환경변수 `AZURE_API_KEY`) 아니면 `DefaultAzureCredential`이다. 파일 전체가 Azure로 전송된다.
+`llm_client`/`llm_model`/`llm_prompt`. 현재 pptx 안의 이미지와 이미지 파일에 적용된다(README). 코드는 이미지를 base64 data URI로 만들어 `client.chat.completions.create`에 보낸다. 즉 OpenAI 호환 `chat.completions`와 `image_url` 형식을 받는 모델이면 사내 호스팅 모델도 연결할 수 있다(비전 모델이어야 함).
 
-**Azure Content Understanding.** `--use-cu --cu-endpoint`. 오디오·비디오 포함, 분석기(analyzer) 기반 구조화 필드 추출 결과를 YAML front matter로 직렬화하고, `--cu-analyzer`로 사용자 정의 analyzer를 지정하며, 지정하지 않으면 파일 유형에 맞춰 prebuilt 분석기(문서·이미지는 `prebuilt-documentSearch`, 비디오 `prebuilt-videoSearch`, 오디오 `prebuilt-audioSearch`)를 자동 선택한다. 호출당 과금되므로 `--cu-file-types pdf,jpeg,mp4`로 라우팅 대상을 제한해 비용을 통제한다. `azure-ai-contentunderstanding>=1.2.0b1`이 필요하다(베타 SDK).
+### Azure Document Intelligence
 
-**markitdown-ocr 플러그인 (`packages/markitdown-ocr`).** PDF·DOCX·PPTX·XLSX 안의 이미지에서 LLM Vision으로 텍스트를 추출하고, 스캔 문서는 전체 페이지 OCR로 폴백한다. 변환기별 구현 파일(`_pdf_converter_with_ocr.py` 등)과 `_ocr_service.py`가 있다. `markitdown>=0.1.8,<0.2.0`이 필요하고, `llm_client`가 없으면 플러그인은 로드되지만 OCR이 조용히 건너뛰어진다(README). 새로운 ML 라이브러리나 바이너리를 쓰지 않으므로 OCR 품질·비용·데이터 반출이 전적으로 연결한 LLM에 달려 있다.
+`-d -e <endpoint>` 또는 `MarkItDown(docintel_endpoint=...)`. 코드상 `prebuilt-layout` 모델을 호출하고, PDF와 이미지(JPEG, PNG, BMP, TIFF)에는 수식 추출(FORMULAS), 고해상도 OCR(OCR_HIGH_RESOLUTION), 폰트 스타일(STYLE_FONT) 기능을 켠다. DOCX, PPTX, XLSX, HTML은 OCR 기능 없이 호출한다. 결과의 주석(`<!-- ... -->`)은 제거한다.
+
+인증은 API 키(환경변수 `AZURE_API_KEY`) 아니면 `DefaultAzureCredential`이다. 파일 전체가 Azure로 전송된다.
+
+### Azure Content Understanding
+
+`--use-cu --cu-endpoint`. 오디오·비디오 포함, 분석기(analyzer) 기반 구조화 필드 추출 결과를 YAML front matter로 직렬화하고, `--cu-analyzer`로 사용자 정의 analyzer를 지정하며, 지정하지 않으면 파일 유형에 맞춰 prebuilt 분석기(문서·이미지는 `prebuilt-documentSearch`, 비디오 `prebuilt-videoSearch`, 오디오 `prebuilt-audioSearch`)를 자동 선택한다.
+
+호출당 과금되므로 `--cu-file-types pdf,jpeg,mp4`로 라우팅 대상을 제한해 비용을 통제한다. `azure-ai-contentunderstanding>=1.2.0b1`이 필요하다(베타 SDK).
+
+### markitdown-ocr 플러그인 (`packages/markitdown-ocr`)
+
+PDF·DOCX·PPTX·XLSX 안의 이미지에서 LLM Vision으로 텍스트를 추출하고, 스캔 문서는 전체 페이지 OCR로 폴백한다. 변환기별 구현 파일(`_pdf_converter_with_ocr.py` 등)과 `_ocr_service.py`가 있다. `markitdown>=0.1.8,<0.2.0`이 필요하고, `llm_client`가 없으면 플러그인은 로드되지만 OCR이 조용히 건너뛰어진다(README).
+
+새로운 ML 라이브러리나 바이너리를 쓰지 않으므로 OCR 품질·비용·데이터 반출이 전적으로 연결한 LLM에 달려 있다.
 
 ## 6. 플러그인 구조
 
@@ -160,7 +192,14 @@ md = MarkItDown(docintel_endpoint="<endpoint>")
 | 설치 무게 | 가벼움(extras 선택) | 단일 바이너리 | 무거움(모델 다운로드) | 시스템 패키지 다수(libmagic, poppler, tesseract, libreoffice) | JDK + 선택적 Python 서버 | 서비스 호출 |
 | 확장 | 플러그인, MCP, Azure | 바인딩 | LangChain/LlamaIndex/CrewAI/Haystack 통합, MCP 서버, API 서버 | 오픈소스 + 엔터프라이즈 플랫폼 | 접근성(Tagged PDF) 기능 | API |
 
-docling과 unstructured 열은 각 저장소 README(2026-10-01 WebFetch 요약)에 근거하며, 성능 수치는 README에 없어서 비교하지 못했다. 선택 기준을 한 줄로 쓰면 이렇다. office 문서를 빠르게 텍스트화하는 전처리는 MarkItDown, PDF 레이아웃·표 정확도가 중요하면 docling이나 opendataloader, 스캔 위주면 Azure Document Intelligence 또는 사내 승인 OCR, 포맷 폭과 속도가 최우선이면 anydoc을 후보로 놓고 한국어 샘플로 직접 비교하는 것이다.
+docling과 unstructured 열은 각 저장소 README(2026-10-01 WebFetch 요약)에 근거하며, 성능 수치는 README에 없어서 비교하지 못했다.
+
+선택 기준은 다음처럼 나눌 수 있다. 후보를 고른 뒤에는 한국어 샘플로 직접 비교해야 한다.
+
+- **Office 문서를 빠르게 텍스트화하는 전처리:** MarkItDown
+- **PDF 레이아웃·표 정확도가 중요할 때:** docling 또는 opendataloader
+- **스캔 문서 위주일 때:** Azure Document Intelligence 또는 사내 승인 OCR
+- **포맷 폭과 속도가 최우선일 때:** anydoc
 
 ## 10. 한계 · 성숙도
 

@@ -9,7 +9,10 @@ researched: 2026-10-01
 # Headroom
 
 > [!summary] 한줄요약
-> 코딩 에이전트와 LLM 앱이 읽는 tool output·로그·RAG chunk·파일·히스토리를 **로컬에서** 압축한 뒤 LLM에 보내는 Apache-2.0 "Context Optimization Layer". 라이브러리(`compress()`), 프록시(`headroom proxy`), 에이전트 래퍼(`headroom wrap claude` 외 15종 이상), MCP 서버 4가지 형태로 쓰고, 압축 원문을 로컬 SQLite에 보관하다 모델이 `headroom_retrieve`로 되찾게 하는 **CCR(Compress-Cache-Retrieve) 가역 압축**과 prompt cache를 깨지 않는 "live-zone only" 정책이 핵심이다.
+> 도구 출력·로그·RAG 청크·파일·히스토리를 로컬에서 압축해 LLM 입력을 줄이는 Apache-2.0 컨텍스트 최적화 계층이다.
+
+- **사용 형태**: 라이브러리(`compress()`), 프록시(`headroom proxy`), 에이전트 래퍼(`headroom wrap claude` 외 15종 이상), MCP 서버의 4가지다. 코딩 에이전트와 LLM 앱에 적용한다.
+- **핵심 설계**: 압축 원문을 로컬 SQLite에 보관하고 `headroom_retrieve`로 되찾는 **CCR(Compress-Cache-Retrieve) 가역 압축**을 제공한다. "live-zone only" 정책으로 prompt cache를 깨지 않는 것을 목표로 한다.
 
 > [!warning] 읽기 전 주의 (보안 사실)
 > README "Telemetry"와 SECURITY.md가 직접 밝히듯 익명 beacon이 **기본 켜짐(opt-out)**이고, CCR 캐시(`~/.headroom/ccr_store.db`)는 압축 전 원문(도구 출력, 파일 내용, 검색 청크)을 **평문으로 디스크에 저장**한다. "압축은 로컬이다"라는 말은 사실이지만, 프록시가 모든 트래픽과 자격증명을 거치는 지점이라는 점이 사내 보안 검토의 핵심이다.
@@ -61,7 +64,14 @@ README가 서술하는 요청 수명주기는 `Setup → Pre-Start → Post-Star
 
 ### 2.3 CCR (Compress-Cache-Retrieve)
 
-`wiki/ccr.md`의 흐름: SmartCrusher가 1,000개 항목을 20개로 압축 → 원문을 해시 키(예: `abc123`)로 LRU/SQLite에 저장 → 압축물에 `[1000 items compressed to 20. Retrieve more: hash=abc123]` 마커를 삽입 → `headroom_retrieve` 도구 정의를 LLM 도구 목록에 주입 → 모델이 20개로 충분하면 그대로 종료(90% 절감), 부족하면 `headroom_retrieve(hash=abc123)`를 호출하면 응답 핸들러가 자동 실행해 원문을 되돌려 준다. 보관 기간은 설정된 TTL이며 백엔드는 SQLite 기본, `HEADROOM_CCR_BACKEND=memory`로 디스크 저장을 끌 수 있다(SECURITY.md).
+`wiki/ccr.md`가 설명하는 예시 흐름은 다음과 같다.
+
+1. **압축**: SmartCrusher가 1,000개 항목을 20개로 줄인다.
+2. **보관**: 원문을 해시 키(예: `abc123`)로 LRU/SQLite에 저장한다.
+3. **복원 안내**: 압축물에 `[1000 items compressed to 20. Retrieve more: hash=abc123]` 마커를 넣고, LLM 도구 목록에 `headroom_retrieve` 정의를 주입한다.
+4. **필요한 경우 복원**: 모델이 20개로 충분하다고 판단하면 그대로 종료한다(문서의 설명: 90% 절감). 부족하면 `headroom_retrieve(hash=abc123)`를 호출하고, 응답 핸들러가 자동 실행해 원문을 반환한다.
+
+보관 기간은 설정된 TTL을 따른다. 기본 백엔드는 SQLite이며, `HEADROOM_CCR_BACKEND=memory`로 디스크 저장을 끌 수 있다(SECURITY.md).
 
 ### 2.4 코드 규모와 구현 언어
 
@@ -74,7 +84,15 @@ README가 서술하는 요청 수명주기는 `Setup → Pre-Start → Post-Star
 
 ## 3. 핵심 기능 상세
 
-- **배포 모드**: (1) Library — `from headroom import compress`, TypeScript `await compress(messages, { model })`, SDK 래퍼(`withHeadroom(new Anthropic())`, Vercel AI SDK `headroomMiddleware()`, LiteLLM `HeadroomCallback`, LangChain `HeadroomChatModel`, Agno, Strands, ASGI `CompressionMiddleware`). (2) Proxy — `headroom proxy --port 8787`, 모든 OpenAI 호환 클라이언트에서 base URL만 바꿔 사용. (3) Agent wrap — `headroom wrap claude|codex|grok|copilot|cursor|aider|opencode|cline|continue|goose|openhands|openclaw|vibe|omp|zcode`, 해제는 `headroom unwrap <tool>`. (4) MCP 서버 — `headroom_compress`, `headroom_retrieve`, `headroom_stats`(`headroom mcp install`, `headroom mcp serve`).
+**배포 모드**는 적용 지점에 따라 선택한다.
+
+1. **Library**: Python의 `from headroom import compress`, TypeScript의 `await compress(messages, { model })`. SDK 래퍼로 `withHeadroom(new Anthropic())`, Vercel AI SDK `headroomMiddleware()`, LiteLLM `HeadroomCallback`, LangChain `HeadroomChatModel`, Agno, Strands, ASGI `CompressionMiddleware`도 제공한다.
+2. **Proxy**: `headroom proxy --port 8787`. OpenAI 호환 클라이언트의 base URL만 바꿔 사용한다.
+3. **Agent wrap**: `headroom wrap claude|codex|grok|copilot|cursor|aider|opencode|cline|continue|goose|openhands|openclaw|vibe|omp|zcode`. 해제 명령은 `headroom unwrap <tool>`이다.
+4. **MCP 서버**: `headroom_compress`, `headroom_retrieve`, `headroom_stats`를 노출한다. `headroom mcp install`, `headroom mcp serve`로 설정·실행한다.
+
+그 밖의 기능과 설정 변경은 다음과 같다.
+
 - **`headroom wrap`의 부수 동작**: 로컬 프록시를 띄우고 **Serena**(시맨틱 코드 탐색 MCP)를 설치해 Claude Code에는 해당 프로젝트에만 `local` 스코프 MCP 서버로 등록한다(`~/.claude.json` 수정). `--code-memory-scope user`로 전역화, `--code-memory none`으로 생략. 즉 래퍼가 사용자 설정 파일을 수정하므로 도입 전에 diff를 확인해야 한다.
 - **교차 에이전트 memory**: Claude, Codex, Gemini, Grok이 하나의 저장소를 공유하고 출처(provenance)와 자동 중복 제거를 가진다(`headroom/memory/`, 외부 벡터 저장소로 Qdrant/Neo4j 개발 컨테이너 언급). `--mode cache`에서는 Anthropic 경로에 자동 memory 주입을 하지 않고(캐시 접두부 보존), `--mode token`에서만 주입한다.
 - **`headroom learn`**: 실패한 세션을 분석해 교정 지침을 `CLAUDE.local.md`(기본, gitignored), `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `GROK.md`에 기록한다. `--verbosity`는 과거 세션에서 사용자가 긴 답변을 끊거나 넘긴 행동을 보고 응답 간결도를 추정한다(`--apply`로 저장). 이 기능은 CLAUDE.md를 자동 수정하므로 결과를 사람이 검토해야 한다.
@@ -95,7 +113,18 @@ README "Proof"의 수치(시드 고정 오프라인 스크립트 `uv run python 
 | 코드베이스 탐색 | 58,801 | 33,895 | 42% |
 | GitHub 이슈 분류 | 46,067 | 32,429 | 30% |
 
-README 스스로 "절감은 페이로드의 반복성에 비례한다. 산문과 이미 조밀한 출력은 거의 줄지 않는다"고 쓴다. 지연: 10K 토큰 JSON 검색 결과 p50 0.21ms, 100K 토큰 1.4ms. 정확도(`python -m headroom.evals suite --tier 1`): GSM8K 0.870 → 0.870(N=100), TruthfulQA 0.530 → 0.560(N=100, 단 README가 "±0.03은 N=100 신뢰구간 안이므로 개선이 아니라 차이 없음"으로 해석), SQuAD v2 97% at 19% 압축, BFCL 97% at 32% 압축. 이 정확도 표는 **소규모(N=100) 합성에 가까운 벤치마크**이며 실제 코딩 에이전트의 장기 과제(SWE-bench류) 성공률 영향은 보여 주지 않는다. 모든 수치는 프로젝트 자체 측정이고 독립 검증은 확인하지 못했다. "50~90% 절감"이라는 마케팅 범위는 위 표(21~57%)보다 높은 쪽 값이며, 자기 데이터로는 `headroom savings`로 측정해야 한다.
+README는 "절감은 페이로드의 반복성에 비례한다. 산문과 이미 조밀한 출력은 거의 줄지 않는다"고 명시한다. 지연과 정확도는 별도의 자체 측정치다.
+
+- **지연**: 10K 토큰 JSON 검색 결과 p50 0.21ms, 100K 토큰 1.4ms.
+- **정확도 평가 명령**: `python -m headroom.evals suite --tier 1`.
+- **GSM8K**: 0.870 → 0.870(N=100).
+- **TruthfulQA**: 0.530 → 0.560(N=100). README는 "±0.03은 N=100 신뢰구간 안이므로 개선이 아니라 차이 없음"으로 해석한다.
+- **SQuAD v2**: 97% at 19% 압축.
+- **BFCL**: 97% at 32% 압축.
+
+정확도 표는 **소규모(N=100) 합성에 가까운 벤치마크**다. 실제 코딩 에이전트의 장기 과제(SWE-bench류) 성공률에 미치는 영향은 보여 주지 않는다. 모든 수치는 프로젝트 자체 측정이며 독립 검증은 확인하지 못했다.
+
+"50~90% 절감"이라는 마케팅 범위는 위 표(21~57%)보다 높은 쪽 값이다. 실제 도입 판단에는 자기 데이터로 `headroom savings`를 측정해야 한다.
 
 ## 5. 설치·사용
 

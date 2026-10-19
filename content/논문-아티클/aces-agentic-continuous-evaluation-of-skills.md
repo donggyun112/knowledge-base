@@ -8,17 +8,44 @@ researched: 2026-10-01
 ---
 # ACES
 
-> [!summary] 한줄요약
-> 스킬(SKILL.md + 스크립트 + 참고자료 패키지)을 문서로 "스캔"하는 데서 그치지 않고, 같은 에이전트·모델·과제·채점기에서 대상 스킬만 넣고/빼서 실제로 돌린 뒤(paired live trial) 그 차이를 Skill Lift로 보고하는 평가 방법론이다. 145개 실제 스킬 스캔에서 구조 점수와 LLM judge 점수의 상관이 낮았고(Spearman 0.14), 58개 프로덕션 스킬의 947개 paired case에서 평균 composite lift는 0.2134였다.
+> [!summary] 핵심 요약
+> **대상 스킬을 넣었을 때와 뺐을 때의 실제 실행 차이(Skill Lift)**를 측정하는 평가 방법론이다. 스킬은 SKILL.md·스크립트·참고자료 패키지를 뜻한다.
+>
+> 문서 스캔에 그치지 않고 같은 에이전트·모델·과제·채점기로 paired live trial을 수행한다.
+> - 실제 스킬 145개 스캔: 구조 점수와 LLM judge 점수의 상관이 낮음(Spearman 0.14)
+> - 프로덕션 스킬 58개의 paired case 947개: 평균 composite lift 0.2134
 
 > [!info] 열람 범위
-> arXiv HTML 전문(https://arxiv.org/html/2608.20614v1, 2026-08-20)을 초록부터 결론과 부록 A-C(표 8, 9)까지 읽었다. 그림은 캡션과 대체 텍스트만 읽었고 부록 D(trace 사례)는 읽지 않았다. 공식 저장소 https://github.com/NVIDIA/SkillEvaluator 를 clone해 구조와 README를 확인했다(최신 커밋 2026-09-30, Apache-2.0). 코드 내부 로직(점수 산식 구현 등)을 한 줄씩 검증하지는 않았다. 저자 소속은 NVIDIA 전원이며 평가 대상 다수가 NVIDIA 내부 저장소 스킬이다.
+> arXiv HTML 전문(https://arxiv.org/html/2608.20614v1, 2026-08-20)을 초록부터 결론과 부록 A-C(표 8, 9)까지 읽었다.
+>
+> 그림은 캡션과 대체 텍스트만 읽었고 부록 D(trace 사례)는 읽지 않았다.
+>
+> 공식 저장소 https://github.com/NVIDIA/SkillEvaluator 를 clone해 구조와 README를 확인했다(최신 커밋 2026-09-30, Apache-2.0).
+>
+> 코드 내부 로직(점수 산식 구현 등)을 한 줄씩 검증하지는 않았다. 저자 소속은 NVIDIA 전원이며 평가 대상 다수가 NVIDIA 내부 저장소 스킬이다.
 
 ## 1. 문제의식·배경
 
-스킬은 에이전트의 "애플리케이션 계층"으로 자리 잡았다. 논문은 스킬을 SKILL.md 설명, 에이전트가 즉흥으로 처리하지 말아야 할 단계를 위한 결정적 스크립트, 참고자료·예제로 이루어진 자연어 절차지식 패키지로 정의한다. 핵심 설계는 **progressive disclosure**다. 에이전트는 처음에 짧은 설명만 읽고, 해당 스킬이 적용된다고 판단할 때만 지시나 스크립트를 불러오므로 수십 개 스킬이 컨텍스트를 부풀리지 않고 공존한다. Claude Code, Codex, Cursor 등이 채택한 형식이고 커뮤니티 레지스트리에는 수천 개 스킬이 있다.
+스킬은 에이전트의 "애플리케이션 계층"으로 자리 잡았다. 논문은 스킬을 SKILL.md 설명, 에이전트가 즉흥으로 처리하지 말아야 할 단계를 위한 결정적 스크립트, 참고자료·예제로 이루어진 자연어 절차지식 패키지로 정의한다.
 
-현재 평가 도구는 네 부류로 묶인다. (1) 구조 검사: frontmatter, 섹션, 스크립트 존재, 이름 규칙으로 결정적 점수. (2) LLM-as-Judge 루브릭: 명확성, 범위, 예제 품질, 트리거 문구. (3) 린터: 스크립트 구문·스타일. (4) 보안 스캐너: 프롬프트 인젝션 흔적, 비밀 유출, 파괴적 셸 패턴. 저자들이 짚는 공통점은 **전부 문서를 스캔할 뿐 실행하지 않는다**는 것이다. 비유는 `-Wall -Werror`로 컴파일한 프로그램이 경고가 없다고 해서 맞게 동작한다는 보증은 아니라는 것이다. 스캔을 통과해도 런타임에 실패하는 경우는 다섯 가지다. (a) 관련 질문에도 에이전트가 스킬을 발견하지 못함. (b) 문서를 읽고도 잘못된 스크립트/인자를 호출. (c) 결과는 맞는데 해석·보고가 틀림. (d) 같은 작업공간의 다른 스킬과 충돌. (e) 모델 업데이트로 문서 해석 방식이 바뀌어 조용히 회귀.
+핵심 설계는 **progressive disclosure**다. 에이전트는 처음에 짧은 설명만 읽고, 해당 스킬이 적용된다고 판단할 때만 지시나 스크립트를 불러오므로 수십 개 스킬이 컨텍스트를 부풀리지 않고 공존한다. Claude Code, Codex, Cursor 등이 채택한 형식이고 커뮤니티 레지스트리에는 수천 개 스킬이 있다.
+
+현재 평가 도구는 네 부류로 묶인다.
+
+1. 구조 검사: frontmatter, 섹션, 스크립트 존재, 이름 규칙으로 결정적 점수.
+2. LLM-as-Judge 루브릭: 명확성, 범위, 예제 품질, 트리거 문구.
+3. 린터: 스크립트 구문·스타일.
+4. 보안 스캐너: 프롬프트 인젝션 흔적, 비밀 유출, 파괴적 셸 패턴.
+
+저자들이 짚는 공통점은 **전부 문서를 스캔할 뿐 실행하지 않는다**는 것이다. 비유는 `-Wall -Werror`로 컴파일한 프로그램이 경고가 없다고 해서 맞게 동작한다는 보증은 아니라는 것이다.
+
+스캔을 통과해도 런타임에 실패하는 경우는 다섯 가지다.
+
+1. 관련 질문에도 에이전트가 스킬을 발견하지 못함.
+2. 문서를 읽고도 잘못된 스크립트/인자를 호출.
+3. 결과는 맞는데 해석·보고가 틀림.
+4. 같은 작업공간의 다른 스킬과 충돌.
+5. 모델 업데이트로 문서 해석 방식이 바뀌어 조용히 회귀.
 
 ### 선행 연구와의 차이 (표 3, 8절)
 
@@ -31,17 +58,32 @@ researched: 2026-10-01
 | Terminal-Bench | - | - | O | - | - |
 | ACES | O | O | O | O | O |
 
-SkillsBench는 고정된 84개 과제에서 skills 유무(no/curated/self-generated)를 비교해 "스킬이 중요하다"를 보이지만 개별 스킬 단위 평가나 작성자 자신의 과제 사용은 아니다. In-the-wild 연구는 3.4만 개 스킬 코퍼스에서 올바른 스킬을 검색하는 능력을 본다. SkillTester는 스킬 산출물의 유용성/보안을 격리해서 보되 에이전트를 실제로 돌리지 않는다. ACES는 이 각도들을 결합한다고 주장한다. 다만 표 3은 저자가 정의한 다섯 능력 기준으로 만든 표라서 자기 도구에 유리하게 짜였을 수 있다. 부록 C는 "페어링 자체나 CI 자체가 아니라 고정 지원 스킬 baseline, 발견 압력, 작성자 소유 자산, ATIF 정규화 다중 지표 trace, 정적-라이브 프로덕션 증거의 결합"이 기여라고 말해 주장을 한 단계 좁힌다.
+SkillsBench는 고정된 84개 과제에서 skills 유무(no/curated/self-generated)를 비교해 "스킬이 중요하다"를 보이지만 개별 스킬 단위 평가나 작성자 자신의 과제 사용은 아니다. In-the-wild 연구는 3.4만 개 스킬 코퍼스에서 올바른 스킬을 검색하는 능력을 본다. SkillTester는 스킬 산출물의 유용성/보안을 격리해서 보되 에이전트를 실제로 돌리지 않는다. ACES는 이 각도들을 결합한다고 주장한다.
+
+다만 표 3은 저자가 정의한 다섯 능력 기준으로 만든 표라서 자기 도구에 유리하게 짜였을 수 있다.
+
+부록 C는 "페어링 자체나 CI 자체가 아니라 고정 지원 스킬 baseline, 발견 압력, 작성자 소유 자산, ATIF 정규화 다중 지표 trace, 정적-라이브 프로덕션 증거의 결합"이 기여라고 말해 주장을 한 단계 좁힌다.
 
 ## 2. 스캔 계층의 실측 (2절, 145개 스킬)
 
 ACES 이전 단계로, 저자들은 두 스캔 방식의 한계를 먼저 실측한다.
 
-**구조 검사 (표 1)**: 약 50개 규칙, 4개 차원 가중합. Correctness 0.35(frontmatter 계약, 이름/디렉터리 일치, Instructions 섹션, 스크립트 존재 등), Discoverability 0.25(설명 길이 50-150 선호, 트리거 어휘, 모호어 회피, 경계/부정 문구, "WHEN to use"), Reliability 0.25(에러 처리 어휘, 입력 검증 힌트, Prerequisites/Limitations/Troubleshooting 섹션), Efficiency 0.15(토큰 예산, 중복 행, 목록 형식, 참조 중첩 깊이, 과대 스킬 경고). 각 차원은 100점에서 시작해 위반마다 감점하고 기본 게이트는 70점 이상.
+**구조 검사 (표 1)**는 약 50개 규칙을 다음 4개 차원의 가중합으로 계산한다.
+
+- **Correctness — 0.35**: frontmatter 계약, 이름/디렉터리 일치, Instructions 섹션, 스크립트 존재 등
+- **Discoverability — 0.25**: 설명 길이 50-150 선호, 트리거 어휘, 모호어 회피, 경계/부정 문구, "WHEN to use"
+- **Reliability — 0.25**: 에러 처리 어휘, 입력 검증 힌트, Prerequisites/Limitations/Troubleshooting 섹션
+- **Efficiency — 0.15**: 토큰 예산, 중복 행, 목록 형식, 참조 중첩 깊이, 과대 스킬 경고
+
+각 차원은 100점에서 시작해 위반마다 감점한다. 기본 게이트는 70점 이상이다.
 
 **LLM judge (표 2)**: G-Eval식 form-filling. SKILL.md(+스크립트)와 구조 결과를 읽고 기준별 pass/fail과 0-10점을 JSON으로 반환, temperature 0. 기준 9개(description clarity, instruction clarity, example quality, documentation completeness, scope definition, professional tone, trigger simulation, workflow completeness, error-handling quality)와 보조 콘텐츠가 있을 때 켜지는 structural coherence 1개. judge 모델 3종(Claude 3.7 Sonnet, Claude 3.5 Haiku, 9B 사내 모델)을 돌린 결과 가장 엄격한 판정자와 가장 관대한 판정자 사이 약 1.5점 격차가 있지만 코퍼스 내 상대 순위는 대체로 보존되었다.
 
-**결과**: 구조 점수 61-98(평균 79.2, 중앙값 79.8, σ=4.9). 기본 70점 게이트 통과 94.5%, 80점 이상은 48.9%뿐("C-to-B 장벽"). LLM judge 통과율은 86.2%. 가장 자주 위반되는 규칙은 frontmatter 계약으로 99.3%가 `tools`를 선언하지 않고 97.9%가 Limitations 섹션, 97.2%가 `author`, 91.7%가 `tags`를 빠뜨린다. 즉 선언된 계약이 "enforced가 아니라 aspirational"이라는 해석이다. 핵심 수치는 두 스캔 점수의 상관이 Spearman 0.14(Pearson 0.08)라는 점이다. 둘 다 높은 비율로 통과시키므로 한쪽이 퇴화한 탓이 아니고, 구조는 맞지만 지시가 모호한 스킬과 필드는 빠졌지만 내용이 풍부한 스킬이 서로 엇갈린다.
+**결과**: 구조 점수 61-98(평균 79.2, 중앙값 79.8, σ=4.9). 기본 70점 게이트 통과 94.5%, 80점 이상은 48.9%뿐("C-to-B 장벽"). LLM judge 통과율은 86.2%.
+
+가장 자주 위반되는 규칙은 frontmatter 계약으로 99.3%가 `tools`를 선언하지 않고 97.9%가 Limitations 섹션, 97.2%가 `author`, 91.7%가 `tags`를 빠뜨린다. 즉 선언된 계약이 "enforced가 아니라 aspirational"이라는 해석이다.
+
+핵심 수치는 두 스캔 점수의 상관이 Spearman 0.14(Pearson 0.08)라는 점이다. 둘 다 높은 비율로 통과시키므로 한쪽이 퇴화한 탓이 아니고, 구조는 맞지만 지시가 모호한 스킬과 필드는 빠졌지만 내용이 풍부한 스킬이 서로 엇갈린다.
 
 ## 3. 방법 상세
 
@@ -55,7 +97,11 @@ ACES 이전 단계로, 저자들은 두 스캔 방식의 한계를 먼저 실측
 
 데이터셋 항목은 `id`, 사용자 `question`, `expected_skill`(부정 사례는 null), 선택적 `expected_script`, `ground_truth` 참조 답, 순서가 있는 `expected_behavior` 문자열 목록으로 구성된다. `expected_behavior`는 "실행 전에 SKILL.md를 읽음", "파괴적 작업 전에 사용자에게 확인" 같은 자유 서술이며, LLM judge가 trajectory를 보고 항목별 YES/NO를 판정해 통과 비율을 집계한다. 합성 가능, 가독성, 강제 가능이 장점이라고 서술한다.
 
-선택적 부트스트랩 `create-dataset --full`은 4개 버킷으로 케이스를 시드한다. Explicit(스킬을 직접 지명), Implicit(시나리오만 서술), Contextual(도메인 맥락이 붙은 노이즈 있는 요청), Negative control(스킬이 처리하면 안 되는 인접/무관 요청). 보안 행동("비밀 유출, rm -rf/DROP TABLE 같은 파괴적 명령, 예상 작업공간 밖 접근 없음")은 빠져 있으면 자동 추가된다. 첫 실행 후에는 `create-dataset --refine --from-results <path>`가 저장된 ATIF trajectory를 읽어 ground_truth를 에이전트의 최종 답(작성자 의도와 맞을 때)으로 갱신하고 관찰된 tool-call 순서를 expected_behavior로 끌어올린다. EVAL.md 지시는 덮어쓰지 않는다. 저자들은 이 refinement가 이후 실행에서 judge 분산을 낮춘다고 주장하나 수치는 본문에 없다.
+선택적 부트스트랩 `create-dataset --full`은 4개 버킷으로 케이스를 시드한다. Explicit(스킬을 직접 지명), Implicit(시나리오만 서술), Contextual(도메인 맥락이 붙은 노이즈 있는 요청), Negative control(스킬이 처리하면 안 되는 인접/무관 요청). 보안 행동("비밀 유출, rm -rf/DROP TABLE 같은 파괴적 명령, 예상 작업공간 밖 접근 없음")은 빠져 있으면 자동 추가된다.
+
+첫 실행 후에는 `create-dataset --refine --from-results <path>`가 저장된 ATIF trajectory를 읽어 ground_truth를 에이전트의 최종 답(작성자 의도와 맞을 때)으로 갱신하고 관찰된 tool-call 순서를 expected_behavior로 끌어올린다.
+
+EVAL.md 지시는 덮어쓰지 않는다. 저자들은 이 refinement가 이후 실행에서 judge 분산을 낮춘다고 주장하나 수치는 본문에 없다.
 
 ### 3.3 여섯 개 기본 지표 (4.3, 부록 A 표 8)
 
@@ -74,7 +120,9 @@ ACES 이전 단계로, 저자들은 두 스캔 방식의 한계를 먼저 실측
 
 **ATIF**(Agent Trajectory Interchange Format)는 버전이 붙은 JSON 스키마로, trajectory를 순서가 있는 step 목록(각 step은 source, message, tool call 목록(함수명+인자), observation)으로 표현한다. Claude Code와 Codex처럼 구조화 tool-calling API를 가진 하네스는 ATIF를 네이티브로 내보내고 Harbor의 표준 입력 형식이다. 평문 로그만 내는 에이전트(예: cursor-cli)는 휴리스틱 어댑터로 합성 ATIF를 만든다. 즉 ATIF가 이식성의 축이다.
 
-**ACES 어댑터와 태스크 에미터**는 Harbor 호환 실행 위에 올라간다. `evals.json`(C개 케이스)에서 케이스마다 with-skill 태스크와 baseline 태스크를 한 쌍씩 생성하고, 올바른 스킬 집합을 계산해 fixture(`evals/files/`)나 BYOT 자산(`evals/harbor/`의 네이티브 Harbor 태스크)을 배치하며, 공통 verifier 스크립트를 복사하고 Dockerfile을 쓴다. 태스크 디렉터리는 `instruction.md`, `task.toml`, Dockerfile, `environment/skills/`, 선택적 Compose, verifier 복사본으로 구성된다. 어댑터는 호출마다 새로 실행되므로 평가가 머지 시점 저장소의 현재 상태를 반영한다. 비용은 N 스킬 x K 에이전트 x C 케이스 x A 시도 x 2 조건으로 선형이며 multi-attempt로 pass@k, stop-on-pass도 지원한다.
+**ACES 어댑터와 태스크 에미터**는 Harbor 호환 실행 위에 올라간다. `evals.json`(C개 케이스)에서 케이스마다 with-skill 태스크와 baseline 태스크를 한 쌍씩 생성하고, 올바른 스킬 집합을 계산해 fixture(`evals/files/`)나 BYOT 자산(`evals/harbor/`의 네이티브 Harbor 태스크)을 배치하며, 공통 verifier 스크립트를 복사하고 Dockerfile을 쓴다. 태스크 디렉터리는 `instruction.md`, `task.toml`, Dockerfile, `environment/skills/`, 선택적 Compose, verifier 복사본으로 구성된다. 어댑터는 호출마다 새로 실행되므로 평가가 머지 시점 저장소의 현재 상태를 반영한다.
+
+비용은 N 스킬 x K 에이전트 x C 케이스 x A 시도 x 2 조건으로 선형이며 multi-attempt로 pass@k, stop-on-pass도 지원한다.
 
 ```mermaid
 flowchart LR
@@ -99,7 +147,9 @@ flowchart LR
 \mathrm{Lift}_{\mathrm{outcome}}=\tfrac12\left(L_{\mathrm{accuracy}}+L_{\mathrm{goal\ accuracy}}\right)
 ```
 
-M은 활성 지표 집합(기본 6개, 균등 1/6 가중), S̄는 케이스·시도에 대한 평균 점수다. 부록 A는 균등 가중이 "점검 가능한 진단용 기본값이지 모든 지표가 인과적으로 동등하다는 주장이 아니다"라고 쓴다. 양의 lift는 스킬이 에이전트를 개선, 음의 lift는 스킬 때문에 악화(논문이 가장 드러내고 싶은 회귀 신호)를 뜻한다.
+M은 활성 지표 집합(기본 6개, 균등 1/6 가중), S̄는 케이스·시도에 대한 평균 점수다.
+
+부록 A는 균등 가중이 "점검 가능한 진단용 기본값이지 모든 지표가 인과적으로 동등하다는 주장이 아니다"라고 쓴다. 양의 lift는 스킬이 에이전트를 개선, 음의 lift는 스킬 때문에 악화(논문이 가장 드러내고 싶은 회귀 신호)를 뜻한다.
 
 **reference decoys**: 단순 baseline은 대상 스킬을 빼고 빈 작업공간을 두는데, 이러면 스킬의 내용(무엇을 하라고 알려주는가)과 발견 가능성(찾을 스킬이 존재한다는 사실)이 섞여 lift가 부풀려진다. 그래서 작성자나 운영자가 지정한 다른 스킬(API 디버깅, 로그 분류, 설정 검증, 릴리스 계획 등)을 두 조건에 고정해 발견·라우팅 과정이 baseline에서도 일어나게 한다.
 
@@ -109,7 +159,9 @@ M은 활성 지표 집합(기본 6개, 균등 1/6 가중), S̄는 케이스·시
 
 ### 3.7 평가 중심 개발 워크플로 (5절)
 
-`evals/` 디렉터리가 스킬의 테스트 스위트 역할을 한다(`evals.json`, `EVAL.md`, `evals/files/`, `evals/config.yml`, `evals/harbor/`, 커스텀 Dockerfile/Compose). 비용 순서로 진행한다. 구조 검사는 변경된 모든 스킬에 API 호출 없이, LLM judge는 요청 시 또는 키가 있을 때, 라이브 평가는 자산이 있거나 리뷰어가 트리거하거나 모델 업데이트 후 예약 재평가 때 돌린다. 변경 인지형(merge base 기준), 게이트 선택형, 리포트 기본형이며 PR/MR 코멘트에 스킬별 점수, 상위 이슈, Skill Lift 증거를 게시한다.
+`evals/` 디렉터리가 스킬의 테스트 스위트 역할을 한다(`evals.json`, `EVAL.md`, `evals/files/`, `evals/config.yml`, `evals/harbor/`, 커스텀 Dockerfile/Compose).
+
+비용 순서로 진행한다. 구조 검사는 변경된 모든 스킬에 API 호출 없이, LLM judge는 요청 시 또는 키가 있을 때, 라이브 평가는 자산이 있거나 리뷰어가 트리거하거나 모델 업데이트 후 예약 재평가 때 돌린다. 변경 인지형(merge base 기준), 게이트 선택형, 리포트 기본형이며 PR/MR 코멘트에 스킬별 점수, 상위 이슈, Skill Lift 증거를 게시한다.
 
 ## 4. 실험 설정 (6.1-6.3)
 
@@ -123,13 +175,21 @@ M은 활성 지표 집합(기본 6개, 균등 1/6 가중), S̄는 케이스·시
 
 ### 5.1 헤드라인 (6.4)
 
-947 paired 케이스에서 평균 composite lift 0.2134(95% CI [0.1967, 0.2301]). 절대 점수는 with-skill 0.7460, baseline 0.5326. 개별 지표: accuracy 0.7760 vs 0.6329(Δ0.1431), goal accuracy 0.6887 vs 0.4720(Δ0.2167). outcome-only lift = (0.1431+0.2167)/2 = 0.1799. 양의 lift 689건, 0 171건, 음 87건(72.8%가 양), 중앙값 0.1717.
+947 paired 케이스에서 평균 composite lift 0.2134(95% CI [0.1967, 0.2301]).
+
+절대 점수는 with-skill 0.7460, baseline 0.5326.
+
+개별 지표: accuracy 0.7760 vs 0.6329(Δ0.1431), goal accuracy 0.6887 vs 0.4720(Δ0.2167). outcome-only lift = (0.1431+0.2167)/2 = 0.1799.
+
+양의 lift 689건, 0 171건, 음 87건(72.8%가 양), 중앙값 0.1717.
 
 지표별 lift: skill_execution +0.3263, behavior_check +0.2983, skill_efficiency +0.2758, goal_accuracy +0.2167, accuracy +0.1431(security는 논문 본문 서술에서 별도 수치가 나오지 않아 확인하지 못했다). skill_efficiency는 평균 lift가 세 번째로 크지만 양의 lift 케이스는 41.7%뿐이라, 일부 실행이 효율을 희생하고 정확성/워크플로 완주를 얻는 고분산 trade-off라고 해석한다.
 
 ### 5.2 하네스·모델별 (6.5, Fig. 10)
 
-하네스별 평균 overall lift는 OpenCode 0.3611, Claude Code 0.2904, Codex 0.1264, Terminus-2 0.0896. 저자 명시로 이는 각 하네스 자신의 baseline에 대한 matched delta이지 절대 모델 순위가 아니다. 동일 Codex 하네스에서 모델만 바꾼 슬라이스에서는 GPT-5.5의 baseline이 크게 올라서 절대 성능은 높게 유지되는데 측정된 Skill Lift는 줄어든다. 즉 강한 모델일수록 스킬의 한계가치가 줄 수 있고, 이것이 모델 업데이트 후 예약 재평가의 근거다.
+하네스별 평균 overall lift는 OpenCode 0.3611, Claude Code 0.2904, Codex 0.1264, Terminus-2 0.0896. 저자 명시로 이는 각 하네스 자신의 baseline에 대한 matched delta이지 절대 모델 순위가 아니다.
+
+동일 Codex 하네스에서 모델만 바꾼 슬라이스에서는 GPT-5.5의 baseline이 크게 올라서 절대 성능은 높게 유지되는데 측정된 Skill Lift는 줄어든다. 즉 강한 모델일수록 스킬의 한계가치가 줄 수 있고, 이것이 모델 업데이트 후 예약 재평가의 근거다.
 
 ### 5.3 라우팅 스트레스 (6.5, 부록 B)
 
@@ -137,11 +197,15 @@ M은 활성 지표 집합(기본 6개, 균등 1/6 가중), S̄는 케이스·시
 
 ### 5.4 음의 lift (6.6)
 
-947 케이스 중 87건이 음의 overall lift, 201 cell 중 11개 cell이 음, 11개가 0. 두 종류로 나뉜다. 실행 불안정(예: with-skill 실행이 점수 trial 없이 끝나고 baseline은 완주)과 진짜 행동 악화(스킬을 읽고도 잘린/메타 응답, 검증 생략, 개선 없는 추가 tool call). 한 기술 설정 사례에서는 activation과 일부 behavior check는 나아졌는데 goal accuracy와 효율이 떨어져 전체가 음이 되었다. "발견하지 못함"과 "발견했으나 오용함"을 분리해 볼 수 있다는 점을 가치로 내세운다.
+947 케이스 중 87건이 음의 overall lift, 201 cell 중 11개 cell이 음, 11개가 0.
+
+두 종류로 나뉜다. 실행 불안정(예: with-skill 실행이 점수 trial 없이 끝나고 baseline은 완주)과 진짜 행동 악화(스킬을 읽고도 잘린/메타 응답, 검증 생략, 개선 없는 추가 tool call). 한 기술 설정 사례에서는 activation과 일부 behavior check는 나아졌는데 goal accuracy와 효율이 떨어져 전체가 음이 되었다. "발견하지 못함"과 "발견했으나 오용함"을 분리해 볼 수 있다는 점을 가치로 내세운다.
 
 ### 5.5 정적 점수는 런타임 증거가 아니다 (6.7)
 
-doc-scan 메타데이터가 있는 62개 스킬에서 Tier 1 구조 점수와 overall live lift의 Spearman은 −0.0181(Fisher-z 95% CI [−0.2667, 0.2327]), Tier 2 LLM judge는 −0.0266([−0.2745, 0.2247]). 둘 다 0과 구분되지 않는다. 저자는 이를 "스캔 점수가 런타임 효용의 유용한 단조 대리변수가 아니라는 것과 부합"한다고 조심스럽게 쓰고 음의 관계의 증거는 아니라고 선을 긋는다. CI가 ±0.25로 넓어(n=62) 약한 양의 관계(0.2 안팎)도 배제하지 못한다는 점에 주의.
+doc-scan 메타데이터가 있는 62개 스킬에서 Tier 1 구조 점수와 overall live lift의 Spearman은 −0.0181(Fisher-z 95% CI [−0.2667, 0.2327]), Tier 2 LLM judge는 −0.0266([−0.2745, 0.2247]). 둘 다 0과 구분되지 않는다. 저자는 이를 "스캔 점수가 런타임 효용의 유용한 단조 대리변수가 아니라는 것과 부합"한다고 조심스럽게 쓰고 음의 관계의 증거는 아니라고 선을 긋는다.
+
+CI가 ±0.25로 넓어(n=62) 약한 양의 관계(0.2 안팎)도 배제하지 못한다는 점에 주의.
 
 공개 OpenClaw sanitization 사례(n=1, 헤드라인 집계 제외): 에이전트 transcript 스킬이 정적 리뷰에서 11/11 체크, 89/100이었지만 보안 스캔은 건너뛰어졌고 코드 체크는 renderer를 놓쳤다. 별도 로컬 paired 실행에서 renderer는 성공했으나 합성 `nvapi-` 카나리를 중간 산출물에 남겼고 에이전트는 최종 파일만 고쳤다. 기본 accuracy와 goal accuracy는 양쪽 1.0이었고 artifact 채점만 with-skill 중간 산출물에서 카나리를 검출했다. 최종 응답만 채점하는 지표의 맹점을 보여준다.
 
@@ -179,7 +243,13 @@ raw-row 감사로 947 중 898 pair를 재구성하여 composite 0.2153, accuracy
 
 ## 9. 관련 노트
 
-[[skillzip-pro]] [[wikiskill]] [[context-fails-first-agent-reliability]] [[algorithmically-establishing-trust-in-evaluators]] [[jev-as-a-judge-agent-evals]] [[llm-agent-skill-memory-without-finetuning]] [[procedural-graphs-self-evolving]]
+- [[skillzip-pro]]
+- [[wikiskill]]
+- [[context-fails-first-agent-reliability]]
+- [[algorithmically-establishing-trust-in-evaluators]]
+- [[jev-as-a-judge-agent-evals]]
+- [[llm-agent-skill-memory-without-finetuning]]
+- [[procedural-graphs-self-evolving]]
 
 ## 10. 출처
 

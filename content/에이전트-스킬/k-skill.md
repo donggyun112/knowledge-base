@@ -9,11 +9,15 @@ researched: 2026-10-01
 # k-skill
 
 > [!summary] 한줄요약
-> 한국 실생활·업무 영역(교통, 부동산, 법령, 세무, 금융, 공공조달, 쇼핑 등) 125개 에이전트 skill을 한 저장소에 모은 번들. 각 `SKILL.md`는 얇은 stub이고 실제 지침은 `npx @nomadamas/k-skill instruct <skill>`로 런타임에 조립되며, 공공 API 키는 운영자가 호스팅하는 `k-skill-proxy`(Fastify, AGPL-3.0)가 대신 보관한다. 저장소 기본 라이선스는 MIT.
+> 한국 서비스의 조회·업무 절차를 모은 skill 번들이다. 실제 지침은 CLI가 조립하며, 공공 API 조회는 기본적으로 외부 프록시를 거친다.
+
+한국 실생활·업무 영역(교통, 부동산, 법령, 세무, 금융, 공공조달, 쇼핑 등) 125개 에이전트 skill을 한 저장소에 모은 번들. 각 `SKILL.md`는 얇은 stub이고 실제 지침은 `npx @nomadamas/k-skill instruct <skill>`로 런타임에 조립되며, 공공 API 키는 운영자가 호스팅하는 `k-skill-proxy`(Fastify, AGPL-3.0)가 대신 보관한다. 저장소 기본 라이선스는 MIT.
 
 ## 배경 — 해결하려는 문제
 
-한국 서비스는 공식 Open API(공공데이터포털 data.go.kr, 서울 열린데이터광장, 법제처, 한국은행 ECOS, KOSIS 등)가 흩어져 있고, 각각 키 발급·활용신청·XML/JSON 포맷·호출 한도가 달라 에이전트가 직접 쓰기 번거롭다. 당근·쿠팡·다나와처럼 공식 API가 없는 서비스는 공개 웹 표면을 읽어야 한다. k-skill은 이 지식을 "에이전트가 읽는 절차서(SKILL.md + instruction)" 형태로 한 곳에 모으고, 키가 필요한 조회는 중앙 프록시로 숨겨 사용자가 키를 발급하지 않아도 되게 한다. README의 표현으로는 "추가 클라이언트 API 레이어는 불필요하다. 필요한 경우 `k-skill-proxy` 같은 프록시 서버에 HTTP 요청만 넣으면 된다."
+한국 서비스는 공식 Open API(공공데이터포털 data.go.kr, 서울 열린데이터광장, 법제처, 한국은행 ECOS, KOSIS 등)가 흩어져 있고, 각각 키 발급·활용신청·XML/JSON 포맷·호출 한도가 달라 에이전트가 직접 쓰기 번거롭다. 당근·쿠팡·다나와처럼 공식 API가 없는 서비스는 공개 웹 표면을 읽어야 한다. k-skill은 이 지식을 "에이전트가 읽는 절차서(SKILL.md + instruction)" 형태로 한 곳에 모으고, 키가 필요한 조회는 중앙 프록시로 숨겨 사용자가 키를 발급하지 않아도 되게 한다.
+
+README의 표현으로는 "추가 클라이언트 API 레이어는 불필요하다. 필요한 경우 `k-skill-proxy` 같은 프록시 서버에 HTTP 요청만 넣으면 된다."
 
 대상 에이전트는 Claude Code, Codex, OpenCode, OpenClaw/ClawHub 등이다. 또한 소스 문서에는 "돌쇠(Dolshoi)"라는 데스크톱 에이전트 런타임에 대한 우선 지원 계약이 따로 있다(아래).
 
@@ -42,7 +46,9 @@ npx -y @nomadamas/k-skill@0 files korean-law-search
 npx -y @nomadamas/k-skill@0 update
 ```
 
-`packages/k-skill-cli`(npm 패키지 `@nomadamas/k-skill`, 확인한 버전 0.9.2, MIT)의 `src/assemble.js`가 `skill.json`의 `profiles`에 따라 `templates/` 아래 공통 템플릿(`core`, `proxy`, `browser`, `vault`, `action-booking`, `action-commerce`, `action-submission`, `action-account`, `action-recruiting`, `legal`, `lookup`, `local`, `operations`)을 이어 붙여 출력한다. `detect.js`는 런타임 capability를 감지한다. 이 방식의 이유는 `docs/dolshoi-runtime.md`에 있다: Vercel `skills add --skill <name>`은 선택한 디렉터리만 설치하고 `docs/`는 포함하지 않으며 symlink/`--copy` 설치 모두 지원되어야 하므로, 저장소 밖 상대 참조에 의존하지 않고 stub이 CLI를 통해 공통 정책을 주입하게 했다. `helper 파일`은 `scripts`, `references`, `tests` 루트만 허용하는 `resolveBundledAsset`로 경로 탈출을 막는다(소스 확인). 
+`packages/k-skill-cli`(npm 패키지 `@nomadamas/k-skill`, 확인한 버전 0.9.2, MIT)의 `src/assemble.js`가 `skill.json`의 `profiles`에 따라 `templates/` 아래 공통 템플릿(`core`, `proxy`, `browser`, `vault`, `action-booking`, `action-commerce`, `action-submission`, `action-account`, `action-recruiting`, `legal`, `lookup`, `local`, `operations`)을 이어 붙여 출력한다. `detect.js`는 런타임 capability를 감지한다.
+
+이 방식의 이유는 `docs/dolshoi-runtime.md`에 있다: Vercel `skills add --skill <name>`은 선택한 디렉터리만 설치하고 `docs/`는 포함하지 않으며 symlink/`--copy` 설치 모두 지원되어야 하므로, 저장소 밖 상대 참조에 의존하지 않고 stub이 CLI를 통해 공통 정책을 주입하게 했다. `helper 파일`은 `scripts`, `references`, `tests` 루트만 허용하는 `resolveBundledAsset`로 경로 탈출을 막는다(소스 확인).
 
 실행형 스킬은 `npx -y @nomadamas/k-skill@0 exec railway-timetable scripts/railway_timetable.py -- search --dep 서울 --arr 부산 --date 20260904` 같은 형태로 번들된 스크립트를 실행한다.
 
@@ -61,13 +67,25 @@ flowchart LR
 
 ### 공통 정책 profile
 
-`core.md`의 항상 적용 규칙이 이 번들의 행동 원칙을 보여준다. (1) 제품명이 아니라 capability를 감지한다. (2) 합법적 공식 표면이 지원하면 조회에서 멈추지 말고 되돌릴 수 있는 준비 단계까지 진행한다. (3) 결제, 메시지/메일 전송, 최종 제출, 취소, 계정 변경, 공개 게시 같은 **비가역 외부 효과 직전에는 `clarify`로 정확한 대상·금액·효과를 보여주고 승인받는다**. (4) 법률, 물리적 출석, CAPTCHA, 본인확인, 전자서명 경계는 우회하지 않는다. (5) CLI를 쓰기 전 `npx -y @nomadamas/k-skill@0 update`로 갱신한다. 모든 stub에는 CLI 없이도 지키는 "Hard rules"(승인 없는 결제/전송 금지, 평문 credential 금지, 법적 경계 우회 금지)가 들어 있다.
+`core.md`의 항상 적용 규칙이 이 번들의 행동 원칙을 보여준다.
+
+1. 제품명이 아니라 capability를 감지한다.
+2. 합법적 공식 표면이 지원하면 조회에서 멈추지 말고 되돌릴 수 있는 준비 단계까지 진행한다.
+3. 결제, 메시지/메일 전송, 최종 제출, 취소, 계정 변경, 공개 게시 같은 **비가역 외부 효과 직전에는 `clarify`로 정확한 대상·금액·효과를 보여주고 승인받는다**.
+4. 법률, 물리적 출석, CAPTCHA, 본인확인, 전자서명 경계는 우회하지 않는다.
+5. CLI를 쓰기 전 `npx -y @nomadamas/k-skill@0 update`로 갱신한다.
+
+모든 stub에는 CLI 없이도 지키는 "Hard rules"(승인 없는 결제/전송 금지, 평문 credential 금지, 법적 경계 우회 금지)가 들어 있다.
 
 ### k-skill-proxy
 
-`packages/k-skill-proxy`는 Fastify 5 단일 의존성(`fastify ^5.10.0`)의 Node 20+ 서버로, 버전 0.12.0, 라이선스 `AGPL-3.0-only`다. `src/server.js`가 약 6,580줄의 composition root이고, 공급자별 모듈(`airkorea.js`, `korean-law.js`, `krx-stock.js`, `kstartup.js`, `molit.js`, `nts-business.js`, `mfds.js`, `kakao-map.js`, `naver-shopping.js`, `komsa-mtis.js`, `vworld.js` 등 약 36개)이 라우트를 나눠 맡는다. README에 나열된 엔드포인트는 `/v1/fine-dust/report`, `/v1/korea-weather/forecast`, `/v1/seoul-subway/arrival`, `/v1/korean-law/search|detail`, `/v1/ev-charger/*`, `/v1/building-register/title`, `/v1/nts-business/status|validate`(POST), `/v1/mfds/*`, `/v1/korean-stock/*`, `/v1/kakao-*`, `/v1/kosis/*`, `/v1/kstartup/*`, `/v1/coupang/products/search`, `/v1/naver-news/search` 등 매우 많다.
+`packages/k-skill-proxy`는 Fastify 5 단일 의존성(`fastify ^5.10.0`)의 Node 20+ 서버로, 버전 0.12.0, 라이선스 `AGPL-3.0-only`다. `src/server.js`가 약 6,580줄의 composition root이고, 공급자별 모듈(`airkorea.js`, `korean-law.js`, `krx-stock.js`, `kstartup.js`, `molit.js`, `nts-business.js`, `mfds.js`, `kakao-map.js`, `naver-shopping.js`, `komsa-mtis.js`, `vworld.js` 등 약 36개)이 라우트를 나눠 맡는다.
 
-운영 특성(소스·개인정보 처리방침 기준): 메모리 캐시 기본 TTL 300초(`KSKILL_PROXY_CACHE_TTL_MS`), 최대 1,000개 항목, IP 기준 rate limit 기본 60초에 60회(`KSKILL_PROXY_RATE_LIMIT_*`), 요청 로깅 비활성(`disableRequestLogging: true`) 후 라우트별 사용량만 구조화 로그. 사용자가 보내는 `apiKey` 파라미터는 무시하고 서버 환경변수 키를 주입한다는 설명이 라우트마다 있다(예: Kakao Local). 예외적으로 VWorld는 호출자가 `x-k-skill-vworld-api-key` 헤더로 자기 키를 위임한다. 컨테이너는 `node:20-alpine`, `USER node`, 8080 포트. `infra/`에는 모니터링 대시보드(`k-skill-proxy-dashboard`, AGPL-3.0)와 `eatpl-relay`가 있다.
+README에 나열된 엔드포인트는 `/v1/fine-dust/report`, `/v1/korea-weather/forecast`, `/v1/seoul-subway/arrival`, `/v1/korean-law/search|detail`, `/v1/ev-charger/*`, `/v1/building-register/title`, `/v1/nts-business/status|validate`(POST), `/v1/mfds/*`, `/v1/korean-stock/*`, `/v1/kakao-*`, `/v1/kosis/*`, `/v1/kstartup/*`, `/v1/coupang/products/search`, `/v1/naver-news/search` 등 매우 많다.
+
+운영 특성(소스·개인정보 처리방침 기준): 메모리 캐시 기본 TTL 300초(`KSKILL_PROXY_CACHE_TTL_MS`), 최대 1,000개 항목, IP 기준 rate limit 기본 60초에 60회(`KSKILL_PROXY_RATE_LIMIT_*`), 요청 로깅 비활성(`disableRequestLogging: true`) 후 라우트별 사용량만 구조화 로그. 사용자가 보내는 `apiKey` 파라미터는 무시하고 서버 환경변수 키를 주입한다는 설명이 라우트마다 있다(예: Kakao Local).
+
+예외적으로 VWorld는 호출자가 `x-k-skill-vworld-api-key` 헤더로 자기 키를 위임한다. 컨테이너는 `node:20-alpine`, `USER node`, 8080 포트. `infra/`에는 모니터링 대시보드(`k-skill-proxy-dashboard`, AGPL-3.0)와 `eatpl-relay`가 있다.
 
 ## 스킬 카테고리 상세 (README 기준 21개 영역)
 
@@ -105,7 +123,15 @@ npx -y @nomadamas/k-skill@0 update
 # 호출: /k-skill:lotto-results
 ```
 
-KTX helper는 Python 3.11+와 `uv`가 추가로 필요하다. 설치 후 `k-skill-setup`으로 credential을 확보한다. 비밀값 해석 순서(`docs/security-and-secrets.md`)는 (1) 돌쇠 vault capability(`DOLSHOI_ACTION_BROKER_URL` + `vault-run`), (2) 없으면 `request_vault_credential`, (3) 이미 주입된 환경변수, (4) 에이전트 vault(1Password, Bitwarden, macOS Keychain 등) 후 `~/.config/k-skill/secrets.env`(`0600`), (5) 호스트의 가장 안전한 입력 표면 순이다. 대부분의 조회는 `KSKILL_PROXY_BASE_URL`이 비어 있으면 기본 호스팅 프록시(`k-skill-proxy.nomadamas.org`)를 쓰므로 키가 필요 없고, 자체 프록시를 쓰려면 환경변수로 지정한다.
+KTX helper는 Python 3.11+와 `uv`가 추가로 필요하다. 설치 후 `k-skill-setup`으로 credential을 확보한다. 비밀값은 다음 순서로 해석한다(`docs/security-and-secrets.md`).
+
+1. 돌쇠 vault capability(`DOLSHOI_ACTION_BROKER_URL` + `vault-run`)
+2. 없으면 `request_vault_credential`
+3. 이미 주입된 환경변수
+4. 에이전트 vault(1Password, Bitwarden, macOS Keychain 등) 후 `~/.config/k-skill/secrets.env`(`0600`)
+5. 호스트의 가장 안전한 입력 표면
+
+대부분의 조회는 `KSKILL_PROXY_BASE_URL`이 비어 있으면 기본 호스팅 프록시(`k-skill-proxy.nomadamas.org`)를 쓰므로 키가 필요 없고, 자체 프록시를 쓰려면 환경변수로 지정한다.
 
 ```bash
 export KSKILL_PROXY_BASE_URL=https://k-proxy.internal.example   # 자체 프록시(예시 URL)
@@ -135,7 +161,12 @@ curl "$KSKILL_PROXY_BASE_URL/v1/korean-law/search?target=law&query=개인정보�
 
 장점: 한국 업무 도메인 커버리지가 매우 넓고, 조회 전용/승인 필요 행동의 경계가 문서화되어 있으며, 법적 검토 기록과 개인정보 처리방침까지 갖췄다. 스킬 작성 규약(`skill.json` 단일 원본 + 생성 stub + CI 검사)이 일관적이다.
 
-한계: (1) 상류 API/웹 표면이 바뀌면 깨진다. 예: `daiso-product-search`는 "정확한 매장별 재고 수량은 다이소몰 보안 정책으로 2026-05-05부터 차단"이라고 스스로 적었고, `emergency-room-beds`는 정확한 잔여 병상 수가 공개 목록에 없다고 밝혔다. (2) 공개 프록시는 운영자 1곳이 올리는 서비스라 가용성이 그 운영에 달려 있다(이슈 #569, #641 참조). (3) 비공식 웹 표면(당근, 쿠팡, 올리브영 등) 스킬은 약관·차단 위험이 있다. (4) 이 노트는 125개 스킬 각각의 동작을 실행해 검증하지 않았다(확인 못함).
+한계:
+
+1. 상류 API/웹 표면이 바뀌면 깨진다. 예: `daiso-product-search`는 "정확한 매장별 재고 수량은 다이소몰 보안 정책으로 2026-05-05부터 차단"이라고 스스로 적었고, `emergency-room-beds`는 정확한 잔여 병상 수가 공개 목록에 없다고 밝혔다.
+2. 공개 프록시는 운영자 1곳이 올리는 서비스라 가용성이 그 운영에 달려 있다(이슈 #569, #641 참조).
+3. 비공식 웹 표면(당근, 쿠팡, 올리브영 등) 스킬은 약관·차단 위험이 있다.
+4. 이 노트는 125개 스킬 각각의 동작을 실행해 검증하지 않았다(확인 못함).
 
 ## 보안·라이선스·운영 리스크
 

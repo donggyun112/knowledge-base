@@ -11,133 +11,74 @@ tags:
 
 # What this repository knows about memory for agents
 
-Eighty-five phases in `neural-memory/RESULTS.md` and thirty-nine in
-`fly-connectome/README.md`, in the order they happened. This is what they add up
-to, for someone who needs the conclusions rather than the path. Every claim names
-the phase that produced it and the limit it stops at.
+이 문서는 `neural-memory/RESULTS.md`의 85개 Phase와 `fly-connectome/README.md`의 39개 Phase를 시간순으로 읽는 대신, 그 실험들이 어떤 결론으로 이어졌는지 정리한 기록이다. 아래에는 이후의 Phase 89까지 이어진 판단도 반영되어 있다. 각 주장은 근거가 된 Phase와 적용 한계를 함께 적었다.
 
-The central question — does a memory of past work make an agent better — is **not
-answered**. What is established is a set of ways it does not, and why, which is
-narrower than an answer and more than nothing.
+출발 질문은 단순하다. **과거 작업을 기억하면 에이전트가 다음 일을 더 잘할까?** 아직 이 질문에 답하지는 못했다. 다만 도움이 되지 않은 방법들과 그 이유를 확인했다. ‘답을 찾았다’보다 좁은 결론이지만, 다음 실험에서 무엇을 반복하지 말아야 하는지는 알려 준다.
 
 ## One: resemblance cannot ground a memory, because resemblance is already free
 
-Three mechanisms, three representations, one result.
+처음 시험한 것은 현재 상황과 닮은 과거 경험을 찾는 방식이었다. 비슷한 경험을 찾아 주면 에이전트가 더 잘할 것이라는 기대다. 구현은 세 가지였고 표현 방식도 달랐지만, 같은 한계에 부딪혔다.
 
 | mechanism | measured against | outcome |
 |---|---|---|
-| similarity over stored actions | random selection | worse, five measurements |
-| familiarity filter over hidden states | the model's output entropy | 0.4498 to 0.8179 |
-| mushroom-body valence, real fly wiring | the model's output entropy | 0.5517 to 0.7968, r = −0.53 |
+| 저장된 행동과의 유사도 | 무작위 선택 | 다섯 번의 측정에서 더 나쁨 |
+| 은닉 상태의 친숙도 필터 | 모델 출력 엔트로피 | 0.4498 대 0.8179 |
+| 실제 초파리 배선의 버섯체 valence | 모델 출력 엔트로피 | 0.5517 대 0.7968, r = −0.53 |
 
-Each asks whether the present resembles something handled before. Each either
-loses to a number the model emits for free, or fails to beat chance against real
-outcomes. *(phases 73–76, 79, 80)*
+친숙도는 ‘전에 비슷한 것을 다뤘는가’를, valence는 자극에 대해 접근하거나 피하는 방향의 신호를 뜻한다. 출력 엔트로피는 모델의 다음 출력 분포가 얼마나 불확실한지 나타내는 값이다. 세 방법 모두 모델이 이미 내놓는 이 값보다 못하거나, 실제 과제 성공·실패를 구분할 때 우연 수준을 넘지 못했다. *(phases 73–76, 79, 80)*
 
-The mechanism is duplication, not weakness: **the better a representation captures
-the present, the more the nearest stored item repeats what the prompt already
-says**. This predicted the direction of the Qwen-space result before it was run,
-which is the strongest thing any explanation here has done. *(phase 75)*
+원인은 표현이 약해서라기보다 **정보가 중복되기 때문**으로 해석된다. 현재 상황을 잘 표현할수록 가장 가까운 과거 항목은 이미 프롬프트에 있는 내용을 반복하기 쉽다. 이 설명은 Qwen 표현 공간 실험을 돌리기 전에 결과의 방향을 예측했다는 점에서 의미가 있다. 결과를 보고 나서 붙인 설명만은 아니었다. *(phase 75)*
 
-Limit: all of it is retrieval *into a prompt* that already contains recent
-context. Nothing here says resemblance is useless where there is no recent
-context to duplicate — few-shot example selection is a different setting and the
-literature finds the opposite there.
+적용 범위는 중요하다. 모두 최근 맥락이 이미 들어 있는 **프롬프트에 과거 기록을 추가하는** 실험이다. 중복할 최근 맥락이 없는 경우까지 유사도가 무용하다고 말할 수는 없다. few-shot 예제를 고르는 문제는 다른 설정이며, 그 분야 문헌에서는 반대 결과도 나온다.
 
 ## Two: the residual stream carries priors, not episodes
 
-Injecting a memory as a bias on the computation fails, and not for the reason
-phase 77 gave. Own-trajectory and foreign-trajectory vectors are indistinguishable
-whether the vector is externally encoded *or* a gradient taken in the model's own
-coordinates — which is exactly what phase 77's diagnosis predicted would fix it.
-*(phases 77, 83)*
+프롬프트에 기억을 덧붙이는 대신, 모델 내부 계산에 벡터를 더하면 개별 경험을 전달할 수 있을까? 이를 확인하려고 residual stream, 즉 층 사이로 이어지는 내부 표현에 기억 벡터를 편향처럼 주입했다. 자기 작업에서 얻은 벡터와 다른 작업의 벡터를 비교하면, 단순한 일반 신호가 아니라 해당 경험 자체가 도움이 되는지 볼 수 있다.
 
-What looked like a gain there was the mean of the stored directions. Both own and
-foreign beat no-memory by ~0.09 NLL until the shared component was removed, after
-which the same injection hurts. Average pairwise cosine was 0.1651 — modest, and
-enough to account for the entire effect. **"These are not in a tight cone" would
-not have excused skipping the check.** *(phase 83)*
+둘은 구별되지 않았다. 외부 인코더로 만든 벡터뿐 아니라 모델 자신의 좌표계에서 구한 그래디언트를 넣어도 마찬가지였다. Phase 77은 좌표계 불일치를 실패 원인으로 보았지만, 그 원인을 없앤 Phase 83에서도 문제가 남았다. *(phases 77, 83)*
 
-Limit: one layer, one gap, one pooling, one model.
+처음 이득처럼 보였던 것은 저장된 방향들의 **공통 평균 성분**이었다. 이 성분을 제거하기 전에는 자기 벡터와 다른 작업의 벡터 모두 메모리 없음보다 NLL을 약 0.09 개선했다. 제거한 뒤에는 같은 주입이 오히려 해로웠다. 벡터 쌍의 평균 코사인 유사도는 0.1651이었다. 작아 보이는 공통성만으로 전체 효과가 설명되었으므로, ‘벡터가 좁은 원뿔에 몰려 있지 않다’는 이유로 이 대조를 생략해서는 안 된다. NLL은 기록된 정답에 모델이 부여한 확률의 음의 로그로, 낮을수록 그 정답을 더 잘 예측했다는 뜻이다. *(phase 83)*
+
+이 결과의 한계는 한 층, 한 간격, 한 풀링 방식, 한 모델만 시험했다는 점이다.
 
 ## Three: some questions this corpus is the wrong size to ask
 
-After the shared component is removed, own-over-foreign sits at +0.0210
-[−0.0005, +0.0427] on 997 trajectories — the corpus ceiling. It excludes neither
-zero nor the 0.02 bar fixed before running. Quadrupling the sample from 250 halved
-the estimate, which is what noise does and a real effect does not. Resolving it
-needs 1,500–2,500 trajectories: more traces, not a longer run. *(phase 85)*
+공통 성분을 뺀 뒤 자기 벡터가 다른 작업 벡터보다 나은 정도는 997개 궤적에서 +0.0210 [−0.0005, +0.0427]이었다. 궤적은 한 에이전트 실행의 행동 순서를 뜻한다. 997개는 이 말뭉치에서 확보할 수 있는 최대치인데도, 구간에는 ‘차이 없음’인 0과 실행 전에 정한 최소 효과 0.02가 모두 들어 있었다. *(phase 85)*
 
-This is a third verdict alongside closed and open, and it was written down before
-the number existed precisely so it could not be rounded into either.
+따라서 ‘효과가 없다’와 ‘충분히 유용하다’ 중 어느 쪽도 확정할 수 없다. 표본을 250개에서 약 네 배로 늘리자 추정 효과는 절반으로 줄었다. 원 기록은 이를 안정된 실효과보다 표본 잡음을 의심하게 하는 징후로 해석했다. 이 크기의 효과를 구분하려면 1,500–2,500개 궤적이 필요하다. 같은 자료로 더 오래 실행하는 문제가 아니라, 독립적인 실행 기록을 더 모아야 하는 문제다.
+
+이 때문에 판정은 ‘종료’와 ‘미해결’ 외에 **현재 말뭉치로는 판별 불가**를 따로 둔다. 결과를 유리한 방향으로 반올림하지 않도록, 이 세 번째 판정은 수치를 보기 전에 정했다.
 
 ## Four: the repair endpoint measures orientation, not search
 
-Every repair number here was produced on tasks where finding the defect is not the
-work.
+행동 예측 점수만으로는 실제 작업 개선을 알 수 없어 코드 수리 과제로 옮겼다. 그러나 이 과제에도 해석의 함정이 있었다. 여기서 에이전트가 주로 시간을 쓰는 곳은 버그 위치를 추론하는 과정이 아니라 낯선 저장소에서 경로와 파일을 파악하는 과정이었다.
 
-- 87% of tasks name their own module in the failing test path, and `--blind` only
-  delays that until the agent's first pytest run. *(phase 82)*
-- Eleven of twenty-eight failures at a 9-turn budget **never edited a line**, and
-  the seventeen that succeeded took a median of six actions of nine to reach the
-  first edit. Those actions are `find`, locate, read. *(phases 84, 86)*
-- Orientation costs what it costs: the same tasks reach their first edit at action
-  6 on a 9-turn budget and action 7 on a 25-turn one. The budget decides only how
-  much of itself that consumes. *(phase 84)*
+- 87%의 과제는 실패한 테스트 경로에 대상 모듈 이름이 들어 있었다. `--blind`로 처음에 이름을 숨겨도 첫 pytest 실행에서 다시 드러났다. *(phase 82)*
+- 9턴 예산에서 실패한 28개 중 11개는 **한 줄도 수정하지 않았다**. 성공한 17개도 첫 수정까지 9개 행동 중 중앙값 6개를 썼다. 그 행동은 `find`, 위치 확인, 파일 읽기였다. *(phases 84, 86)*
+- 같은 과제를 9턴 예산으로 실행하면 첫 수정이 행동 6에, 25턴 예산이면 행동 7에 나왔다. 예산이 줄었다고 준비 작업이 크게 빨라지는 것은 아니었다. 준비가 전체 예산에서 차지하는 비중만 커졌다. *(phase 84)*
 
-The condition orderings survive, since conditions ran on identical task lists. What
-does not survive is the claim about what was being ordered. The one measured gain —
-0.64 actions from random notes — was notes shortening orientation, which is real
-and has a low ceiling.
+모든 조건이 같은 과제 목록을 사용했으므로 조건 간 순위는 유지된다. 다만 **무엇의 순위인지**를 고쳐 읽어야 한다. 무작위 노트에서 측정된 0.64행동의 절약은 저장소 파악 시간을 줄인 효과였다. 실제 이득이지만, 어려운 버그 탐색을 기억이 해결했다는 주장으로 확대할 수 없고 개선 여지도 작다.
 
 ## Five: the baseline was a module mix
 
-`ranges` resolves 3 of 14; every other module resolves nearly everything. The
-"60% baseline at 9 turns" was the proportion of `ranges` tasks in the sample.
-*(phase 87)*
+왜 어떤 수리 과제만 어려웠는지 모듈별로 다시 나눠 보았다. `ranges`는 14개 중 3개만 해결되었고, 다른 모듈은 거의 모두 해결되었다. ‘9턴에서 기준 성공률 60%’라는 수치는 그 표본에 `ranges` 과제가 얼마나 섞였는지에 크게 좌우되고 있었다. *(phase 87)*
 
-Nothing measured explains why `ranges` is hard — not size (`version` is 1,250
-lines and resolves 5 of 5), not sibling files (nothing ever opened `_ranges.py`),
-not name repetition (`ranges` is *less* repetitive than three easier modules), not
-operator density. *(phase 88)*
+측정한 속성들은 이 차이를 설명하지 못했다. 크기는 설명이 아니었다. `version`은 1,250줄인데도 5개 중 5개가 해결되었다. 형제 파일 `_ranges.py`는 한 번도 열리지 않았고, 이름 반복도는 오히려 더 쉬운 세 모듈보다 낮았다. 연산자 밀도도 설명하지 못했다. *(phase 88)*
 
-What this rules out is concrete: do not build a task pool on any of those proxies
-and expect difficulty to follow.
+이 결과가 금지하는 추론은 구체적이다. 파일 크기나 구조 같은 대리 지표로 과제 풀을 만들고, 그 지표가 난이도까지 맞춰 줄 것이라고 기대해서는 안 된다.
 
 ## What has never been tested
 
-**Write-time selection.** Everything above stores everything and selects at read
-time. The fly does the reverse — dopamine decides what is written at all, and
-there is no search later. Storing only what an outcome marked as mattering,
-particularly the failures the pipeline discards, has never been run.
+남은 질문은 **저장 시점의 선택(write-time selection)**이다. 위의 에이전트 기록 활용 실험은 기록을 모은 뒤 읽을 때 무엇을 쓸지 골랐다. 초파리에서는 도파민 신호가 애초에 무엇을 기록할지 결정하고, 나중에 별도 검색을 하지 않는다. 그렇다면 결과를 보고 중요했던 순간만 남기면 어떨까? 특히 현재 파이프라인이 버리는 실패 기록에서 ‘이 길은 피하라’는 지식을 얻을 수 있을까?
 
-It is untestable on this task family, and that is now measured rather than
-suspected. An avoid-line names a path already found wrong, and no pool here
-contains one. Three pools were tried — local at 25 turns, local at 12 blind,
-cross-module at 12/9 — and each produced zero dead-end material for a different
-reason: the budget never bound, then the failing test named the module, then the
-draw landed entirely in near-ceiling modules. *(phase 89)*
+이 가설은 아직 실행으로 검증되지 않았다. 그리고 현재 수리 과제에서는 검증할 수 없다는 사실까지 측정되었다. 피해야 할 경로를 쓰려면 에이전트가 실제로 잘못된 길에 들어간 기록이 필요하다. 하지만 25턴 로컬 풀, 12턴 blind 로컬 풀, 12/9턴 교차 모듈 풀을 시험해도 그런 막다른 경로가 하나도 나오지 않았다. 각각 예산이 충분했거나, 테스트 이름이 모듈을 알려 주었거나, 거의 모두 풀리는 모듈만 추출되었기 때문이다. *(phase 89)*
 
-Sampling the one confirmed-hard module would not help either: its eleven failures
-reached zero edits, so it produces agents that never arrive at the source rather
-than agents that arrive and are wrong. Testing write-time selection needs a
-setting where locating the defect is genuinely the work.
+어려운 `ranges`만 뽑아도 해결되지 않는다. `ranges`의 실패 11개는 모두 수정 0회였다. 소스에 도달한 뒤 잘못 고친 것이 아니라, 소스에 도달하기 전에 끝난 실행들이다. 저장 시점 선택을 시험하려면 **결함 위치를 찾는 것 자체가 실제 과업인 환경**이 필요하다.
 
-The transferable finding from that attempt is not about memory: **task difficulty
-in this harness is almost entirely a module-identity property** — not budget, not
-whether the test names the module, not file size or structure, and phase 88
-established that no measured property of a module predicts it.
+이 시도에서 다른 연구로 옮겨 쓸 수 있는 결론은 메모리 효과가 아니다. **이 평가 도구의 난이도는 거의 모듈 정체성에 달려 있다**는 점이다. 예산, 테스트에 모듈 이름이 나오는지, 파일 크기와 구조로는 설명되지 않았고, Phase 88에서 측정한 어떤 모듈 속성도 이를 예측하지 못했다.
 
 ## What the tooling is worth independently
 
-The harness — mutation-injected defects, pytest as the judge, a diff against
-pristine tests to catch an agent that edits the test instead, tool calls parsed
-from the event stream rather than self-reported — took thirteen defects to get
-right, four of which passed their own checks. It answers "does X help an agent"
-for any X, and the defect list in `board/004` is more transferable than any result
-here.
+평가 도구 자체에는 재사용할 가치가 있다. 코드에 변이를 넣고 pytest로 수리를 판정하며, 원래 테스트와 diff를 비교해 에이전트가 테스트를 고쳐 통과한 경우를 잡는다. 도구 호출 수도 자기 보고가 아니라 이벤트 스트림에서 읽는다. 이를 제대로 만들기까지 결함 13개를 찾았고, 그중 4개는 자체 점검을 통과하고도 남아 있었다. 이 도구는 메모리뿐 아니라 ‘어떤 X가 에이전트에게 도움이 되는가’를 시험하는 데 쓸 수 있다. `board/004`의 결함 목록은 개별 결과보다 다른 연구에 옮기기 쉽다.
 
-The one thing in the fly line that stands alone: `compartment_valence.py` reads
-each mushroom-body compartment's valence sign off raw anatomy, PAM against PPL1
-presynapses, and recovers the textbook horizontal-reward / vertical-punishment
-split with nothing fitted.
+초파리 연구에서 독립적으로 남는 결과도 있다. `compartment_valence.py`는 각 버섯체 구획의 PAM 대 PPL1 시냅스전 연결 수를 원시 해부 데이터에서 읽는다. 아무것도 학습시키지 않고 교과서적인 수평엽 보상 / 수직엽 처벌 구분을 복원했다. 이것은 배선으로 에이전트의 작업 성능을 개선했다는 결과와 구분해야 한다.

@@ -9,7 +9,11 @@ researched: 2026-10-01
 # Onyx
 
 > [!summary] 한줄요약
-> 50+ 사내 앱(Confluence, Google Drive, Slack, GitHub 등)의 문서·메타데이터·권한을 미리 인덱싱해 두고, 그 위에서 hybrid 검색 기반 Agentic RAG, Deep Research, custom agent, MCP 서버, 코드 샌드박스를 제공하는 self-host 가능 AI 플랫폼. 옛 이름은 Danswer로 보이며 Community Edition은 MIT, `ee` 디렉터리는 별도 Enterprise 라이선스다.
+> 사내 앱의 문서와 권한을 미리 인덱싱해 검색·에이전트 기능에 제공하는 자체 호스팅 가능 AI 플랫폼이다.
+
+- **연결 대상**: Confluence, Google Drive, Slack, GitHub 등 50+ 사내 앱의 문서·메타데이터·권한.
+- **제공 기능**: hybrid 검색 기반 Agentic RAG, Deep Research, custom agent, MCP 서버, 코드 샌드박스.
+- **이력과 라이선스**: 옛 이름은 Danswer로 보인다. Community Edition은 MIT이고 `ee` 디렉터리는 별도 Enterprise 라이선스를 따른다.
 
 > [!info] 이 노트의 근거
 > 2026-10-01 시점에 `git clone --depth 1`로 받은 저장소(README 전문, `LICENSE`, `backend/`, `deployment/`, `docs/`, `cli/`, `pyproject.toml`, `backend/onyx/connectors/README.md`, `backend/onyx/background/README.md`, `backend/onyx/document_index/opensearch/README.md`, `backend/onyx/mcp_server/README.md`, `docs/AUDIT_LOGGING.md`)와 `gh api` 결과를 직접 읽고 쓴 것이다. 실제로 기동해 보거나 성능을 측정하지는 않았다. 읽지 못했거나 확인하지 못한 부분은 본문에 "확인 못함"으로 표시했다.
@@ -93,7 +97,15 @@ flowchart LR
   Agent --> Tools[web search / MCP / code-interpreter / skills]
 ```
 
-흐름을 글로 풀면 이렇다. (1) 커넥터가 외부 소스에서 문서를 끌어온다. (2) 문서는 청크로 나뉘어(`backend/onyx/indexing/chunker.py`, 의존성에 `chonkie`가 있다) 임베딩된 뒤 OpenSearch에 색인된다. 문서·커넥터 상태·사용자는 PostgreSQL에 저장된다. (3) 별도 작업이 소스의 권한/그룹을 주기적으로 동기화한다. (4) 사용자가 질문하면 `api_server`의 채팅 루프(`backend/onyx/chat/llm_loop.py`)가 LLM을 호출하고, LLM이 `search_tool`을 부르면 질의가 인덱스로 가고 사용자 권한에 맞는 청크만 반환된다. (5) 결과에 인용(citation, `citation_processor.py`)이 붙어 스트리밍된다. 위 흐름은 디렉터리·모듈 이름과 README 서술을 종합한 것이며, 모든 호출 경로를 코드로 끝까지 추적한 것은 아니다.
+데이터는 다음 순서로 흐른다.
+
+1. **수집**: 커넥터가 외부 소스에서 문서를 가져온다.
+2. **색인·저장**: 문서를 청크로 나누고 임베딩해 OpenSearch에 색인한다. 청킹 코드는 `backend/onyx/indexing/chunker.py`이며 의존성에 `chonkie`가 있다. 문서·커넥터 상태·사용자는 PostgreSQL에 저장한다.
+3. **권한 동기화**: 별도 작업이 소스의 권한과 그룹을 주기적으로 동기화한다.
+4. **질의·검색**: 사용자가 질문하면 `api_server`의 채팅 루프(`backend/onyx/chat/llm_loop.py`)가 LLM을 호출한다. LLM이 `search_tool`을 부르면 인덱스를 검색하고 사용자 권한에 맞는 청크만 반환한다.
+5. **응답**: 결과에 인용(citation, `citation_processor.py`)을 붙여 스트리밍한다.
+
+이 흐름은 디렉터리·모듈 이름과 README를 종합한 것이다. 모든 호출 경로를 코드로 끝까지 추적한 것은 아니다.
 
 ## 4. 핵심 기능 상세
 
@@ -179,7 +191,14 @@ bash install.sh --lite --no-prompt   # 인덱싱 없이 UI만 시험
 
 ### 5.2 Docker Compose 수동 배포
 
-`deployment/README.md`는 compose 파일 세 개(`docker-compose.yml`, `docker-compose.prod.yml`, `docker-compose.prod-no-letsencrypt.yml`)가 `docker-compose.template.yml`에서 `ods generate-compose --write`로 생성되므로 직접 수정하지 말라고 못 박는다. 운영용 compose 상단 주석은 다음을 요구한다: nginx(80/443) 외 포트 노출 제거, 기본 `minioadmin` 대신 강한 객체 저장소 자격증명(`S3_AWS_*`) 설정, nginx에 SSL 인증서 볼륨 추가, 적절한 `DOMAIN` 지정. 즉 기본 파일은 평가용이고 운영은 별도 하드닝이 필요하다.
+`deployment/README.md`에 따르면 compose 파일 세 개(`docker-compose.yml`, `docker-compose.prod.yml`, `docker-compose.prod-no-letsencrypt.yml`)는 `docker-compose.template.yml`에서 `ods generate-compose --write`로 생성된다. 따라서 생성된 파일을 직접 수정하면 안 된다.
+
+운영용 compose 상단 주석은 다음 하드닝을 요구한다. 기본 파일은 평가용으로 읽어야 한다.
+
+- nginx(80/443) 외의 포트 노출 제거
+- 기본 `minioadmin` 대신 강한 객체 저장소 자격증명(`S3_AWS_*`) 설정
+- nginx에 SSL 인증서 볼륨 추가
+- 환경에 맞는 `DOMAIN` 지정
 
 ```bash
 git clone --depth 1 https://github.com/onyx-dot-app/onyx.git
@@ -252,7 +271,13 @@ onyx-cli chat --agent-name "Support Agent"
 
 장점: 커넥터 폭, 권한 동기화 개념, 상세한 배포 자산(Compose, Helm, Terraform, ECS), 감사 로그와 OCSF 정렬, MCP 서버·CLI·Chrome 확장 등 접점의 풍부함, 매우 빠른 개발 속도, OpenSearch hybrid 구현 과정을 문서로 남기는 문화.
 
-한계: (1) 구성 요소가 많아 운영 복잡도가 높다(PostgreSQL, OpenSearch, Redis, MinIO/SeaweedFS, 모델 서버 2개, Celery 워커 다수). Lite 외에는 가볍게 돌리기 어렵다. (2) 엔터프라이즈 기능이 EE 라이선스에 묶여 있다. (3) 인덱스 전환(Vespa에서 OpenSearch로)이 진행되는 흔적이 있어 업그레이드 시 마이그레이션 주의 필요. (4) Python 3.13 요구, 의존성 고정이 많아 사내 커넥터를 커스텀하면 포크 유지 비용이 생긴다. (5) 한국어 검색 품질(토크나이저, 임베딩 모델 선택)은 확인하지 못했다. (6) 성능·정확도 수치를 제3자 벤치마크로 검증하지 못했다.
+한계는 운영 부담과 검증 공백으로 나눌 수 있다.
+
+- **운영 복잡도**: PostgreSQL, OpenSearch, Redis, MinIO/SeaweedFS, 모델 서버 2개, Celery 워커 다수가 필요하다. Lite 외에는 가볍게 돌리기 어렵다.
+- **라이선스 경계**: 엔터프라이즈 기능은 EE 라이선스에 묶여 있다.
+- **마이그레이션**: Vespa에서 OpenSearch로 인덱스를 전환하는 흔적이 있어 업그레이드 시 주의가 필요하다.
+- **커스텀 유지 비용**: Python 3.13을 요구하고 고정된 의존성이 많다. 사내 커넥터를 수정하면 포크 유지 비용이 생긴다.
+- **미확인 품질**: 한국어 검색 품질(토크나이저, 임베딩 모델 선택)은 확인하지 못했다. 성능·정확도 수치도 제3자 벤치마크로 검증하지 못했다.
 
 ## 10. 보안·운영 리스크
 

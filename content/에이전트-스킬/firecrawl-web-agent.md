@@ -9,14 +9,25 @@ researched: 2026-10-01
 # Firecrawl Web Agent
 
 > [!summary] 한줄요약
-> Firecrawl의 호스티드 리서치 에이전트(firecrawl.dev/app/agent)와 같은 구조를 직접 만들어 쓸 수 있게 공개한 MIT 오픈소스 기반 코드. LangChain **Deep Agents**를 하네스로, Firecrawl의 Search/Scrape/Interact(브라우저 자동화)를 Vercel AI SDK 도구로 연결해 "계획 → 행동 → 관찰" 루프, 병렬 subagent, SKILL.md 플레이북, 스키마 강제 JSON 출력, 컨텍스트 compaction을 제공한다. 단 모든 웹 접근이 Firecrawl API 키(유료 크레딧)를 전제로 한다.
+> Firecrawl 도구와 Deep Agents를 결합한 웹 리서치 에이전트 기반 코드다. 탐색 결과를 재사용 가능한 수집 스크립트로 내보낼 수 있다.
+
+Firecrawl의 호스티드 리서치 에이전트(firecrawl.dev/app/agent)와 같은 구조를 직접 만들어 쓸 수 있게 공개한 MIT 오픈소스 기반 코드. LangChain **Deep Agents**를 하네스로, Firecrawl의 Search/Scrape/Interact(브라우저 자동화)를 Vercel AI SDK 도구로 연결해 "계획 → 행동 → 관찰" 루프, 병렬 subagent, SKILL.md 플레이북, 스키마 강제 JSON 출력, 컨텍스트 compaction을 제공한다.
+
+단 모든 웹 접근이 Firecrawl API 키(유료 크레딧)를 전제로 한다.
 
 > [!note] 저장소의 위치
 > 이 저장소는 "agent-core(라이브러리) + 템플릿 3종(Next.js, Express, Library)"이다. README가 스스로 "open-source foundation to build your own — fork it, swap models, add skills, and deploy however you want"라고 쓴다. 호스티드 제품은 Firecrawl의 자체 "Spark 1" 모델을 쓴다고 하지만 이 저장소에는 그 모델이 없고 Gemini/Claude/OpenAI/OpenAI 호환 모델을 붙이는 구조다(`resolve-model.ts`).
 
 ## 1. 배경 — 해결하는 문제
 
-웹 리서치 자동화의 흔한 실패 유형은 (1) 첫 페이지만 긁고 "충분하다"고 선언하는 조기 종료, (2) 모델이 학습 데이터로 값을 채워 넣는 환각, (3) 긴 스크레이프 결과로 컨텍스트가 터지는 문제, (4) 사이트마다 필요한 탐색 요령(페이지네이션, 필드 위치)이 달라 매번 처음부터 시행착오를 겪는 문제다. 이 저장소는 이를 코드와 프롬프트로 정면 대응한다.
+웹 리서치 자동화에서 흔히 생기는 실패는 다음과 같다.
+
+1. 첫 페이지만 긁고 "충분하다"고 선언하는 조기 종료
+2. 모델이 학습 데이터로 값을 채워 넣는 환각
+3. 긴 스크레이프 결과로 컨텍스트가 터지는 문제
+4. 사이트마다 필요한 탐색 요령(페이지네이션, 필드 위치)이 달라 매번 처음부터 시행착오를 겪는 문제
+
+이 저장소는 이를 코드와 프롬프트로 정면 대응한다.
 
 - 시스템 프롬프트가 "페이지에서 스크레이프한 사실만 쓴다. 학습 데이터로 채우지 않는다"를 최우선 임무로 박는다(`mission`, `known_failure_patterns`).
 - `completeness_policy`: 목록을 긁은 뒤 "페이지가 주장하는 총 개수 vs 실제 추출 개수 vs 페이지네이션 진행 vs 요청 필드 vs 채운 필드"를 스스로 점검하게 한다.
@@ -68,21 +79,32 @@ flowchart LR
 
 ### 2.3 Orchestrator와 Worker의 위임 정책
 
-시스템 프롬프트는 병렬 위임을 "기본 수단"이 아니라 "정당화될 때만"으로 제한한다. 작은 작업(약 8 step 미만)이거나 대상이 독립적이지 않거나 `interact`가 필요하면 위임하지 않고, 독립 대상이 5개 이상이거나 사용자가 명시적으로 병렬·전수 조사를 요구할 때만 `spawnAgents`를 쓴다. 각 워커는 격리된 컨텍스트를 가지므로 "정확한 URL, 추출 필드, 반환 형식, 완료 기준"을 포함한 자급자족형 프롬프트가 필요하고, 막연한 위임("이 회사 조사해줘")은 나쁜 예로 명시돼 있다. 이는 멀티에이전트 설계에서 "위임 프롬프트 품질" 가이드로 그대로 읽을 만하다.
+시스템 프롬프트는 병렬 위임을 "기본 수단"이 아니라 "정당화될 때만"으로 제한한다. 작은 작업(약 8 step 미만)이거나 대상이 독립적이지 않거나 `interact`가 필요하면 위임하지 않고, 독립 대상이 5개 이상이거나 사용자가 명시적으로 병렬·전수 조사를 요구할 때만 `spawnAgents`를 쓴다. 각 워커는 격리된 컨텍스트를 가지므로 "정확한 URL, 추출 필드, 반환 형식, 완료 기준"을 포함한 자급자족형 프롬프트가 필요하고, 막연한 위임("이 회사 조사해줘")은 나쁜 예로 명시돼 있다.
+
+이는 멀티에이전트 설계에서 "위임 프롬프트 품질" 가이드로 그대로 읽을 만하다.
 
 ## 3. 핵심 기능 상세
 
 ### 3.1 Skills와 사이트 플레이북
-`src/skills/definitions/`에 기본 6종이 있다: `deep-research`(3개 이상 출처의 교차 검증, 신뢰도 high/medium/low 부여, 반대 관점 포함), `e-commerce`, `financial-research`(사이트별 `sites/sec-gov.md`, `sites/yahoo-finance.md`), `pricing-tracker`(과금 단위 식별: per seat/per token/per GB 등, 연간 할인·초과 요금·좌석 최소·기능 게이팅 같은 함정 표기), `competitor-analysis`, `structured-extraction`. `discovery.ts`가 각 디렉터리의 `SKILL.md` frontmatter를 파싱하고 `sites/*.md`의 `domains` 메타로 **URL 도메인에 맞는 플레이북을 자동 매칭**한다. 실행 시 `skills: ['deep-research']`로 미리 로드하거나 `skillInstructions`로 실행별 지침을 덮어쓸 수 있다("peer-reviewed 출처만 사용" 등). 사용자 정의 스킬은 `skillsDir`로 지정한다.
+`src/skills/definitions/`에 기본 6종이 있다: `deep-research`(3개 이상 출처의 교차 검증, 신뢰도 high/medium/low 부여, 반대 관점 포함), `e-commerce`, `financial-research`(사이트별 `sites/sec-gov.md`, `sites/yahoo-finance.md`), `pricing-tracker`(과금 단위 식별: per seat/per token/per GB 등, 연간 할인·초과 요금·좌석 최소·기능 게이팅 같은 함정 표기), `competitor-analysis`, `structured-extraction`. `discovery.ts`가 각 디렉터리의 `SKILL.md` frontmatter를 파싱하고 `sites/*.md`의 `domains` 메타로 **URL 도메인에 맞는 플레이북을 자동 매칭**한다.
+
+실행 시 `skills: ['deep-research']`로 미리 로드하거나 `skillInstructions`로 실행별 지침을 덮어쓸 수 있다("peer-reviewed 출처만 사용" 등). 사용자 정의 스킬은 `skillsDir`로 지정한다.
 
 ### 3.2 Subagents
-두 종류가 있다. (1) 동적 `spawnAgents` 워커(최대 6개, step 10), (2) 사전 정의된 `subAgents`(id, name, description, instructions, model, tools, skills, maxSteps). 사전 정의 subagent마다 서로 다른 모델을 줄 수 있다(예: 가격 분석은 Claude, 기능 리뷰는 Gemini). Deep Agents의 `task` 툴과 `subagents` primitive에 기반한다. 각 subagent는 도구 범위(`tools: ['scrape']` 등)와 자신의 interact 브라우저 세션 상태를 분리한다.
+두 종류가 있다.
+
+1. 동적 `spawnAgents` 워커(최대 6개, step 10)
+2. 사전 정의된 `subAgents`(id, name, description, instructions, model, tools, skills, maxSteps).
+
+사전 정의 subagent마다 서로 다른 모델을 줄 수 있다(예: 가격 분석은 Claude, 기능 리뷰는 Gemini). Deep Agents의 `task` 툴과 `subagents` primitive에 기반한다. 각 subagent는 도구 범위(`tools: ['scrape']` 등)와 자신의 interact 브라우저 세션 상태를 분리한다.
 
 ### 3.3 구조화 출력
 `schema`에 JSON 예시 객체를 넘기면(null 자리표시자 형태, README의 NVIDIA 예) 에이전트가 정확히 그 필드를 채우고 `formatOutput`으로 JSON을 반환한다. `format: 'markdown'`도 가능하다. 응답 형태는 `{ text, data, format, steps, usage, durationMs, model }`.
 
 ### 3.4 exportSkill — 실행을 재사용 가능한 skill로 결정화
-`exportSkill: true`를 주면 실행 결과에 `exportedSkill`이 포함된다: `name`, `skillMd`(self-healing 지침이 있는 전체 SKILL.md), `workflow`(`@mendable/firecrawl-js`를 쓰는 결정론적 Node.js 스크립트), `schema`(출력 검증용 JSON Schema). 한 번은 에이전트가 탐색하고, 이후에는 `FIRECRAWL_API_KEY=fc-... node workflow.mjs`처럼 **LLM 없이 스크립트만** 돌릴 수 있다(종료 코드 0=수집 성공, 1=부분 성공, 2=URL stale이므로 에이전트 재실행 필요). 반복 모니터링(가격 추적 등)에서 비용을 줄이는 영리한 설계다. [[generic-agent]]의 "작업을 skill로 결정화"와 같은 발상이다.
+`exportSkill: true`를 주면 실행 결과에 `exportedSkill`이 포함된다: `name`, `skillMd`(self-healing 지침이 있는 전체 SKILL.md), `workflow`(`@mendable/firecrawl-js`를 쓰는 결정론적 Node.js 스크립트), `schema`(출력 검증용 JSON Schema). 한 번은 에이전트가 탐색하고, 이후에는 `FIRECRAWL_API_KEY=fc-... node workflow.mjs`처럼 **LLM 없이 스크립트만** 돌릴 수 있다(종료 코드 0=수집 성공, 1=부분 성공, 2=URL stale이므로 에이전트 재실행 필요).
+
+반복 모니터링(가격 추적 등)에서 비용을 줄이는 영리한 설계다. [[generic-agent]]의 "작업을 skill로 결정화"와 같은 발상이다.
 
 ### 3.5 스트리밍·계획
 `agent.stream()`은 이벤트 단위(`event.type === 'text'` 등) 스트림, `agent.plan(prompt)`는 실행 없이 계획만 반환한다. HTTP API는 `openapi.yaml`로 명세돼 있고 모든 템플릿이 구현한다: `POST /v1/run`, `POST /v1/plan`, 헬스 `GET /`.
@@ -159,7 +181,9 @@ Node 20 이상이 필요(`engines.node >= 20`). LangChain 제공자 패키지(`@
 
 ## 7. 장단점·한계·성숙도
 
-사실 지표(GitHub API 2026-10-01): stars 1,240 / forks 160 / open issues 3(조회 시 목록에는 `#13 Creating a Browser Extension` 1건) / MIT / TypeScript / 생성 2026-03-27 / **마지막 push 2026-04-19** / 커밋 538개 / 기여자 2명(API 응답 길이) / GitHub Release 없음 / archived 아님. 즉 초기에 집중 개발된 뒤 5개월 넘게 push가 없는 상태이며, 커밋 538개 대비 기여자 2명이라 사실상 소수 팀(또는 자동 동기화)이 관리하는 저장소로 보인다. 정체 이유(제품 코드가 다른 곳으로 옮겨졌는지 등)는 확인하지 못했다. `package.json`의 repository URL이 `firecrawl/firecrawl-agent`로 되어 있어 과거 이름에서 이름이 바뀐 흔적이 있다.
+사실 지표(GitHub API 2026-10-01): stars 1,240 / forks 160 / open issues 3(조회 시 목록에는 `#13 Creating a Browser Extension` 1건) / MIT / TypeScript / 생성 2026-03-27 / **마지막 push 2026-04-19** / 커밋 538개 / 기여자 2명(API 응답 길이) / GitHub Release 없음 / archived 아님.
+
+즉 초기에 집중 개발된 뒤 5개월 넘게 push가 없는 상태이며, 커밋 538개 대비 기여자 2명이라 사실상 소수 팀(또는 자동 동기화)이 관리하는 저장소로 보인다. 정체 이유(제품 코드가 다른 곳으로 옮겨졌는지 등)는 확인하지 못했다. `package.json`의 repository URL이 `firecrawl/firecrawl-agent`로 되어 있어 과거 이름에서 이름이 바뀐 흔적이 있다.
 
 장점
 - 작고 읽기 쉬운 코드(4.7천 줄)로 "웹 리서치 에이전트의 정석 구성"을 빠르게 이해할 수 있다.

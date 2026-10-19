@@ -8,20 +8,28 @@ researched: 2026-10-01
 ---
 # WISV
 
-> [!summary] 한줄요약
-> device(소형 drafter)와 edge(대형 target) 사이에서 돌아가는 speculative decoding에서, 토큰 단위 엄격 일치(argmax 일치) 대신 "drafter hidden + target hidden + 채널 상태(CSI)"를 입력받는 경량 MLP decision head가 불일치 토큰을 수락할지 정한다. 채널이 나쁠수록 더 관대하게 수락해 round 수와 지연을 줄이는, 통신 비용을 검증 정책에 직접 넣은 judge-style verification이다.
+> [!summary] 핵심 요약
+> 무선 device-edge 환경의 speculative decoding에서 **통신 비용을 토큰 수락 정책에 반영**한 judge-style verification이다.
+>
+> 단말의 소형 drafter와 edge의 대형 target 사이에서, 경량 MLP decision head가 불일치 토큰의 수락 여부를 정한다. 입력은 drafter hidden, target hidden, 채널 상태(CSI)다. 토큰 단위의 엄격한 argmax 일치만 요구하지 않는다.
+>
+> 채널이 나쁠수록 더 관대하게 수락해 interaction round 수와 지연을 줄인다.
 
 > [!info] 열람 범위
 > arXiv HTML 전문(https://arxiv.org/html/2604.17701, v1, 2026-04-20)을 서론부터 결론, 표 I까지 읽었다. 본문에 공식 코드 저장소 링크는 없었다(본문 내 GitHub 링크 검색 결과 없음). Fig. 3, 4, 5, 7은 그림이라 텍스트 서술만 확인했고, 그림 속 개별 점 수치는 읽지 못했다. 분야(IEEE 통신/정보이론, cs.IT)가 우리 에이전트 메모리·RAG 맥락과 거리가 있어 활용 절은 "발상 차용" 수준으로 제한했다.
 
 ## 1. 문제의식·배경
 
-LLM 추론은 중앙 클라우드에서 device-edge 구조로 이동하고 있다. 지연 요구와 단말 하드웨어 한계 때문이다. 여기서 speculative decoding을 쓰면 단말의 가벼운 drafter(이 논문에서는 Llama-3.2-1B-Instruct)가 K개 토큰을 먼저 제안하고, edge 서버의 target(Llama-3.1-8B-Instruct)이 한 번의 forward pass로 이를 병렬 검증한다. 문제는 검증 방식이다. 기존 방식은 크게 두 가지다.
+LLM 추론은 중앙 클라우드에서 device-edge 구조로 이동하고 있다. 지연 요구와 단말 하드웨어 한계 때문이다. 여기서 speculative decoding을 쓰면 단말의 가벼운 drafter(이 논문에서는 Llama-3.2-1B-Instruct)가 K개 토큰을 먼저 제안하고, edge 서버의 target(Llama-3.1-8B-Instruct)이 한 번의 forward pass로 이를 병렬 검증한다.
+
+문제는 검증 방식이다. 기존 방식은 크게 두 가지다.
 
 - **greedy verification**: draft 토큰이 target의 argmax와 같으면 수락, 첫 불일치에서 멈추고 rollback.
 - **speculative sampling (rejection sampling)**: 수락 확률 α(x,y)=min{1, p_T(y|x)/p_D(y|x)} (논문 식 1)로 수락하고, 거절하면 잔차분포 r ∝ p_T − α·p_D (식 2)에서 재샘플링해 target 분포를 정확히 보존한다.
 
-두 방식 모두 "의미상 괜찮은 토큰"도 토큰 레벨에서 어긋나면 거절한다. 단일 호스트에서는 이게 약간의 낭비에 그치지만, 무선 device-edge에서는 거절 하나가 곧 **추가 interaction round**이고, 각 round는 최소 1 RTT와 직렬화 지연을 만든다. 채널이 느리거나 흔들릴수록 거절의 비용이 커진다. 저자들의 핵심 관찰은 "토큰 수락은 단순한 정답/오답 이진 판정이 아니라 통신 비용 하에서의 trade-off"라는 점이다(I-B절).
+두 방식 모두 "의미상 괜찮은 토큰"도 토큰 레벨에서 어긋나면 거절한다. 단일 호스트에서는 이게 약간의 낭비에 그치지만, 무선 device-edge에서는 거절 하나가 곧 **추가 interaction round**이고, 각 round는 최소 1 RTT와 직렬화 지연을 만든다.
+
+채널이 느리거나 흔들릴수록 거절의 비용이 커진다. 저자들의 핵심 관찰은 "토큰 수락은 단순한 정답/오답 이진 판정이 아니라 통신 비용 하에서의 trade-off"라는 점이다(I-B절).
 
 ### 선행 연구와의 차이
 
@@ -60,7 +68,9 @@ while not finished:
     else:      commit ỹ[1:ĵ-1] + argmax(L[ĵ]); send <ĵ, y*>
 ```
 
-핵심은 decision head가 **mismatch 위치에서만** 호출된다는 점이다(V-C). argmax가 일치하는 위치는 head 없이 그대로 통과한다. 따라서 head는 "엄격 매칭이 너무 일찍 블록을 끊는 지점"에서만 개입하는 보조 모듈이고, 기존 검증 파이프라인의 정합성은 유지된다. 논문은 m_r=|S_r| ≪ K_r이 보통이라고 쓴다.
+핵심은 decision head가 **mismatch 위치에서만** 호출된다는 점이다(V-C). argmax가 일치하는 위치는 head 없이 그대로 통과한다.
+
+따라서 head는 "엄격 매칭이 너무 일찍 블록을 끊는 지점"에서만 개입하는 보조 모듈이고, 기존 검증 파이프라인의 정합성은 유지된다. 논문은 m_r=|S_r| ≪ K_r이 보통이라고 쓴다.
 
 ### 2.2 두 가지 통신 프로토콜 (III-B, IV-A)
 
@@ -73,11 +83,15 @@ drafter hidden을 edge에 어떻게 보내느냐가 핵심 설계 선택이다.
 
 ### 2.3 계산 모델 (IV-B)
 
-드래프터/타깃 지연을 FLOPs 기반으로 모델링한다. 한 토큰 FLOPs를 f(ℓ) ≈ N(c1·d² + c2·d·d_ff + c3·ℓ·d) + c4·d·|V| (식 13)로 근사하고, 시간은 T=F/(αP) (식 11, α는 메모리 대역폭·커널 오버헤드 등을 반영하는 효율 계수)로 둔다. decision head 비용은 2층 MLP 기준 f_J ≈ 2·d_in·d_J + d_J + 2·d_J + 1 (식 17)로 target forward에 비해 무시할 수준이다. round 지연은 T_FH(r)=T_D+T_comm^FH+T_T+T_J (식 18), SH도 동일 구조(식 19)이고, E2E는 round 합이다.
+드래프터/타깃 지연을 FLOPs 기반으로 모델링한다. 한 토큰 FLOPs를 f(ℓ) ≈ N(c1·d² + c2·d·d_ff + c3·ℓ·d) + c4·d·|V| (식 13)로 근사하고, 시간은 T=F/(αP) (식 11, α는 메모리 대역폭·커널 오버헤드 등을 반영하는 효율 계수)로 둔다. decision head 비용은 2층 MLP 기준 f_J ≈ 2·d_in·d_J + d_J + 2·d_J + 1 (식 17)로 target forward에 비해 무시할 수준이다.
+
+round 지연은 T_FH(r)=T_D+T_comm^FH+T_T+T_J (식 18), SH도 동일 구조(식 19)이고, E2E는 round 합이다.
 
 ### 2.4 Decision head (V-A)
 
-입력 z_i = [h_i^D ; h_i^T ; c_r] (식 23), 모델은 선형-ReLU-Dropout-선형의 2층 MLP g_θ와 시그모이드(식 24-25)다. hidden은 기본적으로 두 모델의 **마지막 레이어** hidden state를 쓴다. 학습은 BCE 손실(식 26)로 오프라인 학습하고, 추론 시 p_i ≥ τ이면 거절(식 27)이다. τ는 지연-품질 trade-off 손잡이로, 낮으면 보수적(안전), 높으면 통신 효율 우선(더 많이 수락)이다. 파라미터는 O(d_in·d_J)로 작다.
+입력 z_i = [h_i^D ; h_i^T ; c_r] (식 23), 모델은 선형-ReLU-Dropout-선형의 2층 MLP g_θ와 시그모이드(식 24-25)다. hidden은 기본적으로 두 모델의 **마지막 레이어** hidden state를 쓴다. 학습은 BCE 손실(식 26)로 오프라인 학습하고, 추론 시 p_i ≥ τ이면 거절(식 27)이다.
+
+τ는 지연-품질 trade-off 손잡이로, 낮으면 보수적(안전), 높으면 통신 효율 우선(더 많이 수락)이다. 파라미터는 O(d_in·d_J)로 작다.
 
 ### 2.5 CSI-aware 라벨링 (V-B) - 이 논문의 알맹이
 
@@ -94,7 +108,13 @@ head를 "무엇으로" 학습시키느냐가 CSI 반영의 실체다. 라벨을 
 \pi_t = b_t\cdot\sigma\!\left(\frac{\tilde b_t-\lambda(\mathbf c)}{\rho}\right) % (31) 엔트로피 정규화 closed-form
 ```
 
-해석하면 이렇다. critical mismatch의 영향은 거리에 따라 지수 감쇠로 이웃 위치에 번진다(식 28). CSI에 따라 단조 증가하는 repair 예산 B(c)가 있고(채널이 좋을수록 예산이 큼), 예산 안에서 "중요한 것만 고치고 나머지는 skip" 하도록 Lagrangian 완화를 한다. 임계 구조 a*_t = b_t·1{b̃_t > λ(c)}를 얻은 뒤, 샘플 가능한 정책으로 엔트로피 정규화한 Bernoulli 정책 π_t를 쓴다. 채널이 악화되면 λ(c)가 올라가 repair 확률이 떨어지고, 라벨이 점점 관대해진다. a_t ≤ b_t 제약 때문에 원래 안 중요한 mismatch가 repair로 승격되는 일은 없다(one-way relabeling). 학습 인스턴스는 episode마다 여러 CSI를 샘플해 (x_t=[h_D,t; h_T,t; c], y_t=a_t)로 만든다.
+해석하면 이렇다. critical mismatch의 영향은 거리에 따라 지수 감쇠로 이웃 위치에 번진다(식 28). CSI에 따라 단조 증가하는 repair 예산 B(c)가 있고(채널이 좋을수록 예산이 큼), 예산 안에서 "중요한 것만 고치고 나머지는 skip" 하도록 Lagrangian 완화를 한다.
+
+임계 구조 a*_t = b_t·1{b̃_t > λ(c)}를 얻은 뒤, 샘플 가능한 정책으로 엔트로피 정규화한 Bernoulli 정책 π_t를 쓴다.
+
+채널이 악화되면 λ(c)가 올라가 repair 확률이 떨어지고, 라벨이 점점 관대해진다. a_t ≤ b_t 제약 때문에 원래 안 중요한 mismatch가 repair로 승격되는 일은 없다(one-way relabeling).
+
+학습 인스턴스는 episode마다 여러 CSI를 샘플해 (x_t=[h_D,t; h_T,t; c], y_t=a_t)로 만든다.
 
 이 구조 덕분에 head는 같은 hidden이라도 CSI에 따라 다른 라벨을 학습하고, 추론 때 CSI를 보고 permissiveness를 자동 조절한다.
 
@@ -135,7 +155,11 @@ flowchart LR
 
 읽을 점은 세 가지다. 첫째, SD reject는 전체 어휘 확률을 보내야 해서 20 Mbps에서 지연이 폭발한다(K=64에서 151.7). 둘째, WISV의 AAL은 채널이 나쁠수록(20 Mbps) 더 오른다. K=64에서 15.489에서 17.343이다. 이는 head가 CSI를 보고 관대해졌다는 직접 증거다. 셋째, 지연은 draft 창이 커질수록 처음엔 줄다가(round 감소) 이후 수확 체감하며, 표에서도 K=64 지연이 K=10보다 커서 비단조적이다(본문이 "non-monotonic" 명시).
 
-**헤드라인 수치의 정확한 조건**: 초록의 "AAL 최대 60.8%, round 37.3% 감소"는 본문 VI-B에서 **20 Mbps, SD greedy 대비** 최대치로 서술된다. "E2E 지연 31.4% 감소"는 **500 Mbps에서 WISV FH vs greedy SD**의 최대치다. 즉 세 수치가 서로 다른 조건의 최댓값이고 "tested settings 중 최대"라는 점을 구분해서 읽어야 한다. 표에서 직접 검산하면 K=64, 20 Mbps의 AAL은 10.789에서 17.343으로 약 60.8% 증가, round는 19.272에서 12.092로 약 37.3% 감소해 일치한다.
+**헤드라인 수치의 정확한 조건**: 초록의 "AAL 최대 60.8%, round 37.3% 감소"는 본문 VI-B에서 **20 Mbps, SD greedy 대비** 최대치로 서술된다. "E2E 지연 31.4% 감소"는 **500 Mbps에서 WISV FH vs greedy SD**의 최대치다.
+
+즉 세 수치가 서로 다른 조건의 최댓값이고 "tested settings 중 최대"라는 점을 구분해서 읽어야 한다.
+
+표에서 직접 검산하면 K=64, 20 Mbps의 AAL은 10.789에서 17.343으로 약 60.8% 증가, round는 19.272에서 12.092로 약 37.3% 감소해 일치한다.
 
 **FH vs SH (Fig. 4)**: RTT가 크면(50 ms) SH는 추가 round 때문에 FH보다 느리고 greedy SD보다 약간 나쁠 수도 있다. 저속(20 Mbps)에서 큰 draft 창이면 FH는 uplink payload 때문에 SH보다 약간 느리다. 결론은 "SH는 저속·저RTT, FH는 고속 또는 고RTT"이며 FH가 모든 설정에서 greedy보다 낮은 지연이었다.
 

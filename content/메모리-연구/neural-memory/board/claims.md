@@ -11,8 +11,7 @@ tags:
 
 # What we believe, and what measured it
 
-Nothing goes here on argument alone. Each row names the experiment that produced
-it. Overturned claims move to the bottom with the thing that overturned them.
+여기에는 논리만 그럴듯한 주장을 넣지 않는다. 각 항목은 어떤 실험이 근거인지 밝히고, 뒤집힌 주장은 아래 `Overturned`로 옮겨 뒤집은 원인도 남긴다. 특히 ‘유사도가 무작위보다 못하다’는 결과는 최근 맥락이 이미 있는 에이전트에 과거 행동을 추가한 조건에서 읽어야 한다. 아래 HotpotQA 대조처럼 과제 구조가 달라지면 방향도 달라진다.
 
 ## Standing
 
@@ -31,10 +30,7 @@ similarity costs 0.464 actions against random, resolved [-0.929, -0.036].
 > notes shorten orientation, which is a smaller thing than it reads as.
 > *(phases 82, 84)*
 
-**The reason is duplication, not weakness.** The better a representation captures
-the present, the more the nearest stored item repeats what the prompt already
-says. This predicted the direction of the Qwen-space result before it was run.
-*(phase 75)*
+**표현의 약함보다 내용 중복이 원인이라는 해석이다.** 현재 상황을 더 잘 표현할수록 가장 가까운 저장 항목은 프롬프트에 이미 있는 내용을 반복한다. 이 설명은 Qwen 공간 실험 전에 결과 방향을 예측했다. 따라서 유사도 검색 전반의 무용함이 아니라, 추가한 기록이 현재 맥락에 무엇을 더하는지의 문제다. *(phase 75)*
 
 **Memory as an untrained bias on the residual stream does nothing, and not
 because of the encoder.** Own-trajectory and foreign-trajectory vectors are
@@ -43,11 +39,7 @@ also when the vector is a *gradient*, in the model's own coordinates by
 construction, which is what phase 77's diagnosis predicted would fix it.
 *(phases 77, 83)*
 
-**What looked like a gain there was the mean of the stored directions.** Both own
-and foreign beat no-memory by about 0.09 NLL until the shared component was
-removed, after which the same injection hurts. Average pairwise cosine was 0.1651
-— modest, and enough to account for the entire effect, so "these are not in a
-tight cone" would not have excused skipping the check. *(phase 83)*
+**이득처럼 보인 것은 저장 방향들의 공통 평균 성분이었다.** 그 성분을 빼기 전에는 자기 궤적과 다른 궤적 모두 무기억보다 약 0.09 NLL 좋았지만, 제거한 뒤에는 같은 주입이 해로웠다. 평균 쌍별 코사인 0.1651만으로 전체 효과가 설명되었다. 벡터들이 좁은 원뿔에 몰리지 않았다는 이유로 공통 성분 대조를 생략할 수 없다. *(phase 83)*
 
 **A familiarity filter does not predict where the model will do badly.** 0.4498
 AUC against the model's own output entropy at 0.8179 — it loses by 0.368 and does
@@ -85,21 +77,10 @@ five measurements), familiarity over hidden states (0.4498 AUC against entropy's
 0.7968). Against *real* trajectory outcomes rather than next-action likelihood,
 all of them including entropy sit at chance. — *keymem-20, 2026-09-19*
 
-**Some questions this corpus is the wrong size to ask.** After removing the
-shared component, own-over-foreign sits at +0.0210 [-0.0005, +0.0427] on 997
-independent trajectories — the corpus ceiling. It excludes neither zero nor the
-0.02 bar fixed before running. Quadrupling the sample from 250 halved the
-estimate, which is what noise does and a real effect does not. Resolving it needs
-1,500-2,500 trajectories: more traces, not a longer run. *(phase 85)*
+**현재 말뭉치 크기로 판별할 수 없는 질문도 있다.** 공통 성분 제거 뒤 자기 궤적의 우위는 독립 궤적 997개에서 +0.0210 [-0.0005, +0.0427]이었다. 997개는 확보 가능한 최대치인데, 구간이 0과 사전 기준 0.02를 모두 포함한다. 250개에서 표본을 네 배로 늘리자 추정값은 절반으로 줄어, 원 기록은 안정된 효과보다 잡음을 의심했다. 판별에는 1,500-2,500개 궤적이 필요하다. 같은 자료로 더 오래 실행할 문제가 아니다. *(phase 85)*
 
 ## Overturned
 
-**"The real wiring beats a degree-preserving rewiring" (+0.0495, resolved).**
-The rewiring summed collisions and lost 5,255 of 30,543 synapses, so it beat a
-sparser matrix. With an exact curveball trade the difference is -0.0023, not
-resolved. *(phase 38)*
+**“실제 배선이 연결 수 보존 재배선을 이긴다”(+0.0495, resolved)는 철회되었다.** 재배선 코드가 충돌을 합치며 30,543개 중 5,255개 시냅스를 잃었다. 실제로 이긴 상대는 연결 수가 같은 회로가 아니라 더 성긴 행렬이었다. 정확한 curveball 교환으로 고치면 차이는 -0.0023이며 구별되지 않는다. *(phase 38)*
 
-**"Memory raises agent success from 5/15 to 13/15 at a tight budget."**
-The agent inherited the operator's MCP servers and spent its turns on tool
-discovery; a note block of concrete Bash commands short-circuited that hunt. With
-`--safe-mode` the effect is gone. *(phase 78)*
+**“빡빡한 예산에서 메모리가 성공을 5/15에서 13/15로 올린다”는 철회되었다.** 에이전트가 실행자의 MCP 서버를 물려받아 턴을 도구 탐색에 쓰고 있었고, 구체적 Bash 명령 노트가 그 탐색을 건너뛰게 했다. `--safe-mode`로 통제하면 효과는 사라졌다. 기억의 작업 개선과 실행 환경 탐색의 우회를 혼동한 사례다. *(phase 78)*

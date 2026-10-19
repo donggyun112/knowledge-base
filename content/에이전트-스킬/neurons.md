@@ -9,7 +9,10 @@ researched: 2026-10-01
 # Neurons
 
 > [!summary] 한줄요약
-> llama.cpp·Ollama를 감싸지 않고, Apple MLX의 C++ 연산(`mx::fast::*`) 위에서 transformer forward pass를 직접 구현한 macOS Apple Silicon 전용 로컬 LLM inference 엔진 + CLI + gRPC/OpenAI-compatible 서버 + Flutter GUI. 1인 개발 학습 성격이 강한 소규모 프로젝트(스타 48, MIT, 마지막 push 2026-05-23, v0.7.0)다.
+> Apple MLX의 C++ 연산 위에 모델 추론부터 서버·앱까지 직접 구현한 Apple Silicon용 로컬 LLM 엔진이다.
+
+- **구현 범위**: llama.cpp·Ollama를 감싸지 않고, `mx::fast::*`를 이용해 transformer forward pass를 직접 구성한다. CLI, gRPC/OpenAI-compatible 서버, Flutter GUI도 제공한다.
+- **프로젝트 상태**: macOS Apple Silicon 전용이며 1인 개발·학습 성격이 강하다. 스타 48, MIT, 마지막 push 2026-05-23, v0.7.0인 소규모 프로젝트다.
 
 > [!warning] 조사 시점 주의
 > 조사일(2026-10-01) 기준 GitHub API상 마지막 push와 최신 릴리스(v0.7.0)가 모두 2026-05-23이다. 약 4개월간 갱신이 없으므로 "활발히 유지되는 프로젝트"로 단정할 수 없다. 이후 변경은 확인하지 못했다.
@@ -28,7 +31,13 @@ researched: 2026-10-01
 - 에이전트 기능: MCP 클라이언트 런타임(stdio/SSE), 도구 승인 흐름, 내장 filesystem/shell MCP 서버.
 - 앱: Flutter macOS GUI(로컬은 `dart:ffi`, 원격은 gRPC).
 
-"from scratch"의 범위는 정확히 짚어야 한다. 코드에서 확인한 바로는 Metal 셰이더를 직접 작성하는 것이 아니라 MLX의 C++ API(`mx::fast::rms_norm`, `mx::fast::rope`, `mx::fast::scaled_dot_product_attention`, 양자화 matmul, `mx::compile`, `mx::async_eval`)를 조합해 모델 그래프를 직접 구성한다. 따라서 "프레임워크 없이 Metal만으로"가 아니라 "MLX를 텐서/커널 런타임으로 쓰되, 모델 구현·KV cache·샘플러·서버는 직접"이라고 이해하는 것이 정확하다. 또한 MLX는 upstream이 아니라 작성자의 fork(`dexwritescode/mlx`)를 특정 커밋으로 고정해 FetchContent로 받는다(아래 리스크 참조).
+"from scratch"의 범위는 다음처럼 나눠 읽어야 한다.
+
+- **MLX에 맡기는 부분**: 텐서 연산과 Metal 커널 실행. 직접 Metal 셰이더를 작성하는 방식은 아니다.
+- **직접 구현한 부분**: 모델 그래프, KV cache, 샘플러, 서버. 코드에서는 MLX의 C++ API(`mx::fast::rms_norm`, `mx::fast::rope`, `mx::fast::scaled_dot_product_attention`, 양자화 matmul, `mx::compile`, `mx::async_eval`)를 조합한다.
+- **의존성 경계**: upstream MLX 대신 작성자의 fork(`dexwritescode/mlx`)를 특정 커밋으로 고정해 FetchContent로 받는다(아래 리스크 참조).
+
+즉 MLX를 텐서/커널 런타임으로 활용하면서 그 위의 추론 스택을 직접 구현한 프로젝트다.
 
 ## 동작 원리 · 아키텍처
 
@@ -126,7 +135,18 @@ sequenceDiagram
 
 README 표 기준 지원 family는 Llama 2/3·TinyLlama, Mistral, Qwen2/2.5/3, Qwen3 MoE(예: Qwen3-30B-A3B, Qwen3.6-35B-A3B), Gemma/Gemma2/Gemma3, fp16/bf16 비양자화 모델이다. 모델은 `mlx-community`의 MLX 양자화 변형을 HuggingFace에서 내려받는다. GGUF는 지원 대상이 아니다(README에 GGUF 언급 없음).
 
-성능은 README 자체 측정치(M2 Max 64GB, greedy, release)다. TinyLlama 1.1B 4-bit 약 265 tok/s, Gemma 3 1B 약 190, Gemma 3 4B QAT 약 60, Llama-3.1 8B 4-bit 약 61, Mistral 7B 약 57, Qwen3.6 35B-A3B(활성 3.6B) 약 77 tok/s. MoE는 토큰당 활성 파라미터가 작아 dense 3~4B급 속도라는 설명이 붙어 있다. 독립 재현·비교는 하지 못했다.
+성능은 **README 자체 측정치**다. 측정 조건은 M2 Max 64GB, greedy, release이며 독립 재현·비교는 하지 못했다.
+
+| 모델 | 생성 속도(약, tok/s) |
+|---|---:|
+| TinyLlama 1.1B 4-bit | 265 |
+| Gemma 3 1B | 190 |
+| Gemma 3 4B QAT | 60 |
+| Llama-3.1 8B 4-bit | 61 |
+| Mistral 7B | 57 |
+| Qwen3.6 35B-A3B(활성 3.6B) | 77 |
+
+README는 MoE의 토큰당 활성 파라미터가 작아 dense 3~4B급 속도가 나온다고 설명한다.
 
 ### 2) CLI
 
@@ -160,7 +180,10 @@ GUI/CLI의 MCP 화면은 README 표에서 🚧(미완)이고 gRPC 쪽만 ✅다.
 
 ## 설치 · 사용법
 
-사전 요건(README): macOS 14+ Apple Silicon, Xcode command line tools, CMake, gRPC, Protobuf, Flutter SDK. Rust 툴체인(`cargo`)도 `tokenizers-sys` 빌드에 필요한데 README 사전 요건 목록에는 빠져 있고 Makefile에서 확인했다.
+사전 요건은 출처를 구분해 확인해야 한다.
+
+- **README 명시**: macOS 14+ Apple Silicon, Xcode command line tools, CMake, gRPC, Protobuf, Flutter SDK.
+- **Makefile에서 추가 확인**: `tokenizers-sys` 빌드에 Rust 툴체인(`cargo`)이 필요하다. README 사전 요건 목록에는 빠져 있다.
 
 ```bash
 xcode-select --install

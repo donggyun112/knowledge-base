@@ -9,13 +9,21 @@ researched: 2026-10-01
 # Graphify
 
 > [!summary] 한줄요약
-> 코드·문서·PDF·이미지·영상을 NetworkX 기반 knowledge graph(`graph.json`)로 바꾸고, AI 코딩 어시스턴트(Claude Code, Codex, Cursor 등 20여 종)가 grep 대신 `query`/`path`/`explain`으로 질의하게 만드는 `/graphify` skill + Python 라이브러리. 코드는 tree-sitter AST로 LLM 없이 로컬에서 파싱하고, 엣지마다 `EXTRACTED`/`INFERRED`/`AMBIGUOUS` 신뢰 태그를 붙인다. 6개월 만에 스타 12만을 넘긴 YC S26 회사의 오픈소스 코어이며 릴리스가 하루 단위로 나올 만큼 빠르게 변한다.
+> 코드·문서·PDF·이미지·영상을 knowledge graph로 바꾸고, AI 코딩 어시스턴트가 그래프를 질의하게 하는 `/graphify` skill과 Python 라이브러리다.
+
+그래프는 NetworkX 기반 `graph.json`으로 저장한다. Claude Code, Codex, Cursor 등 20여 종의 어시스턴트가 grep 대신 `query`/`path`/`explain`으로 탐색한다. 코드는 tree-sitter AST로 LLM 없이 로컬에서 파싱하며, 엣지마다 `EXTRACTED`/`INFERRED`/`AMBIGUOUS` 신뢰 태그를 붙인다.
+
+6개월 만에 스타 12만을 넘긴 YC S26 회사의 오픈소스 코어다. 릴리스가 하루 단위로 나올 만큼 빠르게 변한다.
 
 ## 배경 / 해결하는 문제
 
-대형 코드베이스에서 AI 어시스턴트가 질문에 답하는 방식은 대개 grep과 파일 순차 읽기다. 이는 토큰을 많이 쓰고, 파일 간 관계(누가 누구를 호출·상속하는가, 이 모듈이 어떤 서브시스템에 속하는가)를 매번 처음부터 재구성해야 한다. 한편 벡터 RAG는 "의미상 비슷한 청크"는 찾지만 호출 경로나 의존 관계처럼 구조적 질문에는 약하다. Graphify는 폴더 하나를 한 번 훑어 그래프를 만들어 두고, 이후 질의는 실제 그래프 순회로 처리한다는 접근이다. README의 첫 요점이 이를 요약한다: 코드는 무료이고 완전 로컬, 모든 엣지에 설명이 붙고, 벡터 인덱스가 아니라 순회 가능한 진짜 그래프라는 것.
+대형 코드베이스에서 AI 어시스턴트가 질문에 답하는 방식은 대개 grep과 파일 순차 읽기다. 이는 토큰을 많이 쓰고, 파일 간 관계(누가 누구를 호출·상속하는가, 이 모듈이 어떤 서브시스템에 속하는가)를 매번 처음부터 재구성해야 한다. 한편 벡터 RAG는 "의미상 비슷한 청크"는 찾지만 호출 경로나 의존 관계처럼 구조적 질문에는 약하다.
 
-저자 측 포지셔닝도 알아둘 만하다. README 상단에는 "Graphify Labs", Y Combinator S26 배지, 유료 플랫폼(app.graphify.com, 14일 무료 체험), 그리고 회의·문서·코드를 항상 갱신하는 "graphify Enterprise"(대기자 명단) 안내가 있다. 즉 이 오픈소스는 상용 제품의 on-demand 코어이고, "항상 켜져 있는 버전"은 유료 제품이다. 이 저장소의 NOTICE에 따르면 저작권자는 Safi Shamsi와 기여자들이며, 과거 MIT로 기여된 부분은 Apache-2.0으로의 재라이선스 이후에도 MIT 조건으로 `LICENSE-MIT`에 보존돼 있다(GitHub API 표시는 Apache-2.0, pyproject도 `Apache-2.0`이며 `license-files`에 LICENSE, LICENSE-MIT, NOTICE를 함께 선언). 이전에 "Apache-2.0 and MIT"로 표기된 이유가 이것이다.
+Graphify는 폴더 하나를 한 번 훑어 그래프를 만들어 두고, 이후 질의는 실제 그래프 순회로 처리한다는 접근이다. README의 첫 요점이 이를 요약한다: 코드는 무료이고 완전 로컬, 모든 엣지에 설명이 붙고, 벡터 인덱스가 아니라 순회 가능한 진짜 그래프라는 것.
+
+저자 측 포지셔닝도 알아둘 만하다. README 상단에는 "Graphify Labs", Y Combinator S26 배지, 유료 플랫폼(app.graphify.com, 14일 무료 체험), 그리고 회의·문서·코드를 항상 갱신하는 "graphify Enterprise"(대기자 명단) 안내가 있다. 즉 이 오픈소스는 상용 제품의 on-demand 코어이고, "항상 켜져 있는 버전"은 유료 제품이다.
+
+이 저장소의 NOTICE에 따르면 저작권자는 Safi Shamsi와 기여자들이며, 과거 MIT로 기여된 부분은 Apache-2.0으로의 재라이선스 이후에도 MIT 조건으로 `LICENSE-MIT`에 보존돼 있다(GitHub API 표시는 Apache-2.0, pyproject도 `Apache-2.0`이며 `license-files`에 LICENSE, LICENSE-MIT, NOTICE를 함께 선언). 이전에 "Apache-2.0 and MIT"로 표기된 이유가 이것이다.
 
 ## 동작 원리 / 아키텍처
 
@@ -37,13 +45,33 @@ flowchart LR
   X --> Q["CLI: query / path / explain"]
 ```
 
-**세 개의 패스(`docs/how-it-works.md`).** Pass 1은 코드 구조(클래스, 함수, import, call graph, 인라인 주석)를 tree-sitter로 추출하며 LLM이 없다. SQL은 테이블·뷰·외래 키·JOIN 관계를 결정론적으로 뽑는다. Pass 2는 영상·오디오를 faster-whisper로 로컬 전사하며, 전사 프롬프트를 지금까지의 god node(가장 연결이 많은 개념)로 시딩해 도메인 용어를 맞춘다. Pass 3은 문서·논문·이미지·전사본을 병렬 서브에이전트(LLM)가 읽어 노드·엣지 JSON 조각을 만들고 병합한다. 코드만 있는 코퍼스는 Pass 3을 건너뛰므로 토큰 비용이 0이다.
+### 세 개의 패스(`docs/how-it-works.md`)
 
-**신뢰 태그.** 모든 관계가 `EXTRACTED`(소스에 명시, 신뢰도 1.0), `INFERRED`(합리적 추론, 0.55~0.95의 이산 루브릭: 0.95 거의 확실, 0.85 강한 근거, 0.75 합리적, 0.65 이름 유사성만, 0.55 추측), `AMBIGUOUS`(불확실, 리포트에서 사람 검토 표시) 중 하나다. 이 설계 덕에 "AI가 지어낸 관계"를 구분해 볼 수 있다. 추출 스키마는 `{nodes:[{id,label,source_file,source_location}], edges:[{source,target,relation,confidence}]}`이고 `validate.py`가 `build()` 전에 검증한다.
+| 패스 | 입력과 처리 | 실행 방식 |
+|---|---|---|
+| Pass 1 | 코드 구조(클래스, 함수, import, call graph, 인라인 주석)를 tree-sitter로 추출. SQL은 테이블·뷰·외래 키·JOIN 관계를 결정론적으로 추출 | 없음 |
+| Pass 2 | 영상·오디오를 faster-whisper로 로컬 전사 | faster-whisper 로컬 전사 |
+| Pass 3 | 문서·논문·이미지·전사본에서 병렬 서브에이전트가 노드·엣지 JSON 조각을 만들고 병합 | LLM 사용 |
 
-**커뮤니티 탐지.** Leiden 알고리즘(선택 extra `graspologic`)으로 엣지 밀도 기준 클러스터링한다. 문서에 따르면 임베딩이나 벡터 DB가 따로 없고, LLM이 뽑은 `semantically_similar_to` 엣지가 이미 그래프에 있어 구조 자체가 유사도 신호가 된다. 커뮤니티 이름은 LLM 없이 붙는 기본 라벨이 있고 필요하면 LLM이 정제한다(0.9.73 changelog에 "community labeling" 수정 항목 있음).
+Pass 2는 지금까지의 god node(가장 연결이 많은 개념)로 전사 프롬프트를 시딩해 도메인 용어를 맞춘다. 코드만 있는 코퍼스는 Pass 3을 건너뛰므로 토큰 비용이 0이다.
 
-**분석 산출물.** `GRAPH_REPORT.md`에는 god nodes, surprising connections(서로 다른 파일/모듈 간 의외의 연결, 의외성 순 정렬), 설계 근거(`# NOTE:` `# WHY:` `# HACK:` 주석, ADR/RFC 인용이 별도 노드로 코드에 연결), 그래프가 특히 잘 답할 수 있는 추천 질문 4~5개, AMBIGUOUS 엣지 목록이 들어간다. 그 외 import 순환 탐지(`find_import_cycles`), 그래프 diff(`graph_diff`), PR 영향 분석이 있다.
+### 신뢰 태그
+
+모든 관계가 `EXTRACTED`(소스에 명시, 신뢰도 1.0), `INFERRED`(합리적 추론, 0.55~0.95의 이산 루브릭: 0.95 거의 확실, 0.85 강한 근거, 0.75 합리적, 0.65 이름 유사성만, 0.55 추측), `AMBIGUOUS`(불확실, 리포트에서 사람 검토 표시) 중 하나다.
+
+이 설계 덕에 "AI가 지어낸 관계"를 구분해 볼 수 있다.
+
+추출 스키마는 `{nodes:[{id,label,source_file,source_location}], edges:[{source,target,relation,confidence}]}`이고 `validate.py`가 `build()` 전에 검증한다.
+
+### 커뮤니티 탐지
+
+Leiden 알고리즘(선택 extra `graspologic`)으로 엣지 밀도 기준 클러스터링한다. 문서에 따르면 임베딩이나 벡터 DB가 따로 없고, LLM이 뽑은 `semantically_similar_to` 엣지가 이미 그래프에 있어 구조 자체가 유사도 신호가 된다. 커뮤니티 이름은 LLM 없이 붙는 기본 라벨이 있고 필요하면 LLM이 정제한다(0.9.73 changelog에 "community labeling" 수정 항목 있음).
+
+### 분석 산출물
+
+`GRAPH_REPORT.md`에는 god nodes, surprising connections(서로 다른 파일/모듈 간 의외의 연결, 의외성 순 정렬), 설계 근거(`# NOTE:` `# WHY:` `# HACK:` 주석, ADR/RFC 인용이 별도 노드로 코드에 연결), 그래프가 특히 잘 답할 수 있는 추천 질문 4~5개, AMBIGUOUS 엣지 목록이 들어간다.
+
+그 외 import 순환 탐지(`find_import_cycles`), 그래프 diff(`graph_diff`), PR 영향 분석이 있다.
 
 ## 핵심 기능 상세
 
@@ -92,7 +120,18 @@ python -m graphify.serve graphify-out/graph.json --transport http --host 0.0.0.0
 
 ## 디렉터리 · 코드 구조에서 확인한 것
 
-`graphify/` 패키지 Python 파일 합계 약 5.05만 줄. 주요 모듈은 `detect`, `extract`(+`extractors/` 40여 언어 모듈과 MIGRATION.md), `build`, `cluster`, `analyze`, `report`, `export`(+`exporters/`), `serve`(MCP), `llm`(백엔드 호출과 프롬프트 방어), `security`, `cache`, `hooks`/`install`(플랫폼별 skill 파일 `skill-*.md` 20종 이상), `resolver_registry`/`*_resolution.py`(언어별 호출·상속 해석), `cross_repo_calls`/`cross_repo_types`, `global_graph`, `scip_ingest`, `pg_introspect`, `prs`, `affected`, `querylog`. 테스트는 `tests/`에 파일 317개. `worked/`에는 예제 코퍼스(httpx, karpathy-repos, mixed-corpus 등), `BENCHMARKS.md`, `docs/`(how-it-works, 다국어 README 번역 — 한국어 README 포함). 핵심 의존성은 `networkx`, `numpy`, `rapidfuzz`, `tree-sitter` 및 언어별 grammar 패키지 약 25개이며 mcp, neo4j, pdf, watch, svg, leiden, office, video(faster-whisper, yt-dlp) 등은 선택 extra다. pyproject는 Python 3.10 이상, 현재 버전 0.9.73. CHANGELOG는 언어별 해석 수정(Java 상속 메서드 호출, VB.NET, Solidity, Astro 등)이 매일 쌓이는 형태다.
+`graphify/` 패키지의 Python 파일은 합계 약 5.05만 줄이다. 주요 모듈을 역할별로 나누면 다음과 같다.
+
+- **파이프라인:** `detect`, `extract`(+`extractors/`의 40여 언어 모듈과 MIGRATION.md), `build`, `cluster`, `analyze`, `report`, `export`(+`exporters/`)
+- **서빙·모델·운영:** `serve`(MCP), `llm`(백엔드 호출과 프롬프트 방어), `security`, `cache`, `hooks`/`install`(플랫폼별 `skill-*.md` 20종 이상)
+- **언어별 해석:** `resolver_registry`/`*_resolution.py`(호출·상속 해석), `cross_repo_calls`/`cross_repo_types`
+- **기타 분석·연동:** `global_graph`, `scip_ingest`, `pg_introspect`, `prs`, `affected`, `querylog`
+
+테스트는 `tests/`에 파일 317개가 있다. `worked/`에는 예제 코퍼스(httpx, karpathy-repos, mixed-corpus 등)가 있고, `BENCHMARKS.md`와 `docs/`(how-it-works, 다국어 README 번역, 한국어 README 포함)도 있다.
+
+핵심 의존성은 `networkx`, `numpy`, `rapidfuzz`, `tree-sitter` 및 언어별 grammar 패키지 약 25개이며 mcp, neo4j, pdf, watch, svg, leiden, office, video(faster-whisper, yt-dlp) 등은 선택 extra다.
+
+pyproject는 Python 3.10 이상, 현재 버전 0.9.73. CHANGELOG는 언어별 해석 수정(Java 상속 메서드 호출, VB.NET, Solidity, Astro 등)이 매일 쌓이는 형태다.
 
 ## 비교 대상
 
@@ -104,13 +143,47 @@ python -m graphify.serve graphify-out/graph.json --transport http --host 0.0.0.0
 | [[pageindex]] | 문서를 트리로 인덱싱, 추론 기반 검색 | 장문 문서 구조 활용. Graphify는 코드/혼합 코퍼스의 관계 그래프 |
 | codecanvas 류(Python 호출 그래프 도구) | 단일 언어 정밀 CFG/호출 그래프 | Graphify는 다언어 광범위, 정밀도는 낮을 수 있음(INFERRED) |
 
-`BENCHMARKS.md`(2026-07-05 갱신, 저자 자체 harness)의 수치: LOCOMO(n=300) 검색 recall@10에서 graphify 0.497, BM25 0.362, mem0 0.048, supermemory 0.149(단 supermemory는 자체 768-d 영어 전용 임베더라 recall이 임베더에 교란된다고 문서가 인정). QA 정확도는 graphify 45.3%, supermemory 49.7%, mem0 27.3%. LongMemEval-S(n=50)는 graphify 76%로 dense RAG와 동률. 코드 인텔리전스는 약 100만 LOC의 ERPNext에서 grep+read 기준선의 key-fact coverage 70.8%가 graphify 도구 하나를 쓰면 82.0%지만, 질문 수가 n=6이다. 모든 시스템에 동일 모델(Kimi K2.6)과 judge를 썼고 judge는 두 번째 judge와 90.6% 일치(Cohen's kappa 0.81). 중요한 주의점은 (1) 벤더 자체 harness, (2) 코드 벤치 n=6으로 통계적 의미가 약함, (3) README는 "임베딩 없음"이라 말하지만 BENCHMARKS의 graphify 행은 "hybrid retrieval"과 로컬 임베더(BGE-m3)를 쓰는 구성이라 두 서술의 범위가 다르다는 점이다(코드 그래프 질의 자체는 임베딩이 없고, 메모리 벤치용 구성은 임베딩을 병용한 것으로 보이나 이 구분은 문서 문구 기준의 추정이며 코드로 확인하지 않았다).
+`BENCHMARKS.md`(2026-07-05 갱신, 저자 자체 harness)의 수치: LOCOMO(n=300) 검색 recall@10에서 graphify 0.497, BM25 0.362, mem0 0.048, supermemory 0.149(단 supermemory는 자체 768-d 영어 전용 임베더라 recall이 임베더에 교란된다고 문서가 인정).
+
+QA 정확도는 graphify 45.3%, supermemory 49.7%, mem0 27.3%.
+
+LongMemEval-S(n=50)는 graphify 76%로 dense RAG와 동률.
+
+코드 인텔리전스는 약 100만 LOC의 ERPNext에서 grep+read 기준선의 key-fact coverage 70.8%가 graphify 도구 하나를 쓰면 82.0%지만, 질문 수가 n=6이다.
+
+모든 시스템에 동일 모델(Kimi K2.6)과 judge를 썼고 judge는 두 번째 judge와 90.6% 일치(Cohen's kappa 0.81).
+
+중요한 주의점은 다음과 같다.
+
+1. 벤더가 자체 harness로 측정했다.
+
+2. 코드 벤치는 n=6으로 통계적 의미가 약하다.
+
+3. README는 "임베딩 없음"이라 말하지만 BENCHMARKS의 graphify 행은 "hybrid retrieval"과 로컬 임베더(BGE-m3)를 쓰는 구성이라 두 서술의 범위가 다르다(코드 그래프 질의 자체는 임베딩이 없고, 메모리 벤치용 구성은 임베딩을 병용한 것으로 보이나 이 구분은 문서 문구 기준의 추정이며 코드로 확인하지 않았다).
 
 ## 장단점 · 한계 · 성숙도
 
-사실(GitHub API, 2026-10-01): Stars 122,851, Forks 11,841, 라이선스 Apache-2.0, 생성 2026-04-03, 마지막 push 2026-09-30, 기본 브랜치 `v8`, open_issues_count 1,500(PR 포함), 최신 릴리스 v0.9.73(2026-09-30), v0.9.72(09-29), v0.9.71(09-28). 기여자는 changelog에 감사 표기된 다수의 외부 개발자가 보이는 활발한 커뮤니티 구조다(정확한 수는 API 호출 오류로 조회하지 못함). 열린 이슈/PR 예: Windows 깊은 경로 보존, GitHub Copilot SDK 백엔드, 다중 레포 그래프 연결, F# extractor 등.
+사실(GitHub API, 2026-10-01): Stars 122,851, Forks 11,841, 라이선스 Apache-2.0, 생성 2026-04-03, 마지막 push 2026-09-30, 기본 브랜치 `v8`, open_issues_count 1,500(PR 포함), 최신 릴리스 v0.9.73(2026-09-30), v0.9.72(09-29), v0.9.71(09-28). 기여자는 changelog에 감사 표기된 다수의 외부 개발자가 보이는 활발한 커뮤니티 구조다(정확한 수는 API 호출 오류로 조회하지 못함).
 
-장점: 코드 그래프가 오프라인·무비용·결정론적, 신뢰 태그로 환각 구분, 20여 종 어시스턴트 설치 자동화, 팀 공유(HTTP MCP)와 증분 갱신, 보안 위협 모델 문서화(`SECURITY.md`). 한계: (1) 0.9.x 미성숙 버전이며 하루 단위 릴리스로 동작이 자주 바뀐다. (2) 이슈·PR 1,500건 적체. (3) 의미 추출 패스(문서/PDF/이미지)는 LLM 비용·품질에 의존하고 파일당 20,000자 상한이 있어 잘리면 경고한다(0.9.73). (4) `graph.json` 크기 상한 기본 512MiB. (5) 정적 AST 해석이므로 동적 디스패치·리플렉션·DI 컨테이너 기반 호출은 INFERRED/누락 가능. (6) 한국어 문서 품질은 선택한 LLM에 달려 있고 직접 검증하지 않았다. (7) 벤치마크는 자체 측정.
+열린 이슈/PR 예: Windows 깊은 경로 보존, GitHub Copilot SDK 백엔드, 다중 레포 그래프 연결, F# extractor 등.
+
+장점: 코드 그래프가 오프라인·무비용·결정론적, 신뢰 태그로 환각 구분, 20여 종 어시스턴트 설치 자동화, 팀 공유(HTTP MCP)와 증분 갱신, 보안 위협 모델 문서화(`SECURITY.md`).
+
+한계:
+
+1. 0.9.x 미성숙 버전이며 하루 단위 릴리스로 동작이 자주 바뀐다.
+
+2. 이슈·PR 1,500건 적체.
+
+3. 의미 추출 패스(문서/PDF/이미지)는 LLM 비용·품질에 의존하고 파일당 20,000자 상한이 있어 잘리면 경고한다(0.9.73).
+
+4. `graph.json` 크기 상한 기본 512MiB.
+
+5. 정적 AST 해석이므로 동적 디스패치·리플렉션·DI 컨테이너 기반 호출은 INFERRED/누락 가능.
+
+6. 한국어 문서 품질은 선택한 LLM에 달려 있고 직접 검증하지 않았다.
+
+7. 벤치마크는 자체 측정.
 
 ## 보안 · 라이선스 · 운영 리스크
 

@@ -9,11 +9,15 @@ researched: 2026-10-01
 # claude-code-best-practice
 
 > [!summary] 한줄요약
-> Claude Code의 구성 요소(subagent, command, skill, hook, MCP, settings, memory)를 필드 단위로 정리한 레퍼런스 문서 + Anthropic 엔지니어(Boris Cherny, Thariq 등)의 공개 팁 모음 + 이를 실제로 구현한 최소 예제(`Command → Agent → Skill` 날씨 워크플로)를 한 저장소에 담은 커뮤니티 레퍼런스(MIT). 설치 대상이 아니라 읽고 `.claude/`에 옮겨 쓰는 문서형 저장소이며, 문서 자체를 Claude Code 에이전트 워크플로로 갱신한다는 점이 특징이다.
+> Claude Code의 개념·설정·워크플로·사용 팁을 모은 레퍼런스다. 문서 간 수치 차이와 미검증 항목을 구분해 읽어야 한다.
+
+Claude Code의 구성 요소(subagent, command, skill, hook, MCP, settings, memory)를 필드 단위로 정리한 레퍼런스 문서 + Anthropic 엔지니어(Boris Cherny, Thariq 등)의 공개 팁 모음 + 이를 실제로 구현한 최소 예제(`Command → Agent → Skill` 날씨 워크플로)를 한 저장소에 담은 커뮤니티 레퍼런스(MIT). 설치 대상이 아니라 읽고 `.claude/`에 옮겨 쓰는 문서형 저장소이며, 문서 자체를 Claude Code 에이전트 워크플로로 갱신한다는 점이 특징이다.
 
 ## 1. 배경과 성격
 
-README 태그라인은 "from vibe coding to agentic engineering – practice makes claude perfect"다. Claude Code 사용 노하우가 트윗, 영상, 공식 문서, 블로그에 흩어져 있다는 문제를 한 곳에 모은 인덱스로, 저장소 안 `CLAUDE.md`는 "Claude Code 모범 사례 질문을 받으면 훈련 지식이나 외부 문서보다 **이 저장소를 먼저 검색하라**, 이 저장소가 권위 있는 출처다"라고 에이전트에게 지시한다. 이 문구는 저자의 자기 주장이라서 독자는 항상 공식 문서(code.claude.com/docs)와 교차 확인해야 한다. 저장소의 정체성은 세 층으로 나뉜다.
+README 태그라인은 "from vibe coding to agentic engineering – practice makes claude perfect"다. Claude Code 사용 노하우가 트윗, 영상, 공식 문서, 블로그에 흩어져 있다는 문제를 한 곳에 모은 인덱스로, 저장소 안 `CLAUDE.md`는 "Claude Code 모범 사례 질문을 받으면 훈련 지식이나 외부 문서보다 **이 저장소를 먼저 검색하라**, 이 저장소가 권위 있는 출처다"라고 에이전트에게 지시한다.
+
+이 문구는 저자의 자기 주장이라서 독자는 항상 공식 문서(code.claude.com/docs)와 교차 확인해야 한다. 저장소의 정체성은 세 층으로 나뉜다.
 
 1. **개념/필드 레퍼런스(`best-practice/`)**: subagent, skill, command, MCP, memory, settings, CLI 플래그, power-ups 문서. 각 문서에 "Last Updated"와 "Claude Code vX.Y.Z" 배지가 붙는다(예: subagents 문서는 2026-09-30 기준 v2.1.285, skills 문서는 2026-10-01 기준 v2.1.286).
 2. **구현 예제(`implementation/`, `.claude/`, `orchestration-workflow/`, `agent-teams/`)**: 문서에 쓴 개념을 실제로 동작시킨 최소 예제.
@@ -34,9 +38,18 @@ flowchart TD
   CHG --> BP
 ```
 
-**`.claude/` 실물.** `agents/`에는 weather-agent, time-agent, presentation 3종, development-workflows-research-agent가 있고, `commands/`에는 `weather-orchestrator`, `time-command`와 `workflows/` 하위(agent-collections, development-workflows, skill-collections, best-practice 갱신 워크플로)가, `skills/`에는 weather-fetcher, weather-svg-creator, time-skill, presentation, agent-browser가, `hooks/`에는 `scripts/hooks.py`(사운드 알림 핸들러)와 `config/hooks-config.json`, `HOOKS-README.md`가, `rules/`에는 `markdown-docs.md`, `presentation.md`가 있다.
+### `.claude/` 실물
 
-**Command → Agent → Skill 예제(`orchestration-workflow.md`).** `/weather-orchestrator` 커맨드가 (1) 사용자에게 섭씨/화씨를 묻고, (2) Agent 툴로 `weather-agent`를 호출하며, (3) 에이전트는 `skills:` frontmatter로 **미리 주입된** `weather-fetcher` skill의 지시(Open-Meteo API 조회)를 따라 온도를 반환하고, (4) 커맨드가 독립 skill인 `weather-svg-creator`를 Skill 툴로 호출해 SVG 카드와 `output.md`를 쓰는 흐름이다. 문서가 구분하는 두 skill 패턴은 "에이전트 skill(프리로드)"과 "일반 skill(Skill 툴로 호출)"이다. 예제 에이전트는 강한 계약을 둔다. `weather-agent.md`는 허용 도구를 `Read`, `Skill`로 제한해 WebFetch를 일부러 빼고("네트워크 도구가 필요하다고 느끼면 skill을 우회하고 있다는 신호"), 실패 시 직접 API를 호출하지 말고 보고하라는 fail-closed 규칙을 넣었다. 이는 허용 도구 제한(하네스가 강제)과 프롬프트 계약(모델이 따르기를 기대)을 함께 쓰는 좋은 예다.
+`agents/`에는 weather-agent, time-agent, presentation 3종, development-workflows-research-agent가 있고, `commands/`에는 `weather-orchestrator`, `time-command`와 `workflows/` 하위(agent-collections, development-workflows, skill-collections, best-practice 갱신 워크플로)가, `skills/`에는 weather-fetcher, weather-svg-creator, time-skill, presentation, agent-browser가, `hooks/`에는 `scripts/hooks.py`(사운드 알림 핸들러)와 `config/hooks-config.json`, `HOOKS-README.md`가, `rules/`에는 `markdown-docs.md`, `presentation.md`가 있다.
+
+**Command → Agent → Skill 예제(`orchestration-workflow.md`).** `/weather-orchestrator` 커맨드는 다음 순서로 실행된다.
+
+1. 사용자에게 섭씨/화씨를 묻는다.
+2. Agent 툴로 `weather-agent`를 호출한다.
+3. 에이전트는 `skills:` frontmatter로 **미리 주입된** `weather-fetcher` skill의 지시(Open-Meteo API 조회)를 따라 온도를 반환한다.
+4. 커맨드가 독립 skill인 `weather-svg-creator`를 Skill 툴로 호출해 SVG 카드와 `output.md`를 쓴다.
+
+문서가 구분하는 두 skill 패턴은 "에이전트 skill(프리로드)"과 "일반 skill(Skill 툴로 호출)"이다. 예제 에이전트는 강한 계약을 둔다. `weather-agent.md`는 허용 도구를 `Read`, `Skill`로 제한해 WebFetch를 일부러 빼고("네트워크 도구가 필요하다고 느끼면 skill을 우회하고 있다는 신호"), 실패 시 직접 API를 호출하지 말고 보고하라는 fail-closed 규칙을 넣었다. 이는 허용 도구 제한(하네스가 강제)과 프롬프트 계약(모델이 따르기를 기대)을 함께 쓰는 좋은 예다.
 
 ## 3. 핵심 내용 상세
 
@@ -62,7 +75,11 @@ flowchart TD
 
 ### 3.3 워크플로·컬렉션 비교표 (README 인용 수치)
 
-"개발 워크플로" 표는 Superpowers(294k 스타 표기), Matt Pocock Skills(273k), Everything Claude Code(270k), Spec Kit(140k), gstack(135k), agent-skills(99.7k), OpenSpec(71k), Get Shit Done(64.6k), BMAD-METHOD(54k), oh-my-claudecode(39.5k), Compound Engineering(25.4k), HumanLayer(11.6k)를 에이전트/커맨드/skill 개수와 함께 나열하고 모두 Research → Plan → Execute → Review → Ship 패턴으로 수렴한다고 주장한다. 이 중 이번에 GitHub API로 직접 대조한 것은 agent-skills(API 100.2k)와 agency-agents(API 155.5k)뿐이고 둘 다 README 표기와 근접했다. 나머지 수치는 검증하지 못했다. README 안에서도 불일치가 있다. "SKILL COLLECTIONS" 표는 agent-skills를 27k·21 skills로, "개발 워크플로" 표는 99.7k·21 skills로 적어 갱신되지 않은 행이 섞여 있고, 실제 현재 구성은 25 skills다([[agent-skills]] 참조). 또 이전 노트에서 쓴 "skill 1,497+개, subagent 279+개"는 이 저장소가 자체 보유한 수가 아니라 README의 큐레이션 표에서 `VoltAgent/awesome-agent-skills`(1,497+ 목록 항목)와 `agency-agents`(279개 표기)를 인용한 값이다. 후자는 이번 조사에서 직접 센 약 267개([[agency-agents]])와도 차이가 있다.
+"개발 워크플로" 표는 Superpowers(294k 스타 표기), Matt Pocock Skills(273k), Everything Claude Code(270k), Spec Kit(140k), gstack(135k), agent-skills(99.7k), OpenSpec(71k), Get Shit Done(64.6k), BMAD-METHOD(54k), oh-my-claudecode(39.5k), Compound Engineering(25.4k), HumanLayer(11.6k)를 에이전트/커맨드/skill 개수와 함께 나열하고 모두 Research → Plan → Execute → Review → Ship 패턴으로 수렴한다고 주장한다. 이 중 이번에 GitHub API로 직접 대조한 것은 agent-skills(API 100.2k)와 agency-agents(API 155.5k)뿐이고 둘 다 README 표기와 근접했다.
+
+나머지 수치는 검증하지 못했다. README 안에서도 불일치가 있다. "SKILL COLLECTIONS" 표는 agent-skills를 27k·21 skills로, "개발 워크플로" 표는 99.7k·21 skills로 적어 갱신되지 않은 행이 섞여 있고, 실제 현재 구성은 25 skills다([[agent-skills]] 참조).
+
+또 이전 노트에서 쓴 "skill 1,497+개, subagent 279+개"는 이 저장소가 자체 보유한 수가 아니라 README의 큐레이션 표에서 `VoltAgent/awesome-agent-skills`(1,497+ 목록 항목)와 `agency-agents`(279개 표기)를 인용한 값이다. 후자는 이번 조사에서 직접 센 약 267개([[agency-agents]])와도 차이가 있다.
 
 ### 3.4 보고서(reports/)
 
@@ -80,11 +97,15 @@ claude                     # 저장소 내 CLAUDE.md와 .claude/ 가 자동 적�
 # 필요한 패턴만 자기 프로젝트의 .claude/ 로 복사해서 사용
 ```
 
-서브에이전트 예(저장소 `weather-agent.md`)의 핵심은 frontmatter에 `tools`/`allowedTools`, `model`, `maxTurns`, `permissionMode`, `memory`, `skills`, `hooks`를 모두 선언하는 것이고, 이를 사내 에이전트 템플릿으로 삼으면 된다. 교차 모델 워크플로(`development-workflows/cross-model-workflow`)는 터미널 1에서 Claude Code 플랜 모드로 계획 작성 → 터미널 2의 Codex CLI가 코드베이스 대비 계획을 QA 리뷰해 "Codex Finding" 단계를 덧붙임 → Claude Code가 단계별로 구현 → Codex가 검증하는 4단계다. RPI(Research → Plan → Implement) 워크플로는 `/rpi:research`, `/rpi:plan` 같은 커맨드와 GO/NO-GO 판정을 문서화한다.
+서브에이전트 예(저장소 `weather-agent.md`)의 핵심은 frontmatter에 `tools`/`allowedTools`, `model`, `maxTurns`, `permissionMode`, `memory`, `skills`, `hooks`를 모두 선언하는 것이고, 이를 사내 에이전트 템플릿으로 삼으면 된다. 교차 모델 워크플로(`development-workflows/cross-model-workflow`)는 터미널 1에서 Claude Code 플랜 모드로 계획 작성 → 터미널 2의 Codex CLI가 코드베이스 대비 계획을 QA 리뷰해 "Codex Finding" 단계를 덧붙임 → Claude Code가 단계별로 구현 → Codex가 검증하는 4단계다.
+
+RPI(Research → Plan → Implement) 워크플로는 `/rpi:research`, `/rpi:plan` 같은 커맨드와 GO/NO-GO 판정을 문서화한다.
 
 ## 5. 저장소 자체의 운영 방식
 
-`changelog/` 아래 `best-practice/claude-{settings,skills,subagents,commands}`, `concepts`, `agent-collections`, `skill-collections`, `development-workflows`, `cross-model-workflows`에 변경 이력 파일이 있고, 각 항목은 Claude Code 버전별로 "새 필드/새 커맨드/삭제된 커맨드" 권고 사항과 `COMPLETE` / `INVALID` / `ON HOLD` 처리 상태를 기록한다(예: v2.1.74 시점 commands 보고서의 권고 중 skill 전용 필드를 command 표에 넣자는 항목은 INVALID로 기각). `.claude/commands/workflows/`의 갱신 워크플로가 공식 문서/CHANGELOG와 대조해 문서를 갱신하는 구조로 보이며 README 배지에는 "updated with Claude Code" 시각이 찍힌다. 이는 신선도를 유지하는 장점이자, 에이전트가 갱신한 내용이 항상 정확하지는 않을 수 있다는 위험이다(INVALID 기록이 그 흔적). 이 갱신 체인을 직접 재현·검증하지는 않았다.
+`changelog/` 아래 `best-practice/claude-{settings,skills,subagents,commands}`, `concepts`, `agent-collections`, `skill-collections`, `development-workflows`, `cross-model-workflows`에 변경 이력 파일이 있고, 각 항목은 Claude Code 버전별로 "새 필드/새 커맨드/삭제된 커맨드" 권고 사항과 `COMPLETE` / `INVALID` / `ON HOLD` 처리 상태를 기록한다(예: v2.1.74 시점 commands 보고서의 권고 중 skill 전용 필드를 command 표에 넣자는 항목은 INVALID로 기각). `.claude/commands/workflows/`의 갱신 워크플로가 공식 문서/CHANGELOG와 대조해 문서를 갱신하는 구조로 보이며 README 배지에는 "updated with Claude Code" 시각이 찍힌다.
+
+이는 신선도를 유지하는 장점이자, 에이전트가 갱신한 내용이 항상 정확하지는 않을 수 있다는 위험이다(INVALID 기록이 그 흔적). 이 갱신 체인을 직접 재현·검증하지는 않았다.
 
 ## 6. 성숙도·활동(GitHub API, 2026-10-01)
 
@@ -103,7 +124,14 @@ claude                     # 저장소 내 CLAUDE.md와 .claude/ 가 자동 적�
 
 ## 8. 장단점·한계
 
-장점: 필드·옵션 표가 상세하고 버전 표기가 있으며, 근거 링크(원문 트윗·영상)가 달린 팁이 많고, 실제로 실행되는 최소 예제와 훅 구성이 있고, 교차 모델·RPI 같은 워크플로 문서가 구체적이다. 한계: (1) 많은 팁의 출처가 X 게시물이라 맥락·재현성이 약하다. (2) 빠르게 변하는 CLI 기능(약 30개 훅, 140+ 설정)이라 문서가 곧 낡는다. 문서 간 불일치(README 내 수치 등)가 이미 있다. (3) 에이전트로 갱신하는 구조 때문에 환각 위험이 있다. (4) 공식 문서와 달리 보증이 없다. (5) 한국어/사내 환경(프록시, 보안 정책) 고려는 없다. (6) 저장소 자체의 `.claude/settings.json` 예시는 데모용으로 `Bash(*)`, `Edit(*)`, `Write(*)`, `WebFetch(domain:*)` 등 광범위한 allow를 두고 `rm`, `npm`, `docker` 등만 `ask`로 둔다. 그대로 복사하면 과도한 권한이 된다.
+장점: 필드·옵션 표가 상세하고 버전 표기가 있으며, 근거 링크(원문 트윗·영상)가 달린 팁이 많고, 실제로 실행되는 최소 예제와 훅 구성이 있고, 교차 모델·RPI 같은 워크플로 문서가 구체적이다. 한계:
+
+1. 많은 팁의 출처가 X 게시물이라 맥락·재현성이 약하다.
+2. 빠르게 변하는 CLI 기능(약 30개 훅, 140+ 설정)이라 문서가 곧 낡는다. 문서 간 불일치(README 내 수치 등)가 이미 있다.
+3. 에이전트로 갱신하는 구조 때문에 환각 위험이 있다.
+4. 공식 문서와 달리 보증이 없다.
+5. 한국어/사내 환경(프록시, 보안 정책) 고려는 없다.
+6. 저장소 자체의 `.claude/settings.json` 예시는 데모용으로 `Bash(*)`, `Edit(*)`, `Write(*)`, `WebFetch(domain:*)` 등 광범위한 allow를 두고 `rm`, `npm`, `docker` 등만 `ask`로 둔다. 그대로 복사하면 과도한 권한이 된다.
 
 ## 9. 보안·라이선스·운영 리스크
 

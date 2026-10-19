@@ -9,11 +9,15 @@ researched: 2026-10-01
 # ActGuard
 
 > [!summary] 한줄요약
-> 도구를 쓰는 LLM 에이전트가 간접 프롬프트 주입(IPI, indirect prompt injection)에 넘어가지 않도록, **도구를 실행하기 직전에** "이 행동이 직전 단계에서 예측한 도구 집합(local tool prior)에서 벗어났는가, 인자가 외부 콘텐츠에서 베껴 왔는가"를 검사하고, 검증기(verifier)가 악성이라고 확인한 span만 마스킹한 뒤 행동을 다시 생성하게 하는 방어 기법. 논문(arXiv 2609.14987)과 AgentDojo 기반 공식 구현(MIT)이 함께 공개되어 있다.
+> 도구 실행 직전에 행동의 근거를 추적하고 악성 지시만 가리는 방어 기법이다. 검증기 오류 시에는 행동을 허용한다는 한계가 있다.
+
+도구를 쓰는 LLM 에이전트가 간접 프롬프트 주입(IPI, indirect prompt injection)에 넘어가지 않도록, **도구를 실행하기 직전에** "이 행동이 직전 단계에서 예측한 도구 집합(local tool prior)에서 벗어났는가, 인자가 외부 콘텐츠에서 베껴 왔는가"를 검사하고, 검증기(verifier)가 악성이라고 확인한 span만 마스킹한 뒤 행동을 다시 생성하게 하는 방어 기법. 논문(arXiv 2609.14987)과 AgentDojo 기반 공식 구현(MIT)이 함께 공개되어 있다.
 
 ## 1. 배경: 왜 이 문제가 어려운가
 
-LLM 에이전트는 웹페이지, 이메일, 문서, 검색 결과 같은 외부 도구 출력을 읽고 다음 행동을 정한다. 이 출력은 과제 수행에 꼭 필요한 정보이면서 동시에 공격자가 지시문을 심을 수 있는 통로다. 논문은 이를 위협 모델로 정리한다. 공격자는 사용자 요청 `q`, 시스템 지시, 에이전트 정책 `π`, 도구 구현을 바꿀 수 없고, 에이전트가 접근하는 외부 콘텐츠의 일부(관측 `o_i`)에만 지시문 `z_i`를 삽입할 수 있다. 오염된 관측은 히스토리에 계속 남기 때문에 영향이 바로 다음 단계에만 국한되지 않고 이후 어느 단계의 행동 `a_t`가 공격 목표 집합 `A_adv(z_i)`에 들어가 실행되기만 하면 공격이 성공한 것으로 본다. 공격은 도구 선택을 바꿀 수도 있고, 같은 도구에서 수신자 주소·URL·명령 같은 인자만 바꿀 수도 있다.
+LLM 에이전트는 웹페이지, 이메일, 문서, 검색 결과 같은 외부 도구 출력을 읽고 다음 행동을 정한다. 이 출력은 과제 수행에 꼭 필요한 정보이면서 동시에 공격자가 지시문을 심을 수 있는 통로다. 논문은 이를 위협 모델로 정리한다. 공격자는 사용자 요청 `q`, 시스템 지시, 에이전트 정책 `π`, 도구 구현을 바꿀 수 없고, 에이전트가 접근하는 외부 콘텐츠의 일부(관측 `o_i`)에만 지시문 `z_i`를 삽입할 수 있다. 오염된 관측은 히스토리에 계속 남기 때문에 영향이 바로 다음 단계에만 국한되지 않고 이후 어느 단계의 행동 `a_t`가 공격 목표 집합 `A_adv(z_i)`에 들어가 실행되기만 하면 공격이 성공한 것으로 본다.
+
+공격은 도구 선택을 바꿀 수도 있고, 같은 도구에서 수신자 주소·URL·명령 같은 인자만 바꿀 수도 있다.
 
 논문이 정리한 기존 방어는 네 갈래다.
 
@@ -73,21 +77,45 @@ flowchart TD
 
 저장소는 AgentDojo를 포크한 런타임에 ActGuard를 얹은 구조다. 핵심은 `src/agentdojo/agent_pipeline/reflective_audit.py`(2,934줄)이며, 내부 식별자는 논문 이전 이름인 `reflective_audit`이 그대로 쓰인다. 코드를 읽고 확인한 내용은 다음과 같다.
 
-**텍스트 프로토콜 프롬프트.** `ReflectiveAuditTextProtocolLLM`(OpenAI 호환 LLM 래퍼)이 에이전트에게 매 턴 다섯 개 XML 섹션을 강제한다: `<function_thought>`, `<function_call>`, `<next_function_thought>`, `<allowed_next_tools>`, `<final_answer>`. 도구 스키마를 프롬프트에 직접 넣고 도구 호출을 파이썬 호출식으로 파싱한다(`parse_reflective_audit_text_protocol`, AST 기반 파싱). `allowed_next_tools`는 1~3개의 실제 도구 이름이어야 하며 `next_function_thought`는 이후 컨텍스트에서 제거되는 방어용 메타데이터로 명시되어 있다. 즉 네이티브 function-calling이 아니라 텍스트 프로토콜을 쓰기 때문에, 다른 에이전트 프레임워크에 이식하려면 이 계층부터 다시 만들어야 한다.
+### 텍스트 프로토콜 프롬프트
 
-**청킹.** `_chunk_text`/`_chunk_structured` 계열이 문장·마크업·YAML 레코드·JSON 필드 단위로 80~180자 청크를 만들고(`CHUNK_MIN_CHARS=80`, `CHUNK_MAX_CHARS=180`), 짧은 인접 조각은 병합하되 `<information>` 태그 경계는 넘지 않게 보호한다. 마스킹은 원문 span 위치를 되찾아 해당 구간만 치환하며(`_replace_chunk_spans_in_tool_result`), 실패하면 소스 단위 폴백(`_fallback_source_unit_span`)을 쓴다. 도구 출력 전체를 지우지 않는다는 주장은 이 구현으로 뒷받침된다.
+`ReflectiveAuditTextProtocolLLM`(OpenAI 호환 LLM 래퍼)이 에이전트에게 매 턴 다섯 개 XML 섹션을 강제한다: `<function_thought>`, `<function_call>`, `<next_function_thought>`, `<allowed_next_tools>`, `<final_answer>`. 도구 스키마를 프롬프트에 직접 넣고 도구 호출을 파이썬 호출식으로 파싱한다(`parse_reflective_audit_text_protocol`, AST 기반 파싱).
 
-**감사 대상 선정.** 모든 도구 결과를 감사하지 않는다. `_is_auditable_content_tool_result`는 오류·24자 미만 스칼라·숫자·날짜·마스크 자리표시자는 제외하고, 도구 권한이 `Read`인 경우는 감사 대상으로, `Write`/`Execute` 도구의 결과는 마크업·YAML 레코드·JSON·diff처럼 "복사된 외부 콘텐츠" 모양일 때만 포함한다. 도구 권한(`Read`/`Write`/`Execute`)은 이름 접두사(`get_`, `send_` 등)와 설명 키워드로 추정하는 휴리스틱(`classify_tool_permission`)이며, 분류 불가 시 `Execute`로 간주한다. 이 접두사 목록은 AgentDojo 도구 이름 관례에 맞춰져 있어 사내 도구명에는 다시 맞춰야 한다.
+`allowed_next_tools`는 1~3개의 실제 도구 이름이어야 하며 `next_function_thought`는 이후 컨텍스트에서 제거되는 방어용 메타데이터로 명시되어 있다. 즉 네이티브 function-calling이 아니라 텍스트 프로토콜을 쓰기 때문에, 다른 에이전트 프레임워크에 이식하려면 이 계층부터 다시 만들어야 한다.
 
-**감사 트리거.** `_current_action_needs_audit`는 감사 가능한 도구 결과가 없으면 건너뛰고, prior가 없으면(`missing_prediction`) 또는 현재 도구가 prior에 없으면(`prediction_deviation`) 도구-수준 경로로, prior 안이면(`predicted_tool_parameter_audit`) 인자-수준 경로로 보낸다. 로그확률 델타가 임계값을 넘는 청크가 하나도 없으면 verifier를 부르지 않고 행동을 통과시킨다(`allowed_no_attributable_chunk`).
+### 청킹
 
-**verifier.** 영어 시스템 프롬프트로 IPI 유형(제어권 탈취, 과제 하이재킹, 개인정보 유출, 가짜 권위)과 "IPI가 아닌 것"(사실 데이터만 있는 경우, 과제에 필요한 정상 절차 등)을 구분하라고 지시하고, 반드시 JSON(`is_ipi`, `ipi_chunk_ids`, `reason`)만 내라고 요구한다. 반환된 청크 ID가 입력 청크에 없으면 무시하고, `is_ipi`가 참이어도 유효한 청크 ID가 없으면 비-IPI로 취급한다. **API 오류나 JSON 파싱 실패 시에는 "유틸리티를 위해 비-IPI로 간주(defaulting to non-IPI)"하는 fail-open 설계**다(`default_openai_verifier`). 또 verifier가 양성이지만 마스킹 가능한 청크가 없으면 행동을 허용한다(`verifier_positive_without_maskable_chunk_allowed`). 보안 관점에서 의도적인 가용성 우선 선택이므로 운영 적용 시 정책으로 검토해야 한다.
+`_chunk_text`/`_chunk_structured` 계열이 문장·마크업·YAML 레코드·JSON 필드 단위로 80~180자 청크를 만들고(`CHUNK_MIN_CHARS=80`, `CHUNK_MAX_CHARS=180`), 짧은 인접 조각은 병합하되 `<information>` 태그 경계는 넘지 않게 보호한다. 마스킹은 원문 span 위치를 되찾아 해당 구간만 치환하며(`_replace_chunk_spans_in_tool_result`), 실패하면 소스 단위 폴백(`_fallback_source_unit_span`)을 쓴다.
 
-**재시도.** 양성이면 해당 청크를 마스킹하고 같은 행동 키에 대해 최대 2회(`max_repairs`) 재생성하며, 한도를 넘으면 도구 결과로 `ReflectiveAuditBlocked: <이유>` 오류 메시지를 돌려주어 실행을 막는다.
+도구 출력 전체를 지우지 않는다는 주장은 이 구현으로 뒷받침된다.
 
-**감사 로그.** 모든 감사에 대해 트리거 사유, 후보 청크, 로그확률 델타, verifier 요청·원문 응답, 수리 상태를 JSON 이벤트로 남기고, `util_scripts/reflective_audit_trace_viewer.py`와 `actguard-trace` CLI로 열람한다. 사후 감사 가능성은 상당히 좋은 편이다.
+### 감사 대상 선정
 
-**테스트.** `tests/test_agent_pipeline/test_reflective_audit.py`(1,939줄)에 `def test_` 55개가 있다. 텍스트 프로토콜 파싱, 청킹, 마스킹, verifier 실패 처리, 감사 트리거를 다루며, 이번 조사에서는 의존성 설치 없이 코드만 읽었기 때문에 테스트를 실행하지는 않았다.
+모든 도구 결과를 감사하지 않는다. `_is_auditable_content_tool_result`는 오류·24자 미만 스칼라·숫자·날짜·마스크 자리표시자는 제외하고, 도구 권한이 `Read`인 경우는 감사 대상으로, `Write`/`Execute` 도구의 결과는 마크업·YAML 레코드·JSON·diff처럼 "복사된 외부 콘텐츠" 모양일 때만 포함한다. 도구 권한(`Read`/`Write`/`Execute`)은 이름 접두사(`get_`, `send_` 등)와 설명 키워드로 추정하는 휴리스틱(`classify_tool_permission`)이며, 분류 불가 시 `Execute`로 간주한다.
+
+이 접두사 목록은 AgentDojo 도구 이름 관례에 맞춰져 있어 사내 도구명에는 다시 맞춰야 한다.
+
+### 감사 트리거
+
+`_current_action_needs_audit`는 감사 가능한 도구 결과가 없으면 건너뛰고, prior가 없으면(`missing_prediction`) 또는 현재 도구가 prior에 없으면(`prediction_deviation`) 도구-수준 경로로, prior 안이면(`predicted_tool_parameter_audit`) 인자-수준 경로로 보낸다. 로그확률 델타가 임계값을 넘는 청크가 하나도 없으면 verifier를 부르지 않고 행동을 통과시킨다(`allowed_no_attributable_chunk`).
+
+### verifier
+
+영어 시스템 프롬프트로 IPI 유형(제어권 탈취, 과제 하이재킹, 개인정보 유출, 가짜 권위)과 "IPI가 아닌 것"(사실 데이터만 있는 경우, 과제에 필요한 정상 절차 등)을 구분하라고 지시하고, 반드시 JSON(`is_ipi`, `ipi_chunk_ids`, `reason`)만 내라고 요구한다. 반환된 청크 ID가 입력 청크에 없으면 무시하고, `is_ipi`가 참이어도 유효한 청크 ID가 없으면 비-IPI로 취급한다. **API 오류나 JSON 파싱 실패 시에는 "유틸리티를 위해 비-IPI로 간주(defaulting to non-IPI)"하는 fail-open 설계**다(`default_openai_verifier`).
+
+또 verifier가 양성이지만 마스킹 가능한 청크가 없으면 행동을 허용한다(`verifier_positive_without_maskable_chunk_allowed`). 보안 관점에서 의도적인 가용성 우선 선택이므로 운영 적용 시 정책으로 검토해야 한다.
+
+### 재시도
+
+양성이면 해당 청크를 마스킹하고 같은 행동 키에 대해 최대 2회(`max_repairs`) 재생성하며, 한도를 넘으면 도구 결과로 `ReflectiveAuditBlocked: <이유>` 오류 메시지를 돌려주어 실행을 막는다.
+
+### 감사 로그
+
+모든 감사에 대해 트리거 사유, 후보 청크, 로그확률 델타, verifier 요청·원문 응답, 수리 상태를 JSON 이벤트로 남기고, `util_scripts/reflective_audit_trace_viewer.py`와 `actguard-trace` CLI로 열람한다. 사후 감사 가능성은 상당히 좋은 편이다.
+
+### 테스트
+
+`tests/test_agent_pipeline/test_reflective_audit.py`(1,939줄)에 `def test_` 55개가 있다. 텍스트 프로토콜 파싱, 청킹, 마스킹, verifier 실패 처리, 감사 트리거를 다루며, 이번 조사에서는 의존성 설치 없이 코드만 읽었기 때문에 테스트를 실행하지는 않았다.
 
 ## 4. 설치와 실행
 
@@ -102,7 +130,20 @@ uv run --frozen pytest -q tests/test_agent_pipeline/test_reflective_audit.py
 
 `scripts/run_actguard.sh`는 `workspace` 스위트와 `important_instructions` 공격, 벤치마크 버전 v1.2.2로 `--defense reflective_audit`를 돌린다. 결과는 `runs/openai_gpt-4o-mini-2024-07-18-reflective_audit/actguard/`에 쌓인다. 로컬 체크포인트를 쓰려면 `--reflective-audit-embedding-model`, `--reflective-audit-logprob-model` 값을 경로로 바꾼다.
 
-README의 기본 구성값은 다음과 같다: 백엔드 `openai/gpt-4o-mini-2024-07-18`(temperature 0), 청크 80~180자, 임베딩 `all-MiniLM-L6-v2` k=3, 로그확률 모델 Llama-3.1-8B-Instruct(임계값 0), 유사 청크 그룹화 임계값 0.9, verifier `openai/gpt-5-mini`, 다음 도구 예측 1~3개, 이웃 청크 확장 ±1, 행동당 최대 수리 2회, 마스킹 문구 `[Removed suspicious instruction from external tool result.]`. 참고로 논문 구현 세부에는 top-k=5로 적혀 있어 README의 k=3과 다르다. 어느 쪽이 논문 표의 설정인지는 확인하지 못했다.
+README의 기본 구성값은 다음과 같다.
+
+- 백엔드 `openai/gpt-4o-mini-2024-07-18`(temperature 0)
+- 청크 80~180자
+- 임베딩 `all-MiniLM-L6-v2` k=3
+- 로그확률 모델 Llama-3.1-8B-Instruct(임계값 0)
+- 유사 청크 그룹화 임계값 0.9
+- verifier `openai/gpt-5-mini`
+- 다음 도구 예측 1~3개
+- 이웃 청크 확장 ±1
+- 행동당 최대 수리 2회
+- 마스킹 문구 `[Removed suspicious instruction from external tool result.]`
+
+참고로 논문 구현 세부에는 top-k=5로 적혀 있어 README의 k=3과 다르다. 어느 쪽이 논문 표의 설정인지는 확인하지 못했다.
 
 ## 5. 논문 실험 결과(논문 본문·부록 표에서 직접 확인)
 
@@ -129,7 +170,14 @@ README의 기본 구성값은 다음과 같다: 백엔드 `openai/gpt-4o-mini-20
 
 저장소는 `Initial ActGuard release` 커밋 1개로 2026-09-14에 생성되었고(논문 제출 당일), 스타 1, 포크 0, 오픈 이슈 0, 릴리스·태그 없음이다. `pyproject.toml`은 버전 0.1.0, "Development Status :: Beta"로 표기한다. 라이선스는 MIT이며 AgentDojo 파생 코드의 원저작권 고지를 유지한다고 README가 밝힌다. 사실상 **논문 재현용 연구 코드**이고, 운영 라이브러리나 패키지로 배포된 상태는 아니다.
 
-한계로 코드와 논문에서 확인되는 것은 다음과 같다. (1) 모든 평가가 AgentDojo/AgentDyn 계열이며 한국어 콘텐츠나 사내 도구에 대한 검증은 없다. (2) 에이전트가 텍스트 프로토콜(XML 5섹션)을 따라야 하므로 네이티브 function-calling 기반 스택에 바로 붙지 않는다. (3) 로컬 8B 모델 확률 계산 때문에 GPU와 모델 접근 권한(gated)이 필요하고 지연이 약 2배다. (4) verifier 오류 시 fail-open이다. (5) 도구 권한 분류가 영어 접두사 휴리스틱이다. (6) 공격자가 지시문을 도구 출력이 아닌 곳(시스템 프롬프트, 메모리, 사용자 입력)에 넣는 경로는 위협 모델 밖이다.
+한계로 코드와 논문에서 확인되는 것은 다음과 같다.
+
+1. 모든 평가가 AgentDojo/AgentDyn 계열이며 한국어 콘텐츠나 사내 도구에 대한 검증은 없다.
+2. 에이전트가 텍스트 프로토콜(XML 5섹션)을 따라야 하므로 네이티브 function-calling 기반 스택에 바로 붙지 않는다.
+3. 로컬 8B 모델 확률 계산 때문에 GPU와 모델 접근 권한(gated)이 필요하고 지연이 약 2배다.
+4. verifier 오류 시 fail-open이다.
+5. 도구 권한 분류가 영어 접두사 휴리스틱이다.
+6. 공격자가 지시문을 도구 출력이 아닌 곳(시스템 프롬프트, 메모리, 사용자 입력)에 넣는 경로는 위협 모델 밖이다.
 
 ## 8. 보안·라이선스·운영 리스크
 

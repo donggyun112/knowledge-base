@@ -13,6 +13,10 @@ tags:
 
 ## 최종 결합 구조
 
+이 문서의 질문은 ‘두 기억을 어떻게 함께 보여 줄까?’와 ‘함께 보여 준 효과를 어떻게 공정하게 잴까?’다. Semantic memory는 과거 작업에서 확인한 사실을, procedural graph는 지금 단계에서 취할 절차를 제공한다. 둘 중 하나가 맞더라도 현재 환경의 관찰과 충돌할 수 있으므로, 최종 행동은 최신 관찰까지 보는 Solver가 고른다.
+
+여기의 ‘최종’은 이 동결 메모리 비교 프로토콜 안에서의 구조를 뜻한다. 그래프가 기억의 쓰기·조회까지 바꾸는 후속 확장은 [[메모리-연구/procedural-graphs/docs/COMBINED_DESIGN|재설계 문서]]의 별도 가설이다.
+
 ```text
                             fresh task agent
                                    │
@@ -47,8 +51,7 @@ PG가 다음 action을 강제하거나 semantic fact를 변형하지 않는다. 
 
 ## Fair factorial protocol
 
-결합 효과를 측정할 때 가장 중요한 불변식은 Semantic-only와 Semantic+PG가 같은 semantic memory를
-받는 것이다.
+두 조건이 각자 기억을 만들게 두면, 한쪽이 우연히 잘못된 규칙을 저장한 것만으로 점수가 달라질 수 있다. 그러면 PG의 효과인지 기억 품질의 차이인지 알 수 없다. 그래서 Semantic-only와 Semantic+PG에 **질문마다 같은 기억과 같은 검색 결과를 주는 것**을 가장 중요한 비교 조건으로 삼는다. 여기서 frozen은 40문항 내내 하나의 고정 기억을 쓴다는 뜻이 아니다. Semantic-only가 질문마다 갱신한 기억을, 결합 조건이 같은 시점에 그대로 재생한다는 뜻이다.
 
 ```text
 Grounded semantic-only stream
@@ -73,6 +76,8 @@ replay한다. 따라서 recalled record 배열도 동일해야 한다.
 |---|---|---|
 | Semantic 없음 | `stateless` | `pg_only` |
 | Semantic 있음 | `grounded_memory` | `pg_frozen_grounded_memory` |
+
+아래 뺄셈은 모두 같은 문항에서의 점수를 비교한다. 특히 interaction은 결합 점수 자체가 아니다. 메모리가 있을 때의 PG 효과가 없을 때보다 얼마나 달라졌는지다. 이 값이 양수여도 결합이 baseline보다 좋다는 뜻은 아니므로 네 조건의 실제 점수를 함께 본다.
 
 이를 통해 다음 효과를 분리한다.
 

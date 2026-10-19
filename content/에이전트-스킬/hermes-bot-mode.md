@@ -9,11 +9,23 @@ researched: 2026-10-01
 # Hermes Bot Mode
 
 > [!summary] 한줄요약
-> Hermes Agent 데스크톱 앱 위에서 "에이전트 profile 하나 = 이름·아바타·성격·루틴을 가진 bot 하나"로 보여주는 UI 플러그인(MIT, JavaScript 단일 파일 약 6,460줄). 2026-08 중순에 아카이브되었고 기능은 hermes-agent 본체(`apps/desktop/src/plugins/hermes-bots/`)에 기본 활성 번들 플러그인으로 흡수되었다. 지금 가치는 "코드"보다 **profile 격리 + 에이전트 간 메시징 프로토콜 + 제한된 라운드의 그룹 챗**이라는 설계 패턴에 있다.
+> Hermes Agent의 profile을 영속 채팅과 이름·아바타·성격·루틴을 가진 bot으로 보여주는 데스크톱 UI 플러그인이다.
+
+- **구현**: MIT, JavaScript 단일 파일 약 6,460줄. "에이전트 profile 하나 = bot 하나" 모델을 사용한다.
+- **현재 상태**: 2026-08 중순에 아카이브됐으며, 기능은 hermes-agent 본체(`apps/desktop/src/plugins/hermes-bots/`)의 기본 활성 번들 플러그인으로 흡수됐다.
+- **참고 가치**: 현재는 코드 자체보다 **profile 격리, 에이전트 간 메시징 프로토콜, 제한된 라운드의 그룹 챗**이라는 설계 패턴이 중요하다.
 
 ## 배경 — 해결하려는 문제
 
-Hermes Agent(NousResearch)는 `~/.hermes/profiles/<name>/` 아래에 설정, 메모리, skills, 자격증명, 대화 이력을 profile 단위로 격리해 두는 구조를 가진 에이전트 런타임이다. profile 자체는 CLI 개념(`hermes -p <name> ...`)이라서, 여러 profile을 실제로 "팀원"처럼 쓰려면 매번 profile을 바꿔 가며 대화를 열어야 하고, 어떤 profile이 지금 일하고 있는지, 어떤 정기 작업이 걸려 있는지, 서로 일을 넘길 수 있는지가 한눈에 보이지 않는다. Bot Mode는 이 간극을 메우는 **데스크톱 앱 플러그인**이다. "에이전트마다 하나의 영속 채팅(one chat per agent)"이라는 슬랙/메신저식 모델을 얹어, profile 목록을 연락처 목록처럼 보이게 만든다.
+Hermes Agent(NousResearch)는 `~/.hermes/profiles/<name>/` 아래에 설정, 메모리, skills, 자격증명, 대화 이력을 profile별로 격리하는 에이전트 런타임이다.
+
+Profile은 원래 CLI 개념(`hermes -p <name> ...`)이다. 여러 profile을 팀원처럼 쓰려면 매번 profile을 바꿔 대화를 열어야 한다. 다음 상태도 한눈에 파악하기 어렵다.
+
+- 지금 작업 중인 profile
+- 각 profile에 걸린 정기 작업
+- 다른 profile에 일을 넘길 수 있는지 여부
+
+Bot Mode는 이를 보완하는 **데스크톱 앱 플러그인**이다. "에이전트마다 하나의 영속 채팅(one chat per agent)"이라는 슬랙/메신저식 모델로 profile 목록을 연락처 목록처럼 보여 준다.
 
 중요한 점은 이 플러그인이 새 런타임을 만들지 않는다는 것이다. README는 "No core patches, no background daemons, no extra storage: everything is standard Hermes surface"라고 명시한다. 즉 기능 대부분은 이미 존재하던 gateway RPC와 CLI를 UI에서 묶어준 것이다.
 
@@ -126,11 +138,27 @@ hermes -p researcher chat --in ~ -c "Bot Chat" -Q -q "Message from 🤖 writer (
 
 ## 장단점·한계·성숙도
 
-확인한 사실(GitHub API, 2026-10-01): 스타 666, fork 130, 라이선스 MIT, 생성 2026-08-13, 마지막 push 2026-08-17(archived=true), 커밋은 shallow clone에서 보이는 1개(아카이브 안내)만 확인. 이슈 현황은 열린 이슈 13개로 집계되며 목록 상단 예: #108(per-task 워크플로 의도 질문), #48(조용한 핸드오프 드롭 + restore checkpoint가 전송을 막음), #43(composer @ 자동완성에 Bot Mode 에이전트 포함 요청)이 OPEN이다. 상위 프로젝트 hermes-agent는 스타 약 25만, MIT, push 2026-10-01(API 확인)로 매우 활발하다. 통합 PR #87886은 "bundle Bot Mode as built-in default-on plugin + core teammate protocol"이며 2026-08-17 병합(작성자 teknium1).
+GitHub API에서 2026-10-01에 확인한 사실은 다음과 같다.
 
-장점: (1) 의존성 0에 가까운 단일 파일이라 읽기 쉽다. (2) 테스트 비중이 크다(35여 개 파일). (3) 종료 조건과 상한이 명시된 멀티 에이전트 대화 설계. (4) 구형 gateway에 대한 feature-detect와 graceful degrade.
+- **독립 저장소**: 스타 666, fork 130, MIT. 생성일은 2026-08-13, 마지막 push는 2026-08-17이며 `archived=true`다. 커밋은 shallow clone에 보이는 아카이브 안내 1개만 확인했다.
+- **열린 이슈**: 13개. 목록 상단의 #108(per-task 워크플로 의도 질문), #48(조용한 핸드오프 드롭 + restore checkpoint가 전송을 막음), #43(composer @ 자동완성에 Bot Mode 에이전트 포함 요청)은 OPEN이다.
+- **상위 hermes-agent**: 스타 약 25만, MIT, push 2026-10-01로 활동이 매우 활발하다(API 확인).
+- **본체 통합**: PR #87886의 제목은 "bundle Bot Mode as built-in default-on plugin + core teammate protocol"이다. 작성자는 teknium1이며 2026-08-17에 병합됐다.
 
-한계: (1) 독립 저장소는 유지보수 종료. (2) 의사소통이 "에이전트가 터미널에서 CLI를 실행"하는 간접 방식이라 실패가 조용히 사라질 수 있다(이슈 #48). (3) 핸드오프 신뢰성은 LLM이 지시문을 정확히 따르는지에 의존한다. (4) 전달은 invocation 단위이며 라이브 인터럽트 불가(README). (5) 6천 줄 단일 JS 파일이라 유지보수성 낮음(관찰).
+**장점**
+
+- 의존성 0에 가까운 단일 파일이라 읽기 쉽다.
+- 테스트 비중이 크다(35여 개 파일).
+- 멀티 에이전트 대화의 종료 조건과 상한을 명시한다.
+- 구형 gateway에서는 feature-detect와 graceful degrade로 호환성을 관리한다.
+
+**한계**
+
+- 독립 저장소의 유지보수는 종료됐다.
+- 에이전트가 터미널에서 CLI를 실행하는 간접 통신 방식이라, 실패가 조용히 사라질 수 있다(이슈 #48).
+- 핸드오프 신뢰성은 LLM의 지시문 준수에 의존한다.
+- README에 따르면 전달은 invocation 단위이며 라이브 인터럽트는 불가하다.
+- 6천 줄짜리 단일 JS 파일이라는 구조는 유지보수에 불리하다. 이는 코드 구성에 대한 관찰이다.
 
 ## 보안·라이선스·운영 리스크
 

@@ -9,7 +9,11 @@ researched: 2026-10-01
 # NullClaw
 
 > [!summary] 한줄요약
-> Zig 0.16으로 작성한 "정적 바이너리 하나짜리" 자율 AI assistant 런타임. 50+ provider, 19개(이상) 메시징 채널, 10종 memory 엔진, 다층 sandbox, MCP, A2A, cron/heartbeat, 하드웨어 peripheral까지 전부 vtable 인터페이스로 갈아끼운다(MIT, 스타 약 8.1k). 678KB·RAM 약 1MB는 README 자체 주장이다.
+> Zig로 작성한 단일 정적 바이너리 기반 AI 비서 런타임으로, 메신저에서 도구를 호출하며 상시 동작한다.
+
+- **구성**: Zig 0.16, MIT, 스타 약 8.1k.
+- **기능 범위**: 50+ provider, 19개(이상) 메시징 채널, 10종 memory 엔진, 다층 sandbox, MCP, A2A, cron/heartbeat, 하드웨어 peripheral을 vtable 인터페이스로 교체할 수 있다.
+- **수치의 한계**: 바이너리 678KB·RAM 약 1MB는 README 자체 주장이다.
 
 ## 1. 배경: 어떤 문제를 푸는가
 
@@ -36,7 +40,11 @@ researched: 2026-10-01
 | `src/` 총 줄 수 | 약 28.6만 줄(285,763) | clone 후 `wc` |
 | `test "..."` 블록 | 약 7,471개 | clone 후 grep |
 
-숫자 해석에 주의할 점이 있다. README는 "소스 약 230~250개, 테스트 5,300+"라고 쓰지만 2026-09 시점 clone에서는 파일 292개, 테스트 블록 약 7.4k로 늘어 있었다. README 문구가 코드 성장을 따라가지 못한 것이다. 반대로 말하면 "678KB"라는 바이너리 크기도 기능이 늘어난 현재 빌드에서 그대로인지는 확인하지 못했다. 이 수치는 README의 2026-02 로컬 벤치 기준이고, 나는 빌드를 돌려 재측정하지 않았다. 또 최신 정식 릴리스가 5월이고 그 뒤 4개월간 main이 계속 움직였으므로, 현재 main은 릴리스 태그보다 앞서 있다. 운영에 쓰려면 nightly를 쓸지 v2026.5.29를 고정할지 정해야 한다.
+수치는 **문서의 측정 시점과 조사한 코드의 시점**을 구분해서 읽어야 한다.
+
+- **소스·테스트 규모**: README는 "소스 약 230~250개, 테스트 5,300+"라고 쓰지만, 2026-09 시점 clone에서는 파일 292개·테스트 블록 약 7.4k로 늘어 있었다. README가 코드 성장을 따라가지 못한 상태다.
+- **바이너리 크기**: 678KB는 README의 2026-02 로컬 벤치 수치다. 기능이 늘어난 현재 빌드에서도 같은지는 직접 빌드·재측정하지 않아 확인하지 못했다.
+- **배포 버전**: 최신 정식 릴리스는 5월이며 그 뒤 4개월간 main이 계속 변경됐다. 운영에서는 nightly를 쓸지, v2026.5.29를 고정할지 정해야 한다.
 
 ## 3. 아키텍처
 
@@ -109,7 +117,20 @@ flowchart LR
 
 ### 4.2 Channel과 라우팅
 
-채널 정책의 기본값은 "비어 있으면 전부 거부"다. `allow_from`이 빈 배열이면 inbound 전체 차단, `"*"`는 명시적 전체 허용, 그 외는 정확 일치다. 이 기본값은 저장소의 `SECURITY-PATCH-PLAN-2026-05-10.md`에서 보강된 것으로 보인다. 그 문서는 (1) Telegram 웹훅 위조/인증 부재, (2) `curl` argv로 비밀 노출, (3) cron shell job이 shell tool 보안을 우회, (4) `allow_from` 비었을 때 전체 허용 — 네 가지를 수정 대상으로 적고 있다. 즉 초기 버전에는 실제로 이런 취약점이 있었다는 뜻이고, 투명하게 계획을 공개했다는 점은 긍정적이지만 도입 평가 시 "어느 버전부터 수정됐는지"를 따로 확인해야 한다(릴리스 노트별 대응 여부는 확인하지 못함).
+채널 정책의 기본값은 "비어 있으면 전부 거부"다.
+
+- `allow_from`이 빈 배열이면 inbound 전체를 차단한다.
+- `"*"`는 명시적으로 전체를 허용한다.
+- 그 외 값은 정확히 일치할 때만 허용한다.
+
+이 기본값은 `SECURITY-PATCH-PLAN-2026-05-10.md`에서 보강된 것으로 보인다. 문서가 수정 대상으로 적은 취약점은 네 가지다.
+
+1. Telegram 웹훅 위조 및 인증 부재
+2. `curl` argv를 통한 비밀 노출
+3. cron shell job의 shell tool 보안 우회
+4. 빈 `allow_from`을 전체 허용으로 처리하는 동작
+
+초기 버전에 이런 취약점이 있었다는 기록이다. 수정 계획을 공개한 점은 긍정적이지만, 도입 시에는 **어느 버전부터 수정됐는지** 별도로 확인해야 한다. 릴리스 노트별 대응 여부는 이번 조사에서 확인하지 못했다.
 
 `bindings[]`로 채널·계정·peer(채팅/포럼 topic)를 이름 붙은 agent profile에 연결한다. Telegram 포럼 topic은 `"<chat_id>:thread:<topic_id>"` 형태로 지정하며, topic 바인딩이 그룹 바인딩보다 우선한다(배열 순서는 무관). 채팅에서 `/bind coder`를 치면 `~/.nullclaw/config.json`에 정확한 바인딩이 기록된다. `agents.list[].workspace_path`를 주면 에이전트별 워크스페이스와 `agent:<id>` memory namespace가 분리된다. 하나의 데몬에 여러 역할 에이전트를 두고 대화방별로 나누는 구성이 가능하다는 의미다.
 
@@ -129,7 +150,13 @@ README가 강조하는 "외부 의존 없는 hybrid 검색"은 SQLite 안에서 
 
 ### 4.6 Sandbox
 
-`security/detect.zig`는 `auto`, `none`, `landlock`, `firejail`, `bubblewrap`, `docker` 중 하나를 고른다. 주석상 자동 선택 우선순위는 Linux에서 firejail > bubblewrap > docker > noop, macOS에서 docker > noop이며, "Landlock is not surfaced until rule installation is implemented"라고 적혀 있다. 즉 README와 docs가 Landlock을 지원 목록에 올리지만, 적어도 이 시점 코드 주석상 자동 선택 경로에는 노출되지 않는다. 이 불일치는 보안 평가에서 반드시 짚어야 한다. 또 macOS에서는 docker 없으면 사실상 sandbox가 없다. Windows는 확인하지 못했다.
+`security/detect.zig`가 선택하는 옵션은 `auto`, `none`, `landlock`, `firejail`, `bubblewrap`, `docker`다. 코드 주석의 자동 선택 우선순위는 플랫폼별로 다르다.
+
+- **Linux**: firejail > bubblewrap > docker > noop
+- **macOS**: docker > noop. Docker가 없으면 사실상 sandbox가 없다.
+- **Windows**: 확인하지 못했다.
+
+**Landlock은 문서와 코드 주석을 구분해야 한다.** README와 docs에는 지원 항목으로 나오지만, 코드에는 "Landlock is not surfaced until rule installation is implemented"라고 적혀 있다. 적어도 조사 시점의 주석상 자동 선택 경로에는 노출되지 않으므로 보안 평가에서 확인해야 할 불일치다.
 
 ### 4.7 PII redaction
 

@@ -8,16 +8,30 @@ researched: 2026-10-01
 ---
 # WikiSkill
 
-> [!summary] 한줄요약
-> 스킬 진화 루프에 "불변 raw trace / 누적되는 wiki / 실행 가능한 skill"의 3계층을 두고, 스킬은 validation gate에서 거부되면 롤백하되 wiki(패턴 카탈로그, 진화 로그, 제안 diff와 수락 여부 기록)는 절대 롤백하지 않아서 다음 제안이 이전 시행착오 위에 쌓이게 만든 co-evolution 프레임워크. 같은 조건의 EvoSkill / SkillOpt / Trace2Skill 대비 5개 모델 평균을 모두 앞선다.
+> [!summary] 핵심 요약
+> 에이전트 경험을 **불변 raw trace / 누적 wiki / 실행 가능한 skill**로 나누는 스킬·지식 공동 진화(co-evolution) 프레임워크다.
+>
+> Validation gate에서 거부된 skill은 롤백하지만, wiki는 롤백하지 않는다. Wiki에는 패턴 카탈로그, 진화 로그, 제안 diff, 수락 여부가 남아 다음 제안이 이전 시행착오 위에 쌓인다.
+>
+> 같은 조건의 EvoSkill / SkillOpt / Trace2Skill보다 5개 모델의 평균 성능이 모두 높다고 보고한다.
 
 > [!info] 조사 범위
-> `source`는 DAIR.AI Academy 요약 페이지다. 그 페이지가 가리키는 원 논문은 **arXiv:2608.27454v1 [cs.AI], 2026-08-27**(Google Research 소속 저자 6인, CC BY 4.0)이며, `https://arxiv.org/html/2608.27454`의 전문(1~7절, Limitations, 부록 A~E 프롬프트까지)을 직접 읽고 원문 기준으로 작성했다. 논문 본문에서 공식 코드 저장소 링크는 찾지 못했다(HTML에 GitHub 코드 URL 없음). 아래 수치는 논문의 표/절 번호를 병기한다.
+> `source`는 DAIR.AI Academy 요약 페이지다. 그 페이지가 가리키는 원 논문은 **arXiv:2608.27454v1 [cs.AI], 2026-08-27**(Google Research 소속 저자 6인, CC BY 4.0)이며, `https://arxiv.org/html/2608.27454`의 전문(1~7절, Limitations, 부록 A~E 프롬프트까지)을 직접 읽고 원문 기준으로 작성했다.
+>
+> 논문 본문에서 공식 코드 저장소 링크는 찾지 못했다(HTML에 GitHub 코드 URL 없음).
+>
+> 아래 수치는 논문의 표/절 번호를 병기한다.
 
 ## 1. 문제의식·배경
 
 ### 1.1 문제
-agent skill(SKILL.md + 스크립트 + 리소스로 구성된 파일시스템 기반 모듈, progressive disclosure로 필요할 때만 로드)은 모델 파라미터를 건드리지 않고 도메인 절차 지식을 주입하는 가벼운 포맷이다. 문제는 대부분 사람이 직접 쓰고 있다는 점이고(1절), 이를 자동화하려는 최근 연구는 학습 태스크에서 에이전트를 돌리고 성공/실패 trajectory를 분석해 스킬을 고치는 루프를 쓴다. 저자들이 짚는 빈틈은 "루프가 배운 것을 어디에 어떻게 보존하는가"다. 기존 방법들은 각자 다른 방식으로 이를 처리하지만 "배운 것 자체를 별도의 진화하는 지식 표현으로 유지하지는 않는다"고 주장한다.
+agent skill(SKILL.md + 스크립트 + 리소스로 구성된 파일시스템 기반 모듈, progressive disclosure로 필요할 때만 로드)은 모델 파라미터를 건드리지 않고 도메인 절차 지식을 주입하는 가벼운 포맷이다.
+
+문제는 대부분 사람이 직접 쓰고 있다는 점이고(1절), 이를 자동화하려는 최근 연구는 학습 태스크에서 에이전트를 돌리고 성공/실패 trajectory를 분석해 스킬을 고치는 루프를 쓴다.
+
+저자들이 짚는 빈틈은 "루프가 배운 것을 어디에 어떻게 보존하는가"다.
+
+기존 방법들은 각자 다른 방식으로 이를 처리하지만 "배운 것 자체를 별도의 진화하는 지식 표현으로 유지하지는 않는다"고 주장한다.
 
 ### 1.2 선행 연구와의 차이 (1절, 부록 D.1)
 | 방법 | 경험 보존 방식 | 한계로 지적되는 점 |
@@ -27,7 +41,9 @@ agent skill(SKILL.md + 스크립트 + 리소스로 구성된 파일시스템 기
 | SkillOpt (Yang 2026) | ReflACT 6단계(Rollout, Reflect, Aggregate, Select, Update, Evaluate), rejected-edit 피드백, epoch별 meta guidance | 하나의 monolithic skill 문서를 갱신 |
 | **WikiSkill** | raw trace(불변) → wiki(구조화된 패턴) → skill로 분리, 롤백은 skill에만 적용 | — |
 
-영감은 Karpathy(2026)의 "LLM Wiki" 관점, 즉 경험을 지속적으로 복리 누적되는 지식으로 컴파일하라는 아이디어다([[karpathy-llm-wiki]]). 논문은 GEPA 같은 범용 프롬프트 최적화기를 직접 비교에서 제외했다. 근거는 "전용 skill-evolution 파이프라인이 범용 최적화보다 일관되게 낫다"는 SkillOpt 논문의 결과이며, 이 논문에서 재현해 확인한 것은 아니다(4.1절).
+영감은 Karpathy(2026)의 "LLM Wiki" 관점, 즉 경험을 지속적으로 복리 누적되는 지식으로 컴파일하라는 아이디어다([[karpathy-llm-wiki]]).
+
+논문은 GEPA 같은 범용 프롬프트 최적화기를 직접 비교에서 제외했다. 근거는 "전용 skill-evolution 파이프라인이 범용 최적화보다 일관되게 낫다"는 SkillOpt 논문의 결과이며, 이 논문에서 재현해 확인한 것은 아니다(4.1절).
 
 ## 2. 방법 상세
 
@@ -48,7 +64,13 @@ workspace/
     <skill>/SKILL.md
     <skill>/PURPOSE.md         #   이 스킬이 어떤 wiki 패턴 때문에 생겼는지 역추적 (Origin, Patterns Addressed, Evolution History)
 ```
-핵심은 wiki가 하는 세 가지 일이다(3.1절). (1) 완전한 스킬 수락 이력을 보여줘 거부된 개입이 재제안되지 않게 한다, (2) 이전 iteration에서 무엇을 제안했고 성공했는지 추적한다, (3) 어떤 오류가 iteration을 가로질러 반복되는지 식별한다. `PURPOSE.md`가 스킬 → wiki 패턴 방향의 provenance를 남기는 것도 눈여겨볼 설계다.
+핵심은 wiki가 하는 세 가지 일이다(3.1절).
+
+1. 완전한 스킬 수락 이력을 보여줘 거부된 개입이 재제안되지 않게 한다.
+2. 이전 iteration에서 무엇을 제안했고 성공했는지 추적한다.
+3. 어떤 오류가 iteration을 가로질러 반복되는지 식별한다.
+
+`PURPOSE.md`가 스킬 → wiki 패턴 방향의 provenance를 남기는 것도 눈여겨볼 설계다.
 
 ### 2.3 진화 루프 (3.2절, Algorithm 1)
 ```text
@@ -66,9 +88,13 @@ for k = 1..K:
     W_k = W'_k + log(P_k diff, R_val, a_k)        # skill-impact.md에 diff, 점수, 수락 여부 기록
 ```
 세부.
-- **Inference Agent**: 활성 스킬의 전체 내용을 system prompt에 직접 주입한다("full injection"). 선행 연구(SkillOpt, Trace2Skill)를 따른 선택으로, 스킬 트리거/검색 실패를 교란 변수에서 제거하기 위해서다. 따라서 이 논문은 skill retrieval/triggering 능력은 평가하지 않는다. **학습 rollout 중에는 wiki 접근을 금지**한다(5.1절 ablation 근거).
+- **Inference Agent**: 활성 스킬의 전체 내용을 system prompt에 직접 주입한다("full injection"). 선행 연구(SkillOpt, Trace2Skill)를 따른 선택으로, 스킬 트리거/검색 실패를 교란 변수에서 제거하기 위해서다.
+
+  따라서 이 논문은 skill retrieval/triggering 능력은 평가하지 않는다. **학습 rollout 중에는 wiki 접근을 금지**한다(5.1절 ablation 근거).
 - **Wiki Maintainer**: 전체 wiki와 샘플링된 trace를 받아 실패 task는 root cause analysis, 성공 task는 성공 전략 추출. 출력은 JSON(`create_patterns`, `update_patterns`(append/replace/insert_after 패치 연산), `update_index`(전체 재작성 필수), `append_log`). 프롬프트(E.2)가 강제하는 규칙: 에세이가 아니라 10~30줄, 중복 패턴 금지(기존 것에 증거 추가), index 항목은 "PROBLEM + ROOT CAUSE + FIX"를 1~2문장에 담아 에이전트가 페이지를 열지 않고도 관련성을 판단할 수 있게 한다(index가 "가장 중요한 부분"이라고 명시). 패턴 수 제한은 없다.
-- **Skill Proposer**: 고정된 trace 묶음을 받는 대신 wiki index, skill-impact.md, 학습 태스크 결과 요약(통과/실패, 예측, 정답)만 받고, ReAct 방식으로 `read_file`을 써서 필요한 패턴/trace만 열어본다(컨텍스트 소진 방지). 프롬프트(E.3)의 규칙: wiki를 먼저 읽을 것, `skill-impact.md`에 실려 있는 거부된 제안의 전체 내용을 반복하지 말 것, 최소 4개 trace를 읽고 제안할 것, 기존 스킬이 부분적으로 맞으면 새로 만들기보다 패치할 것, 스킬은 간결하게. 출력 액션은 `create`(SKILL.md + PURPOSE.md 전체), `patch`(edit 연산), `no_action`.
+- **Skill Proposer**: 고정된 trace 묶음을 받는 대신 wiki index, skill-impact.md, 학습 태스크 결과 요약(통과/실패, 예측, 정답)만 받고, ReAct 방식으로 `read_file`을 써서 필요한 패턴/trace만 열어본다(컨텍스트 소진 방지). 프롬프트(E.3)의 규칙: wiki를 먼저 읽을 것, `skill-impact.md`에 실려 있는 거부된 제안의 전체 내용을 반복하지 말 것, 최소 4개 trace를 읽고 제안할 것, 기존 스킬이 부분적으로 맞으면 새로 만들기보다 패치할 것, 스킬은 간결하게.
+
+  출력 액션은 `create`(SKILL.md + PURPOSE.md 전체), `patch`(edit 연산), `no_action`.
 - **Gating**: 후보 스킬셋을 validation split에서 평가해 **엄격한 '>'** 로 개선될 때만 수락(`R_val > R_best`). 동점은 거부. 수락 시 임계값 갱신.
 
 ```mermaid
@@ -116,12 +142,22 @@ flowchart LR
 | | EvoSkill | 44.6 | 43.6 | 55.4 | 51.2 | 85.9 | 56.1 |
 | | **WikiSkill** | 72.6 | 44.7 | 76.6 | 60.7 | 85.9 | **68.1** |
 
-(각 모델에서 가장 높은 경쟁 방법만 발췌. 전체 표는 논문 Table 1.) 논문 서술: 모든 모델에서 평균 1위이며 가장 강한 경쟁 방법 대비 +3.3(4B), +5.1(9B), +10.0(27B), +5.8(Gemma), +12.0(Gemini Flash)점. 대표 사례: Gemini-3.5-Flash LiveMath 33.0→72.6, SpreadSheet 50.5→76.6, Qwen-3.6-27B ALFWorld 52.8→77.6. 반대로 기존 방법은 불안정하다: EvoSkill은 Qwen-9B LiveMath를 28.2→58.1로 올리지만 Gemma-4-31B의 같은 LiveMath는 33.9→29.8로 떨어뜨리고, SkillOpt는 Gemini-3.5-Flash SealQA를 29.4→28.2로 낮춘다.
+(각 모델에서 가장 높은 경쟁 방법만 발췌. 전체 표는 논문 Table 1.) 논문 서술: 모든 모델에서 평균 1위이며 가장 강한 경쟁 방법 대비 +3.3(4B), +5.1(9B), +10.0(27B), +5.8(Gemma), +12.0(Gemini Flash)점.
+
+대표 사례: Gemini-3.5-Flash LiveMath 33.0→72.6, SpreadSheet 50.5→76.6, Qwen-3.6-27B ALFWorld 52.8→77.6.
+
+반대로 기존 방법은 불안정하다: EvoSkill은 Qwen-9B LiveMath를 28.2→58.1로 올리지만 Gemma-4-31B의 같은 LiveMath는 33.9→29.8로 떨어뜨리고, SkillOpt는 Gemini-3.5-Flash SealQA를 29.4→28.2로 낮춘다.
 
 주의할 점: (a) Gemini-3.5-Flash ALFWorld는 no-skill 상태에서 이미 validation 100%라서 모든 방법이 85.9%로 동일(진화 자체가 일어나지 않음). (b) 셀 단위로 보면 WikiSkill이 최고가 아닌 곳이 있다: Qwen-4B OfficeQA 28.5는 no-skill 30.2보다 낮고, Qwen-27B OfficeQA 53.7은 SkillOpt 54.8, Trace2Skill 54.3 이하이며, Gemma OfficeQA 44.2는 SkillOpt 44.4 이하, Qwen-9B LiveMath 56.3은 EvoSkill 58.1 이하다. 평균 우위가 모든 셀의 우위를 뜻하지는 않는다.
 
 ### 4.2 스케일링과의 관계
-Qwen 계열에서 WikiSkill의 평균 개선폭이 +12.3(4B) → +17.5(9B) → +23.9(27B)점으로 모델 규모에 따라 커진다. SpreadSheet에서는 +6.5 → +9.3 → +40.9점으로 더 두드러진다. 동시에 Qwen-3.5-9B + WikiSkill(47.4%)이 스킬 없는 Qwen-3.6-27B(39.4%)를 넘어선다. 저자 해석: 모델 능력과 진화된 절차 지식은 서로 보완적인 성능 원천이다. 벤치마크별로 편차도 크다. LiveMath는 전 모델에서 +20.6~+39.6, ALFWorld는 +14.0~+29.3(Gemini 제외)인 반면, OfficeQA는 장문 문서 탐색 워크플로를 소형 모델이 실행하지 못해 Qwen-4B에서 오히려 소폭 하락한다.
+Qwen 계열에서 WikiSkill의 평균 개선폭이 +12.3(4B) → +17.5(9B) → +23.9(27B)점으로 모델 규모에 따라 커진다. SpreadSheet에서는 +6.5 → +9.3 → +40.9점으로 더 두드러진다.
+
+동시에 Qwen-3.5-9B + WikiSkill(47.4%)이 스킬 없는 Qwen-3.6-27B(39.4%)를 넘어선다.
+
+저자 해석: 모델 능력과 진화된 절차 지식은 서로 보완적인 성능 원천이다.
+
+벤치마크별로 편차도 크다. LiveMath는 전 모델에서 +20.6~+39.6, ALFWorld는 +14.0~+29.3(Gemini 제외)인 반면, OfficeQA는 장문 문서 탐색 워크플로를 소형 모델이 실행하지 못해 Qwen-4B에서 오히려 소폭 하락한다.
 
 ### 4.3 스킬 전이 (Table 2)
 소스 모델이 진화시킨 스킬을 다른 추론 모델에 주입해 비교했다(소스: Qwen-4B / Qwen-27B / Gemini Flash).
@@ -139,15 +175,23 @@ Qwen 계열에서 WikiSkill의 평균 개선폭이 +12.3(4B) → +17.5(9B) → +
 | 있음 | 있음 | 64.8 | 42.8 | 80.2 | 55.6 | 60.9 |
 | 없음 | 있음(기본) | 72.6 | 44.7 | 76.6 | 60.7 | **63.7** |
 
-(표의 행 배치는 텍스트 추출본에서 복원한 것으로, 본문 서술 "Inference Agent의 wiki 접근이 꺼진 상태에서 Proposer가 wiki를 가지면 48.7→63.7(+15.0)", "Proposer가 wiki를 가진 상태에서 Inference Agent에게도 wiki를 주면 63.7→60.9"와 일치한다.) 해석: persistent wiki가 스킬 품질을 가장 크게 올리는 요소이고, 학습 rollout 중 에이전트가 wiki에 접근하면 해결 지식이 스킬이 아닌 wiki에서 직접 나와 trajectory가 스킬 개발에 덜 유익해진다는 것이 저자의 가설이다(검증된 메커니즘은 아님).
+(표의 행 배치는 텍스트 추출본에서 복원한 것으로, 본문 서술 "Inference Agent의 wiki 접근이 꺼진 상태에서 Proposer가 wiki를 가지면 48.7→63.7(+15.0)", "Proposer가 wiki를 가진 상태에서 Inference Agent에게도 wiki를 주면 63.7→60.9"와 일치한다.)
+
+해석: persistent wiki가 스킬 품질을 가장 크게 올리는 요소이고, 학습 rollout 중 에이전트가 wiki에 접근하면 해결 지식이 스킬이 아닌 wiki에서 직접 나와 trajectory가 스킬 개발에 덜 유익해진다는 것이 저자의 가설이다(검증된 메커니즘은 아님).
 
 ### 4.5 정성 분석 (5.2~5.3절, Table 4/5, Figure 3)
 - 스킬 길이: Qwen 계열 118.9~128.6줄, Gemma 45.1줄, Gemini Flash 81.2줄. 벤치마크별로는 SpreadSheet 142.5줄(패턴도 9.8개로 최다), LiveMath 84.6줄(패턴 4.4개). 모델별 wiki 패턴 평균 생성 6.3~8.9개, 편집 7.0~18.4회. 제안 대비 수락 건수는 스킬 생성 2.3~4.8개 제안에 1.2~1.6개 수락, 편집 3.2~5.7개 제안에 0.7~1.3개 수락 수준이다(Table 4). 즉 제안의 절반 안팎 이상이 gate에서 걸러진다.
-- 수락 시점(Table 5): 수락된 업데이트의 39~52%(모델별)가 초반(iter 0~1)에 몰리지만, 중반(2~4)과 후반(5~7)에도 계속 나온다. SealQA는 중반 33%, 후반 28%로 후반 개선이 두드러진다.
+-
+
+  수락 시점(Table 5): 수락된 업데이트의 39~52%(모델별)가 초반(iter 0~1)에 몰리지만, 중반(2~4)과 후반(5~7)에도 계속 나온다. SealQA는 중반 33%, 후반 28%로 후반 개선이 두드러진다.
 - 케이스 스터디(ALFWorld, Qwen-3.6-27B, Figure 3): Iteration 0에서 wiki가 `take-examine-move-loop.md`(루프 행동)를 발견, proposer의 `goal-directed-action` 스킬은 validation 개선 실패로 거부되고 `skill-impact.md`에 diff와 거부가 기록. Iteration 1에서 이 기록을 보고 `break-repetition-loop`를 구체 규칙("Never Return an Item to Its Origin Location")으로 제안해 수락. 이후 새 루프 변형(`multi-operation-loop.md`)이 쌓이자 Iteration 4에서 "Each Operation Type ONCE Per Item" 규칙으로 정교화. 이 사례가 논문의 핵심 주장인 "거부 이력과 패턴 누적이 다음 제안을 개선한다"의 구체적 근거로 제시되나, 단일 사례다.
 
 ### 4.6 비용 (부록 D.2, Table 7)
-iteration당 optimizer API 호출: WikiSkill = $(1+T_{ReAct})N_{train}/B$, 본 실험은 $B=N_{train}$이므로 $1+T_{ReAct}$회(T_ReAct는 대략 10~20). 저자 주장은 학습셋 크기와 무관한 O(1). 비교: EvoSkill $2N/B$, SkillOpt $K_{opt}N/B$(K_opt≈6~8), Trace2Skill $\approx N+(1+1/(c-1))N/B+1$. 단 저자도 "일부 데이터셋에서는 추론 비용이 더 높을 수 있다"고 인정한다. 비교는 optimizer 호출 수만 다루며, rollout(학습/검증) 호출이나 토큰 총량, 달러 비용은 보고되지 않았다.
+iteration당 optimizer API 호출: WikiSkill = $(1+T_{ReAct})N_{train}/B$, 본 실험은 $B=N_{train}$이므로 $1+T_{ReAct}$회(T_ReAct는 대략 10~20). 저자 주장은 학습셋 크기와 무관한 O(1). 비교: EvoSkill $2N/B$, SkillOpt $K_{opt}N/B$(K_opt≈6~8), Trace2Skill $\approx N+(1+1/(c-1))N/B+1$.
+
+단 저자도 "일부 데이터셋에서는 추론 비용이 더 높을 수 있다"고 인정한다.
+
+비교는 optimizer 호출 수만 다루며, rollout(학습/검증) 호출이나 토큰 총량, 달러 비용은 보고되지 않았다.
 
 ## 5. 저자가 밝힌 한계 + 비판적 평가
 
@@ -173,7 +217,10 @@ iteration당 optimizer API 호출: WikiSkill = $(1+T_{ReAct})N_{train}/B$, 본 �
 - 3회 독립 실행과 paired bootstrap은 평가 하네스의 필수 부분으로 가져갈 만하다.
 
 ## 관련 노트
-[[karpathy-llm-wiki]] [[skillzip-pro]] [[procedural-graphs-self-evolving]] [[aces-agentic-continuous-evaluation-of-skills]]
+- [[karpathy-llm-wiki]]
+- [[skillzip-pro]]
+- [[procedural-graphs-self-evolving]]
+- [[aces-agentic-continuous-evaluation-of-skills]]
 
 ## 출처
 - Liyan Tang, Cyrus Rashtchian, Chun-Sung Ferng, Andrew Tomkins, Da-Cheng Juan (Google Research), Tu Vu (Google Research, Virginia Tech). "WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution." arXiv:2608.27454v1 [cs.AI], 2026-08-27. 초록 https://arxiv.org/abs/2608.27454 , 전문 https://arxiv.org/html/2608.27454 (실제 열람, 본문·Limitations·부록 A~E).

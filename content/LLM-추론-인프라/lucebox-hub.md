@@ -9,7 +9,11 @@ researched: 2026-10-01
 # Lucebox Hub
 
 > [!summary] 한줄요약
-> 소비자 GPU(RTX 3090/4090/5090)와 AMD APU·워크스테이션 카드(R9700, Strix Halo)에서 큰 모델을 빠르게 돌리기 위해 ggml 위에 C++/CUDA/HIP로 직접 짠 추론 서버. speculative decoding(DFlash/DSpark/DDTree), speculative prefill(PFlash), KV 페이징(KVFlash), MoE 전문가 핫/콜드 캐시(Spark), megakernel을 한 서버(`luce_server`)에 묶고 OpenAI Chat/Responses·Anthropic Messages 호환 API로 노출한다. 수치는 전부 프로젝트 자체 측정이다.
+> 소비자 GPU와 AMD APU·워크스테이션 카드에 맞춰 ggml 위에 C++/CUDA/HIP로 직접 짠 추론 서버. 수치는 전부 프로젝트 자체 측정이다.
+>
+> - **대상**: RTX 3090/4090/5090, R9700, Strix Halo에서 큰 모델을 빠르게 실행
+> - **최적화**: speculative decoding(DFlash/DSpark/DDTree), speculative prefill(PFlash), KV 페이징(KVFlash), MoE 전문가 핫/콜드 캐시(Spark), megakernel
+> - **접점**: 한 서버(`luce_server`)에서 OpenAI Chat/Responses·Anthropic Messages 호환 API 제공
 
 > [!info] 이번 재조사 범위
 > `git clone --depth 1`(HEAD `db4cdef`, 2026-10-01 커밋)로 받아 루트 README 전문, `server/docs/`의 ARCHITECTURE·ENGINE_COMPONENTS·API·RECOMMENDED_SETUPS·MODEL_LOAD_BALANCING·PREFIX_CACHE·DS41, `optimizations/*` README 5종, harness README, CI 워크플로, pyproject·.gitmodules를 읽었다. 약 1,949개 파일 중 대용량 문서(DS4.md 62KB, ENVIRONMENT.md 38KB, HIP_PERF_PLAN.md 37KB 등)와 CUDA/HIP 커널 소스는 본문을 읽지 않았고 파일 이름·디렉터리 구조만 확인했다. 직접 빌드·실행·벤치는 하지 않았다.
@@ -24,7 +28,9 @@ researched: 2026-10-01
 
 ## 배경: 어떤 문제를 푸는가
 
-일반적인 로컬 추론 도구(llama.cpp 등)는 범용성을 위해 모델·하드웨어별 최적화를 포기한다. Lucebox의 접근은 반대로 "모델 하나와 칩 하나에 맞춰 손으로 최적화"다. 루트 pyproject의 설명이 이를 직접 말한다: "open LLM inference, rewritten by hand for one specific chip at a time". 목표 환경은 데이터센터 GPU가 아니라 24~32GB 소비자 카드와 128GB 통합 메모리 APU다. 이런 환경의 병목은 세 가지로 정리된다.
+일반적인 로컬 추론 도구(llama.cpp 등)는 범용성을 위해 모델·하드웨어별 최적화를 포기한다. Lucebox의 접근은 반대로 "모델 하나와 칩 하나에 맞춰 손으로 최적화"다. 루트 pyproject의 설명이 이를 직접 말한다: "open LLM inference, rewritten by hand for one specific chip at a time".
+
+목표 환경은 데이터센터 GPU가 아니라 24~32GB 소비자 카드와 128GB 통합 메모리 APU다. 이런 환경의 병목은 세 가지로 정리된다.
 
 1. **decode가 메모리 대역폭에 묶임**: 27B급 양자화 모델은 토큰 하나당 가중치 전체를 읽는다. speculative decoding으로 한 번의 target forward에서 여러 토큰을 검증해 이를 완화한다.
 2. **긴 컨텍스트 prefill이 O(S²)**: PFlash 문서는 RTX 3090에서 llama.cpp가 Qwen3.6-27B Q4_K_M의 131,072 토큰 prefill에 약 257초 걸린다고 적는다(FA on, Q4_0 KV). 사용자는 첫 토큰까지 4분을 기다린다.
@@ -60,13 +66,21 @@ flowchart TD
 
 ### 소스 디렉터리 (확인한 것)
 
-`server/src/` 아래에 `qwen35`, `qwen3`, `gemma4`, `laguna`, `deepseek4`, `bailingmoe3`(Ling), `qwen35moe` 모델 백엔드, `common/`(spec decode, DDTree, KV 페이징, 샘플러, 프리픽스 캐시, 레이어 분할, IPC), `engine/`, `server/`(http_server, scheduler, launch_profiles), `draft/`, `placement/`, `ipc/`, `hip_compat/`, 그리고 `flashprefill_*.cu`, `bsa_launcher*.cu`, `rms_norm_hip.cu` 같은 커널이 있다. `server/deps/llama.cpp`는 서브모듈이 아니라 ggml 부분집합을 레포에 직접 벤더링한 디렉터리이고(`VENDOR.md`, 원본 Luce-Org/lucebox-ggml), 서브모듈은 `Block-Sparse-Attention`(mit-han-lab) 하나뿐이다(.gitmodules). `server/deps/bsa_stubs/`는 libtorch 없이 BSA를 빌드하기 위한 ATen/c10 헤더 스텁이다(PFlash README).
+`server/src/` 아래에 `qwen35`, `qwen3`, `gemma4`, `laguna`, `deepseek4`, `bailingmoe3`(Ling), `qwen35moe` 모델 백엔드, `common/`(spec decode, DDTree, KV 페이징, 샘플러, 프리픽스 캐시, 레이어 분할, IPC), `engine/`, `server/`(http_server, scheduler, launch_profiles), `draft/`, `placement/`, `ipc/`, `hip_compat/`, 그리고 `flashprefill_*.cu`, `bsa_launcher*.cu`, `rms_norm_hip.cu` 같은 커널이 있다.
+
+`server/deps/llama.cpp`는 서브모듈이 아니라 ggml 부분집합을 레포에 직접 벤더링한 디렉터리이고(`VENDOR.md`, 원본 Luce-Org/lucebox-ggml), 서브모듈은 `Block-Sparse-Attention`(mit-han-lab) 하나뿐이다(.gitmodules). `server/deps/bsa_stubs/`는 libtorch 없이 BSA를 빌드하기 위한 ATen/c10 헤더 스텁이다(PFlash README).
 
 ### Speculative decoding 계층 (DFlash / DDTree / DSpark)
 
 `server/README.md`는 DFlash를 이렇게 설명한다. 작은 draft가 여러 토큰을 제안하고 target이 한 번의 forward로 검증한다. DDTree는 단일 체인이 아니라 후보 트리를 검증해 같은 target 연산 예산에서 acceptance length를 높인다. 이 레포가 제공하는 것은 libllama·PyTorch 없이 ggml 위에서 동작하는 C++/CUDA decode 루프, DFlash draft의 GGUF/safetensors 로딩, tree-aware SSM(DeltaNet) rollback 커널, TQ3_0 및 K/V 비대칭 양자화다.
 
-ARCHITECTURE.md의 `DFlashTarget` 인터페이스가 핵심이다. 범용 DFlash draft 모델은 target의 중간층 feature에 cross-attend하므로 target 쪽은 세 가지만 제공하면 된다. (1) `verify_batch()` 중 지정 층 활성값 캡처, (2) 거절된 토큰 rollback을 위한 KV snapshot/restore, (3) draft hidden state를 target의 lm_head로 투영. 현재 qwen35 백엔드만 완전 구현이고 qwen3/gemma4/laguna는 AR 전용이라고 문서가 말한다(문서의 "Gemma4에 DFlash 추가" 가이드는 다소 오래된 내용일 수 있다. 루트 README는 Gemma 4 + DFlash 드래프터 수치를 싣고 있어 이후 구현된 것으로 보이나 문서 간 불일치를 확인했을 뿐 원인은 확인 못함).
+ARCHITECTURE.md의 `DFlashTarget` 인터페이스가 핵심이다. 범용 DFlash draft 모델은 target의 중간층 feature에 cross-attend하므로 target 쪽은 세 가지만 제공하면 된다.
+
+1. `verify_batch()` 중 지정 층 활성값 캡처
+2. 거절된 토큰 rollback을 위한 KV snapshot/restore
+3. draft hidden state를 target의 lm_head로 투영
+
+현재 qwen35 백엔드만 완전 구현이고 qwen3/gemma4/laguna는 AR 전용이라고 문서가 말한다(문서의 "Gemma4에 DFlash 추가" 가이드는 다소 오래된 내용일 수 있다. 루트 README는 Gemma 4 + DFlash 드래프터 수치를 싣고 있어 이후 구현된 것으로 보이나 문서 간 불일치를 확인했을 뿐 원인은 확인 못함).
 
 DeepSeek V4/V4.1 계열은 "DSpark" 드래프터를 쓴다. DS41 문서에 따르면 DSpark 드래프터는 원 체크포인트의 `mtp.*` 텐서에서 변환한 것이다(MTP 계열 헤드 활용). Qwen 3.8 쪽은 "DFlash2" 드래프터를 쓴다.
 
@@ -74,19 +88,41 @@ DeepSeek V4/V4.1 계열은 "DSpark" 드래프터를 쓴다. DS41 문서에 따�
 
 ### PFlash (speculative prefill)
 
-SambaNova의 Cross-Family Speculative Prefill 논문(arXiv:2603.02631, ICLR 2026)을 구현한 것이다. 작은 드래프터(Qwen3-0.6B BF16)가 긴 프롬프트의 토큰 중요도를 점수화하고 큰 target은 중요한 span만 prefill한다. 참조 구현은 vLLM+BF16 대형 GPU용인데 PFlash는 24GB 카드의 양자화 GGUF target 앞에서 Python/Triton 없이 쓰기 위해 C++로 짰다. 4개 CUDA 커널(`mean_K → score → select → sparse_fwd`), BSA 연결, 커스텀 Qwen3-0.6B 포워드(libllama 없음)를 포함한다. README 수치: RTX 3090, Qwen3.6-27B Q4_K_M, 128K에서 TTFT 24.8초 vs llama.cpp 약 257초(약 10.4배), 64K는 13.5초 vs 134.95초(10.0배, FA off dense 기준), NIAH 단일 바늘 검색 유지, keep_ratio 0.05(128K를 약 2.6K span으로). 핵심 주의: 루트 README가 "PFlash is lossy prompt compression; keep it off for exact-retrieval and matched true-context benchmarks"라고 직접 경고한다. 정확한 인용이 필요한 RAG·법률·로그 분석에는 끄는 것이 맞다.
+SambaNova의 Cross-Family Speculative Prefill 논문(arXiv:2603.02631, ICLR 2026)을 구현한 것이다. 작은 드래프터(Qwen3-0.6B BF16)가 긴 프롬프트의 토큰 중요도를 점수화하고 큰 target은 중요한 span만 prefill한다.
+
+참조 구현은 vLLM+BF16 대형 GPU용인데 PFlash는 24GB 카드의 양자화 GGUF target 앞에서 Python/Triton 없이 쓰기 위해 C++로 짰다. 4개 CUDA 커널(`mean_K → score → select → sparse_fwd`), BSA 연결, 커스텀 Qwen3-0.6B 포워드(libllama 없음)를 포함한다.
+
+README 수치: RTX 3090, Qwen3.6-27B Q4_K_M, 128K에서 TTFT 24.8초 vs llama.cpp 약 257초(약 10.4배), 64K는 13.5초 vs 134.95초(10.0배, FA off dense 기준), NIAH 단일 바늘 검색 유지, keep_ratio 0.05(128K를 약 2.6K span으로).
+
+핵심 주의: 루트 README가 "PFlash is lossy prompt compression; keep it off for exact-retrieval and matched true-context benchmarks"라고 직접 경고한다. 정확한 인용이 필요한 RAG·법률·로그 분석에는 끄는 것이 맞다.
 
 ### KVFlash
 
-attention KV 캐시를 고정 크기 슬롯 풀에 두고 64토큰 chunk 단위로 cold 부분을 호스트 RAM으로 페이징한다(bit-exact, 재호출 가능). PFlash의 드래프터가 "Memory Indexer"로 다음에 필요한 컨텍스트를 점수화한다. README 표: Qwen3.6-27B Q4_K_M, RTX 3090에서 풀 캐시는 256K에서 13.1 tok/s·KV 4608MiB인데 KVFlash 4K 풀은 어떤 컨텍스트에서도 38.6 tok/s, 상주 KV 72MiB, 바늘 검색 14~15/16. 256K 프롬프트가 4.6GiB VRAM 대신 72MiB 상주 + 호스트 RAM 4.2GiB가 된다. 사용법은 `luce_server model.gguf --max-ctx 32768 --kvflash auto`, 정책 기본값은 드래프터 점수화이고 드래프터가 없으면 LRU로 조용히 폴백하므로 시작 배너에서 `policy=drafter`를 확인하라고 문서가 경고한다.
+attention KV 캐시를 고정 크기 슬롯 풀에 두고 64토큰 chunk 단위로 cold 부분을 호스트 RAM으로 페이징한다(bit-exact, 재호출 가능). PFlash의 드래프터가 "Memory Indexer"로 다음에 필요한 컨텍스트를 점수화한다.
+
+README 표: Qwen3.6-27B Q4_K_M, RTX 3090에서 풀 캐시는 256K에서 13.1 tok/s·KV 4608MiB인데 KVFlash 4K 풀은 어떤 컨텍스트에서도 38.6 tok/s, 상주 KV 72MiB, 바늘 검색 14~15/16. 256K 프롬프트가 4.6GiB VRAM 대신 72MiB 상주 + 호스트 RAM 4.2GiB가 된다.
+
+사용법은 `luce_server model.gguf --max-ctx 32768 --kvflash auto`, 정책 기본값은 드래프터 점수화이고 드래프터가 없으면 LRU로 조용히 폴백하므로 시작 배너에서 `policy=drafter`를 확인하라고 문서가 경고한다.
 
 ### Luce Spark (MoE 핫/콜드)
 
-활성화 희소성을 이용해 큰 MoE를 작은 GPU에 넣는다. 세 가지 구성요소: (1) 실제 트래픽을 데몬에 재생해 (레이어, 전문가)별 라우팅 빈도를 모아 placement 프로파일을 만들고, cold-hit율을 균등 배치 36%에서 6.6%로 낮췄고 decode를 66에서 81 tok/s로 올렸다(동일 VRAM). (2) 고정 링 버퍼의 GPU 여유 슬롯에 cold 전문가를 LRU로 들여오는 bounded 캐시로 cold miss를 거의 0으로. (3) 토큰당 40개의 레이어별 GPU 그래프 대신 FFN을 attention 그래프에 접어 넣은 per-token fused decode(`laguna_step_hybrid`, 기본 on). 결과: Laguna-XS.2 Q4_K_M(33B total, 3B active) RTX 3090에서 전문가 60% 상주 시 ~100 tok/s(전부 GPU 119 tok/s의 85%, 순진한 오프로드 66 tok/s), 14.6GiB. Qwen3.6 35B-A3B는 13.3GiB(원래 약 20.5GiB). 다음 전문가를 한 스텝 앞서 아는 예측은 토큰 수준 recall 약 53%에서 막혀 "연구 과제로 열려 있음"이라고 솔직히 적는다.
+활성화 희소성을 이용해 큰 MoE를 작은 GPU에 넣는다. 구성요소는 세 가지다.
+
+1. **Placement 프로파일**: 실제 트래픽을 데몬에 재생해 (레이어, 전문가)별 라우팅 빈도를 모은다. cold-hit율을 균등 배치 36%에서 6.6%로 낮췄고 decode를 66에서 81 tok/s로 올렸다(동일 VRAM).
+2. **Bounded 캐시**: 고정 링 버퍼의 GPU 여유 슬롯에 cold 전문가를 LRU로 들여와 cold miss를 거의 0으로 낮춘다.
+3. **Per-token fused decode**: 토큰당 40개의 레이어별 GPU 그래프 대신 FFN을 attention 그래프에 접어 넣는다(`laguna_step_hybrid`, 기본 on).
+
+결과: Laguna-XS.2 Q4_K_M(33B total, 3B active) RTX 3090에서 전문가 60% 상주 시 ~100 tok/s(전부 GPU 119 tok/s의 85%, 순진한 오프로드 66 tok/s), 14.6GiB. Qwen3.6 35B-A3B는 13.3GiB(원래 약 20.5GiB).
+
+다음 전문가를 한 스텝 앞서 아는 예측은 토큰 수준 recall 약 53%에서 막혀 "연구 과제로 열려 있음"이라고 솔직히 적는다.
 
 ### Paged attention + continuous batching
 
-`GGML_OP_PAGED_ATTN`(CUDA/HIP): 16토큰 물리 블록 풀과 시퀀스별 블록 테이블, D=256 GQA, F16/Q4_0/Q8_0 K/V. 근사나 축출 없이 레이아웃·할당만 바꾼다(KVFlash와 구분). 불균등 8요청(128K + 7x8K) RTX 3090에서 K/V 저장 82% 감소, attention 1.35배. 서버 옵션은 `--paged-attention --max-concurrency N`. 루트 README: Qwen 3.8 27B + DFlash2, R9700, 5 클라이언트에서 총 300.9 tok/s. 한계: 페이징·동시성은 공유 prefix block을 아직 지원하지 않아 `--agent-turn-cache`와 같이 쓸 수 없다(API.md).
+`GGML_OP_PAGED_ATTN`(CUDA/HIP): 16토큰 물리 블록 풀과 시퀀스별 블록 테이블, D=256 GQA, F16/Q4_0/Q8_0 K/V. 근사나 축출 없이 레이아웃·할당만 바꾼다(KVFlash와 구분).
+
+불균등 8요청(128K + 7x8K) RTX 3090에서 K/V 저장 82% 감소, attention 1.35배. 서버 옵션은 `--paged-attention --max-concurrency N`. 루트 README: Qwen 3.8 27B + DFlash2, R9700, 5 클라이언트에서 총 300.9 tok/s.
+
+한계: 페이징·동시성은 공유 prefix block을 아직 지원하지 않아 `--agent-turn-cache`와 같이 쓸 수 없다(API.md).
 
 ### Megakernel
 
@@ -102,7 +138,13 @@ Qwen 3.5-0.8B(DeltaNet+Attention 하이브리드) 24개 레이어를 단일 CUDA
 
 ### 이기종·다중 GPU
 
-`--target-devices cuda:0,cuda:1 --target-split-mode tensor --peer-access`로 2x RTX 3090 NVLink에서 Qwen 3.8 tensor parallel + DFlash2를 돌려 79.7 tok/s(AR 대비 2.16배, PR #637). DeepSeek V4 Flash는 RX 7900 XT + Strix Halo(45.0~47.7 tok/s, 132,981 토큰 prefill 111.2 tok/s), R9700 + Strix Halo(86 tok/s decode, 2K prefill 788 tok/s)로 전문가를 두 장치에 나눈다. DS41 문서는 ROCMFP2S 파일이 383GB(라우팅 전문가 158GiB, dense 8GiB, Engram 테이블 189GiB, 테이블은 파일에서 행 단위로 읽고 mmap하지 않음)이며 R9700 + Strix Halo + SSD 3계층 전문가 배치로 코드 생성 decode 25~26 tok/s를 얻는다고 적는다. README가 직접 "서로 다른 프롬프트·양자화·추론 정책의 결과이며 하드웨어 순위가 아니다"라고 단서를 단다.
+`--target-devices cuda:0,cuda:1 --target-split-mode tensor --peer-access`로 2x RTX 3090 NVLink에서 Qwen 3.8 tensor parallel + DFlash2를 돌려 79.7 tok/s(AR 대비 2.16배, PR #637).
+
+DeepSeek V4 Flash는 RX 7900 XT + Strix Halo(45.0~47.7 tok/s, 132,981 토큰 prefill 111.2 tok/s), R9700 + Strix Halo(86 tok/s decode, 2K prefill 788 tok/s)로 전문가를 두 장치에 나눈다.
+
+DS41 문서는 ROCMFP2S 파일이 383GB(라우팅 전문가 158GiB, dense 8GiB, Engram 테이블 189GiB, 테이블은 파일에서 행 단위로 읽고 mmap하지 않음)이며 R9700 + Strix Halo + SSD 3계층 전문가 배치로 코드 생성 decode 25~26 tok/s를 얻는다고 적는다.
+
+README가 직접 "서로 다른 프롬프트·양자화·추론 정책의 결과이며 하드웨어 순위가 아니다"라고 단서를 단다.
 
 ## 설치·사용법
 
@@ -151,7 +193,14 @@ python server/scripts/quantize_dflash_draft.py models/qwen38-dflash2-f16.gguf mo
 
 ## 지원 모델 (README 표 기준)
 
-Qwen 3.5 0.8B(Megakernel), Qwen 3.8 27B(DFlash2, 비전 mmproj 포함), Laguna XS 2.1 33B(PFlash/KVFlash/DFlash Q4), Gemma 4 26B-A4B 및 31B(DFlash Q8_0 드래프터, 31B에서 3.2배), DeepSeek V4 Flash 및 V4.1 Flash(DSpark, 비전 실험판), Ling 3.0 Flash 124B-A5.1B(DGX Spark에서 AR 34.6 tok/s). 모델 이름은 README 표기를 그대로 옮긴 것이며 각 모델의 실체와 가중치는 열어 확인하지 않았다.
+- **Qwen 3.5 0.8B**: Megakernel
+- **Qwen 3.8 27B**: DFlash2, 비전 mmproj 포함
+- **Laguna XS 2.1 33B**: PFlash/KVFlash/DFlash Q4
+- **Gemma 4 26B-A4B 및 31B**: DFlash Q8_0 드래프터, 31B에서 3.2배
+- **DeepSeek V4 Flash 및 V4.1 Flash**: DSpark, 비전 실험판
+- **Ling 3.0 Flash 124B-A5.1B**: DGX Spark에서 AR 34.6 tok/s
+
+모델 이름은 README 표기를 그대로 옮긴 것이며 각 모델의 실체와 가중치는 열어 확인하지 않았다.
 
 테스트 하드웨어: R9700(gfx1201), Ryzen AI MAX+ 395/Strix Halo(gfx1151), RX 7900 XT/XTX(gfx1100), RTX 3090(sm_86), RTX 5090(sm_120), DGX Spark/GB10(sm_121), RTX 4090(sm_89), RTX 2080 Ti(sm_75), V100/P40, Jetson AGX Thor(sm_110, CUDA 13). 런타임은 CUDA 12+ 또는 HIP 7+(ROCm 7.2).
 

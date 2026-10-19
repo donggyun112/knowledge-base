@@ -8,8 +8,12 @@ researched: 2026-10-01
 ---
 # Large-scale online deanonymization with LLMs
 
-> [!summary] 한줄요약
-> 비정형 텍스트(게시글·댓글)만으로 가명 계정을 실명 프로필 또는 다른 가명 계정에 대규모로 연결할 수 있음을 보인 논문이다. Extract-Search-Reason-Calibrate(ESRC) 4단계 파이프라인이 Netflix Prize식 고전 공격을 전 설정에서 압도한다(예: HN-LinkedIn 99% precision에서 recall 0.1% -> 45.1%). 저자들의 결론은 "practical obscurity(실질적 난독성)가 더는 가명 보호로 작동하지 않는다"이다.
+> [!summary] 핵심 요약
+> 비정형 게시글·댓글만으로 가명 계정을 실명 프로필이나 다른 가명 계정에 **대규모로 연결할 수 있음**을 보인 논문이다.
+>
+> Extract-Search-Reason-Calibrate(ESRC) 4단계 파이프라인은 Netflix Prize식 고전 공격을 전 설정에서 크게 앞선다. 예를 들어 HN-LinkedIn에서는 precision 99%일 때 recall이 0.1%에서 45.1%로 올랐다.
+>
+> 저자들은 "practical obscurity(실질적 난독성)가 더는 가명 보호로 작동하지 않는다"고 결론짓는다.
 
 > [!info] 열람 범위
 > arXiv HTML 전문(https://arxiv.org/html/2602.16800, v2)을 초록부터 본문 8장, 윤리 절, 부록 A-G(표 2, 4, 5, 6 포함)까지 읽었다. 저자들이 **코드와 처리된 데이터셋, 에이전트 프롬프트를 의도적으로 공개하지 않았다**(Open Science 절). 따라서 코드 저장소 확인은 불가능한 것이 정상이다. 논문 서지: Lermen, Paleka 등, 제출 2026-02-18, v2 2026-02-25, USENIX Security Symposium 2026 (pp. 1947-1966) 게재 표기(arXiv abs 페이지 기재).
@@ -25,7 +29,9 @@ researched: 2026-10-01
 - Narayanan & Shmatikov(Netflix Prize attack): 익명 Netflix 평점을 공개 IMDb 프로필과 소수의 영화 선호로 연결.
 - de Montjoye et al.: 시공간 점 4개로 휴대전화 데이터 개인의 95% 식별.
 
-이들은 모두 **구조화된 micro-data**에 의존했다. 저자들의 질문은 "LLM이 비정형 텍스트에서 identity-relevant 신호를 뽑고, 수백만 후보를 검색하고, 두 계정이 같은 사람인지 추론하는 전 과정을 자동화하면 어떻게 되는가"다. 핵심 주장은 LLM이 인간 조사원을 능가해서가 아니라 **비용을 낮춰서** 위협을 현실화한다는 것이다(Staab et al.의 관찰을 이어받음, 서론 Implications).
+이들은 모두 **구조화된 micro-data**에 의존했다. 저자들의 질문은 "LLM이 비정형 텍스트에서 identity-relevant 신호를 뽑고, 수백만 후보를 검색하고, 두 계정이 같은 사람인지 추론하는 전 과정을 자동화하면 어떻게 되는가"다.
+
+핵심 주장은 LLM이 인간 조사원을 능가해서가 아니라 **비용을 낮춰서** 위협을 현실화한다는 것이다(Staab et al.의 관찰을 이어받음, 서론 Implications).
 
 ### 선행 연구와의 차이
 
@@ -73,7 +79,11 @@ ground truth가 있어야 하지만 진짜 가명 계정의 정답은 없다. �
 - **합성 익명화**: 스스로 링크를 공개한 계정(HN bio에 LinkedIn URL)을 골라 직접 식별자를 LLM으로 제거한 뒤, 제거된 링크를 복원하는지 측정. Table 2의 규칙: 개인 URL, 블로그 URL, SNS 핸들, GitHub 저장소/핸들은 **삭제**, 고유 프로젝트/부트캠프명은 **일반화**, 동료 이름, 지역 상점, 기관, 인구통계, 관심사, 기술스택은 **유지**(그것만으로는 본인 특정이 안 되므로).
 - **의미 분할(semantic split)**: 한 사용자의 활동을 커뮤니티별 또는 시간별로 갈라 두 프로필을 만든다. 정확한 정답이 대량으로 생기지만 현실성은 낮다.
 
-저자 스스로 편향을 명시한다. 링크를 공개한 사용자는 익명성에 덜 신경 쓰는 집단이라 **recall이 과대평가될 수 있고**, 분할 프로필은 서로 더 닮아 있다. 대신 false positive 비율은 실세계로 이전된다고 논증해 **낮은 FPR(고 precision) 구간의 Recall@Precision을 핵심 지표**로 쓴다(3.3). recall=정답 존재 쿼리 중 맞힌 비율, precision=non-abstain 중 정답 비율.
+저자 스스로 편향을 명시한다. 링크를 공개한 사용자는 익명성에 덜 신경 쓰는 집단이라 **recall이 과대평가될 수 있고**, 분할 프로필은 서로 더 닮아 있다.
+
+대신 false positive 비율은 실세계로 이전된다고 논증해 **낮은 FPR(고 precision) 구간의 Recall@Precision을 핵심 지표**로 쓴다(3.3).
+
+recall=정답 존재 쿼리 중 맞힌 비율, precision=non-abstain 중 정답 비율.
 
 ### 2.4 설정 1: 에이전트형 end-to-end 공격 (2절)
 
@@ -132,7 +142,13 @@ return pairs sorted by rating desc
 | Reason (low) | 55.0% | 44.8% | 36.0% |
 | Reason (high) | 54.2% | 50.0% | 45.1% |
 
-high reasoning은 99% precision에서만 low를 크게 앞선다(45.1 vs 36.0). 서론의 "recall 0.1%에서 45.1%"가 이 표의 baseline 대 Reason(high) 99% 열이다. 후보 풀 확장(Fig. 3b): 90% precision에서 Reason은 1k 후보 68.3%에서 89k 55.2%로 약 13%p 하락, Search는 47.6%에서 26.6%. 99% precision, 89k에서 Reason 33.0% vs Search 4.2%. 로그-선형 외삽으로 100만 후보에서 Reason 약 45%, Search 약 12%, 1억 후보에서 Reason 약 27%, Search 0이다(부록 D.1). 외삽이므로 거친 추정이다.
+high reasoning은 99% precision에서만 low를 크게 앞선다(45.1 vs 36.0). 서론의 "recall 0.1%에서 45.1%"가 이 표의 baseline 대 Reason(high) 99% 열이다.
+
+후보 풀 확장(Fig. 3b): 90% precision에서 Reason은 1k 후보 68.3%에서 89k 55.2%로 약 13%p 하락, Search는 47.6%에서 26.6%. 99% precision, 89k에서 Reason 33.0% vs Search 4.2%.
+
+로그-선형 외삽으로 100만 후보에서 Reason 약 45%, Search 약 12%, 1억 후보에서 Reason 약 27%, Search 0이다(부록 D.1).
+
+외삽이므로 거친 추정이다.
 
 **Reddit 영화 (5.3절, 표 4/5)**: high reasoning이 90% precision에서 recall 8.5%(low 5.2%, 상대 +63%), 99%에서 2.8%(low 1.4%, +100%)로 p<0.05. 공유 영화가 많을수록 쉽다. 90% precision recall은 공유 영화 1편 3.1%, 10편 이상 48.1%(Fig. 4b). LLM confidence가 임베딩 top-2 gap보다 낫고, 이 설정에서는 LLM 정렬(sorting)이 verification 단계 confidence를 능가하지 못했다(부록 F).
 
@@ -145,9 +161,17 @@ high reasoning은 99% precision에서만 low를 크게 앞선다(45.1 vs 36.0). 
 | LLM + Selection (Reason) | 47.8% | 28.2% | 20.3% |
 | LLM + Selection + Sorting (Calibrate) | 67.3% | 47.6% | 38.4% |
 
-초록의 "68% recall @ 90% precision"은 HN 에이전트 67%와 이 표의 67.3%에 대응하는 값으로 보이며, 정확히 어느 설정의 반올림인지는 초록에 명시돼 있지 않다(내 해석). 근거 진단: 임베딩 rank-1 정확도는 약 60%이고 top-15에서 80% 이상(Fig. 8a), 임베딩 유사도로 정렬한 매치 순서는 무작위보다 약간 나은 정도라 신뢰도 척도로 부적합(Fig. 8b). 이 두 관찰이 Reason과 Calibrate 단계의 존재 이유다.
+초록의 "68% recall @ 90% precision"은 HN 에이전트 67%와 이 표의 67.3%에 대응하는 값으로 보이며, 정확히 어느 설정의 반올림인지는 초록에 명시돼 있지 않다(내 해석).
 
-**난이도 파라미터 (6.4절)**: 후보 풀 크기에 대해 recall이 대략 로그-선형으로 감소하며 100만 후보로 외삽하면 90% precision에서 약 35% recall(전체 공격 기준, Fig. 7a). π에 대해서는 정밀도 식 Precision(π)=π·TPR/(π·TPR+π·FMR+(1-π)·FPIR)로 TPR, FMR(false match rate), FPIR(false positive identification rate)을 따로 추정한 뒤 사후 계산했고, 매치 가능 쿼리가 1만 명 중 1명(π=0.0001)이어도 Search+Reason은 90% precision에서 recall 약 9%를 유지한다(Fig. 7b). 고전 baseline은 π=1에서도 실패한다. Calibrate 단계는 쿼리 간 상관 때문에 이 사후 계산이 불가해 이 분석에서 제외됐다.
+근거 진단: 임베딩 rank-1 정확도는 약 60%이고 top-15에서 80% 이상(Fig. 8a), 임베딩 유사도로 정렬한 매치 순서는 무작위보다 약간 나은 정도라 신뢰도 척도로 부적합(Fig. 8b).
+
+이 두 관찰이 Reason과 Calibrate 단계의 존재 이유다.
+
+**난이도 파라미터 (6.4절)**: 후보 풀 크기에 대해 recall이 대략 로그-선형으로 감소하며 100만 후보로 외삽하면 90% precision에서 약 35% recall(전체 공격 기준, Fig. 7a).
+
+π에 대해서는 정밀도 식 Precision(π)=π·TPR/(π·TPR+π·FMR+(1-π)·FPIR)로 TPR, FMR(false match rate), FPIR(false positive identification rate)을 따로 추정한 뒤 사후 계산했고, 매치 가능 쿼리가 1만 명 중 1명(π=0.0001)이어도 Search+Reason은 90% precision에서 recall 약 9%를 유지한다(Fig. 7b). 고전 baseline은 π=1에서도 실패한다.
+
+Calibrate 단계는 쿼리 간 상관 때문에 이 사후 계산이 불가해 이 분석에서 제외됐다.
 
 ## 4. 저자가 밝힌 한계 + 내 비판적 평가
 

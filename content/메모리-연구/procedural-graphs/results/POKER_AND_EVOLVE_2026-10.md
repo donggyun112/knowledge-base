@@ -14,6 +14,10 @@ CLBench `database_exploration`에서 관찰한 정확도만으로는 절차 그�
 
 ## 포커 결과
 
+이 표에서 bb/hand는 한 판당 얻거나 잃은 칩을 큰 블라인드(big blind) 단위로 나타낸 값이다. 높을수록 좋지만, 같은 조건도 받은 패와 진행에 따라 흔들릴 수 있다. 따라서 평균 순위뿐 아니라 오른쪽의 세 실행 값을 함께 본다.
+
+비교는 두 단계로 읽는다. 먼저 memory와 stateless를 비교해 상대를 기억하는 것 자체가 도움이 됐는지 본다. 그다음 memory + PG와 memory를 비교해 절차 안내의 추가 이득을 본다. 결합이 memory를 이겨도 stateless보다 낮다면, ‘아무 장치 없이 하는 것보다 나아졌다’는 결론은 나오지 않는다. `graph prompt`와 PG를 쓴 결합은 표에 별도 조건으로 남겨 두었으며, 이름만으로 두 구현을 같다고 가정하지 않는다.
+
 - 기록된 요청 모델: `~deepseek/deepseek-v4-flash-latest`, 상대 loose-aggressive, 조건당 3회, 지표는 bb/hand. 가변 alias이므로 현재 같은 이름이 같은 모델 버전을 뜻한다고 보장하지 않는다.
 
 | 조건 | 평균 | 3회 값 |
@@ -32,6 +36,8 @@ CLBench `database_exploration`에서 관찰한 정확도만으로는 절차 그�
 
 ## 그래프 진화 단일 실행
 
+포커 표와 달리 여기서는 다시 DB 탐색 과제로 돌아온다. 질문도 바뀐다. ‘PG를 붙일까?’가 아니라 **‘이미 메모리와 PG를 함께 쓰는 상태에서, 그래프를 경험으로 고치면 더 나아질까?’**다. 따라서 비교 상대는 메모리 없는 에이전트가 아니라 고정 그래프를 쓰는 에이전트다.
+
 2026-10-17 21:43 KST에 저장된 `mt-evolve-v2-agg` 최종 파일을 10월 18일 다시 확인했다. `database_exploration/schema_drift`, 요청 모델 `deepseek/deepseek-v4.1-flash`, `multiturn-v1`, solver reasoning `medium`, required recall, `e5` retriever 조건이다. Refiner는 `claude-cli:opus`, reasoning `medium`이다.
 
 | 조건 | 정답 | normalized score | 평균 SQL 수 | 전반 정확도 | 후반 정확도 |
@@ -47,6 +53,8 @@ CLBench `database_exploration`에서 관찰한 정확도만으로는 절차 그�
 
 ## 같은 계열의 반복 실행과 비교
 
+앞의 85%가 한 번의 실행에만 나온 것인지 판단하려면 반복 결과가 필요하다. 아래 실행군은 그 판단에 참고할 수 있지만 동일한 반복 실험은 아니다. 여기서는 memory 단독과 미리 준비된 guided PG의 차이를 보며, 각 실행 안에서 그래프를 새로 진화시키지 않았다. 이 구분을 지켜야 ‘안내를 사용하는 효과’와 ‘안내를 학습한 효과’를 섞지 않는다.
+
 `mt-memonly-idx{1,2}-{a,b,c}`와 `mt-guided-idx{1,2}-{a,b,c}`의 완료된 최종 파일도 재집계했다. 모두 요청 모델 `deepseek/deepseek-v4.1-flash`, reasoning `medium`, 40문항, stride 10, required recall, `e5` 조건이다. 아래는 각 stream에서 세 실행의 산술평균이다. guided는 각 파일의 `evolved_pg`, memory는 `fixed_pg` 행을 사용하되, 실제 조건 플래그로 PG 유무를 구분했다. 이름만으로 조건을 판단하면 안 된다.
 
 | stream index | 조건 | 실행 수 | 평균 정확도 | 평균 SQL 수 | 평균 score |
@@ -61,6 +69,8 @@ CLBench `database_exploration`에서 관찰한 정확도만으로는 절차 그�
 `e0731-*`는 이번에 확인한 범위에서 checkpoint 파일만 있었고 완료된 최종 비교 파일이 없었다. 중간 결과는 이 표에 넣지 않는다.
 
 ## 확인하지 못한 것
+
+현재 다음 판단을 가르는 것은 최고 점수의 재인용보다 실행 경로와 비교 조건의 확인이다. 포커에서는 그래프가 실제로 사용됐는지부터 확인해야 한다. DB 탐색에서는 동일 조건의 반복과 문항별 누출·비용 감사가 있어야 단일 20pt 차이를 일반적인 개선으로 해석할 수 있다.
 
 - 포커 `pg_memory`에서 그래프 노드가 실제로 활성화됐는지 로그를 확인하지 않았다. 이전에 STATUS 노드가 활성 노드가 되지 못하는 문제가 있었다.
 - 포커는 조건당 정확히 3회지만 상대 유형 하나만 대상으로 했다. 최종 진화 비교는 조건당 1회다.

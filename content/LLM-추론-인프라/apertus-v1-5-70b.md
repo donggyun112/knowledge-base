@@ -9,16 +9,31 @@ researched: 2026-10-01
 # Apertus v1.5 70B
 
 > [!summary] 한줄요약
-> 스위스 AI Initiative(EPFL, ETH Zurich, CSCS)가 가중치·학습 데이터 출처·학습 레시피를 모두 공개한 "fully open" 70B 모델. 8B와 함께 2026-07-24 HF에 올라왔고, Apache-2.0, 컨텍스트 262,144, 텍스트+이미지+오디오 입력(출력은 텍스트), 선택형 thinking 모드를 지원한다. 단 모델카드 본문은 gated이고 기술 보고서는 아직 미공개다.
+> 스위스 AI Initiative(EPFL, ETH Zurich, CSCS)가 가중치·학습 데이터 출처·학습 레시피를 모두 공개한 "fully open" 70B 모델.
+>
+> - **공개**: 8B와 함께 2026-07-24 HF에 게시, Apache-2.0
+> - **기능**: 컨텍스트 262,144, 텍스트+이미지+오디오 입력, 텍스트 출력, 선택형 thinking 모드
+> - **제약**: 모델카드 본문은 gated이고 기술 보고서는 아직 미공개
 
 > [!warning] 접근 제약
 > HF 레포는 `gated: auto`다. 파일 목록과 메타데이터는 공개 API로 읽었지만 `raw/main/README.md`, `config.json`은 비로그인 상태에서 HTTP 401이었다. 모델카드 본문은 headless Chrome 렌더(`render.sh`)로 페이지에 노출되는 카드 텍스트를 읽었다. 벤치마크 수치는 카드에 이미지 차트(`assets/text_performance_plot.png`, `assets/visual_performance_plot.png`)로만 있어 **수치는 확인 못함**. 아래 내용은 이 범위 안에서 확인한 것만이다.
 
 ## 배경: 무엇을 해결하려는 모델인가
 
-Apertus는 스위스 AI Initiative가 추진하는 공개 LLM 계열이다. 1.0 기술 보고서(arXiv:2509.14233, 2025-09-17 제출, 2025-12-01 v2)의 초록은 문제의식을 두 가지로 요약한다. 하나는 data compliance(데이터 준수)이고 다른 하나는 multilingual representation(다국어 표현)이다. 보고서는 기존 공개 모델 상당수가 가중치만 풀고 재현 가능한 데이터 파이프라인이나 콘텐츠 소유자의 권리는 신경 쓰지 않았다고 지적한다. Apertus는 공개적으로 이용 가능한 데이터만으로 pretraining하며, robots.txt 류의 opt-out을 소급 적용하고 비허용 라이선스·유해·개인식별정보(PII) 콘텐츠를 필터링했다고 설명한다. memorization(학습 데이터 그대로 암기) 위험은 Goldfish objective로 줄였다고 한다. 1.0은 1800개 이상 언어에서 15T 토큰을 학습했고 비영어 비중이 약 40%라고 초록에 적혀 있다(출처: arXiv abs 페이지, 직접 열람).
+Apertus는 스위스 AI Initiative가 추진하는 공개 LLM 계열이다. 1.0 기술 보고서(arXiv:2509.14233, 2025-09-17 제출, 2025-12-01 v2)의 초록은 문제의식을 두 가지로 요약한다.
 
-v1.5는 이 1.0 위에서 이어 학습(continued pretraining)한 후속 릴리스다. 모델카드의 Model Summary에 따르면 멀티모달 믹스 토큰을 8B에는 4T, 70B에는 2T 추가했다. 아키텍처는 1.0과 같은 decoder-only transformer이고 xIELU 활성함수, AdEMAMix 옵티마이저를 쓴다. 카드는 post-training 레시피를 개선해 instruction following과 tool use가 좋아졌고, 처음으로 thinking 모드를 켤 수 있다고 쓴다. 또 Apertus 계열 처음으로 이미지·오디오·텍스트가 섞인 입력을 받는다.
+- **Data compliance**: 데이터 준수
+- **Multilingual representation**: 다국어 표현
+
+보고서는 기존 공개 모델 상당수가 가중치만 풀고 재현 가능한 데이터 파이프라인이나 콘텐츠 소유자의 권리는 신경 쓰지 않았다고 지적한다.
+
+Apertus는 공개적으로 이용 가능한 데이터만으로 pretraining하며, robots.txt 류의 opt-out을 소급 적용하고 비허용 라이선스·유해·개인식별정보(PII) 콘텐츠를 필터링했다고 설명한다. memorization(학습 데이터 그대로 암기) 위험은 Goldfish objective로 줄였다고 한다.
+
+1.0은 1800개 이상 언어에서 15T 토큰을 학습했고 비영어 비중이 약 40%라고 초록에 적혀 있다(출처: arXiv abs 페이지, 직접 열람).
+
+v1.5는 이 1.0 위에서 이어 학습(continued pretraining)한 후속 릴리스다. 모델카드의 Model Summary에 따르면 멀티모달 믹스 토큰을 8B에는 4T, 70B에는 2T 추가했다. 아키텍처는 1.0과 같은 decoder-only transformer이고 xIELU 활성함수, AdEMAMix 옵티마이저를 쓴다.
+
+카드는 post-training 레시피를 개선해 instruction following과 tool use가 좋아졌고, 처음으로 thinking 모드를 켤 수 있다고 쓴다. 또 Apertus 계열 처음으로 이미지·오디오·텍스트가 섞인 입력을 받는다.
 
 "왜 지금 이 모델을 보는가"를 우리 맥락에서 정리하면 이렇다. 온프렘 LLM 서빙에서는 모델 성능만큼 라이선스, 데이터 출처 설명 가능성, 규제 대응 문서가 의사결정에 들어온다. Apertus는 성능 최상위를 노리기보다 이 세 번째 축(감사·규제 대응)에서 차별점을 가진 모델이다. 카드는 EU AI Act용 `Apertus_1_5_EU_Public_Summary.pdf`와 `Apertus_1_5_EU_Code_of_Practice.pdf`를 레포 파일로 포함한다(파일 목록 API에서 확인).
 
@@ -40,7 +55,11 @@ v1.5는 이 1.0 위에서 이어 학습(continued pretraining)한 후속 릴리�
 | 출력 | 텍스트만 (이미지·오디오 생성 안 함) | 카드 |
 | 어휘 | LM head는 텍스트 토큰 131,072개, 로짓은 전체 266,752 토큰 어휘로 패딩 | 카드 Input notes |
 
-파일 구성이 흥미롭다. `model-apertus-model-0000{1,2,3}-of-00003.safetensors` 3분할이 본체이고, 별도로 `model-vision_tokenizer-model.safetensors`와 `model-wavtokenizer-model.safetensors`가 있다. 즉 이미지와 오디오는 별도 토크나이저(비전 토크나이저, 파일명상 WavTokenizer 계열)를 거쳐 이산 토큰으로 LM에 들어가는 구조로 보인다(파일명과 카드의 "image and audio tokens are never generated" 문구에서 추정한 것이며 내부 구조 문서는 확인 못함). 카드는 "Audio contributes 40 tokens per second"라고 쓰고, 오디오는 24kHz로 리샘플링된다. 비디오는 네이티브 미지원이며 프레임을 이미지로 뽑아 넣어야 한다.
+파일 구성이 흥미롭다. `model-apertus-model-0000{1,2,3}-of-00003.safetensors` 3분할이 본체이고, 별도로 `model-vision_tokenizer-model.safetensors`와 `model-wavtokenizer-model.safetensors`가 있다.
+
+즉 이미지와 오디오는 별도 토크나이저(비전 토크나이저, 파일명상 WavTokenizer 계열)를 거쳐 이산 토큰으로 LM에 들어가는 구조로 보인다(파일명과 카드의 "image and audio tokens are never generated" 문구에서 추정한 것이며 내부 구조 문서는 확인 못함).
+
+카드는 "Audio contributes 40 tokens per second"라고 쓰고, 오디오는 24kHz로 리샘플링된다. 비디오는 네이티브 미지원이며 프레임을 이미지로 뽑아 넣어야 한다.
 
 ## 동작 원리와 서빙 구조
 
@@ -59,7 +78,16 @@ flowchart LR
 
 ### Thinking 모드
 
-기본값은 off다. Transformers에서는 `apply_chat_template(..., enable_thinking=True)`, vLLM에서는 `--reasoning-parser apertus`와 `--default-chat-template-kwargs.enable_thinking true`로 켠다. 활성화되면 모델이 `<|inner_prefix|>`와 `<|inner_suffix|>` 사이에서 추론한 뒤 답을 낸다. 카드는 중요한 운영 제약을 둘 적는다. 첫째, thinking 모드에서는 tool calling이 지원되지 않아 tool-call 플래그를 일부러 뺐고 둘을 같이 쓰는 것을 권장하지 않는다. 둘째, 추론 구간이 보이는 답변보다 몇 배 길 수 있으니 `max_new_tokens`를 넉넉히 잡아야 한다. 또 추론 마커는 `skip_special_tokens=True`로도 제거되지 않으니 파싱해서 분리해야 한다. 게이트웨이 입장에서는 thinking 변형을 별도 `--served-model-name`(`...-thinking`)으로 올리라는 카드의 예제가 곧 운영 패턴이다.
+기본값은 off다. Transformers에서는 `apply_chat_template(..., enable_thinking=True)`, vLLM에서는 `--reasoning-parser apertus`와 `--default-chat-template-kwargs.enable_thinking true`로 켠다. 활성화되면 모델이 `<|inner_prefix|>`와 `<|inner_suffix|>` 사이에서 추론한 뒤 답을 낸다.
+
+카드는 중요한 운영 제약을 두 가지 적는다.
+
+1. **Tool calling과 병용하지 않기**: thinking 모드에서는 tool calling이 지원되지 않아 tool-call 플래그를 일부러 뺐고, 둘을 같이 쓰는 것을 권장하지 않는다.
+2. **출력 예산 확보**: 추론 구간이 보이는 답변보다 몇 배 길 수 있으니 `max_new_tokens`를 넉넉히 잡아야 한다.
+
+또 추론 마커는 `skip_special_tokens=True`로도 제거되지 않으니 파싱해서 분리해야 한다.
+
+게이트웨이 입장에서는 thinking 변형을 별도 `--served-model-name`(`...-thinking`)으로 올리라는 카드의 예제가 곧 운영 패턴이다.
 
 ## 설치·사용법
 
@@ -92,11 +120,17 @@ vllm serve swiss-ai/Apertus-v1.5-70B \
   --default-chat-template-kwargs.enable_thinking true
 ```
 
-카드는 하드웨어에 따라 `--tensor-parallel-size`, `--gpu-memory-utilization`, `--max-model-len`을 조정하라고 하고, TP>1에서 CUDA Graph capture가 fused all-reduce RMS 최적화 때문에 실패하면 `--compilation-config.pass_config.fuse_allreduce_rms false`로 띄우라고 안내한다. "TP 4가 최소 요구"라고 명시한 것은 아니며 예제가 TP 4일 뿐이다. 가중치만 145GB(BF16)라 80GB급 GPU 2장은 가중치만으로 빠듯하다는 계산이 가능하지만(145.6GB / 2 = 약 72.8GB 이상), KV 캐시와 활성 메모리를 포함한 실제 최소 구성은 확인 못함.
+카드는 하드웨어에 따라 `--tensor-parallel-size`, `--gpu-memory-utilization`, `--max-model-len`을 조정하라고 하고, TP>1에서 CUDA Graph capture가 fused all-reduce RMS 최적화 때문에 실패하면 `--compilation-config.pass_config.fuse_allreduce_rms false`로 띄우라고 안내한다.
+
+"TP 4가 최소 요구"라고 명시한 것은 아니며 예제가 TP 4일 뿐이다.
+
+가중치만 145GB(BF16)라 80GB급 GPU 2장은 가중치만으로 빠듯하다는 계산이 가능하지만(145.6GB / 2 = 약 72.8GB 이상), KV 캐시와 활성 메모리를 포함한 실제 최소 구성은 확인 못함.
 
 ### Transformers
 
-업스트림 릴리스에 아직 들어가지 않아 swiss-ai 포크의 특정 커밋에서 설치해야 한다(`pip install "transformers[torch,vision,audio] @ git+https://github.com/swiss-ai/transformers.git@<commit>"`). `AutoModelForMultimodalLM`과 `AutoProcessor`를 쓰고, 8B/70B가 같은 코드를 공유한다. 배치 입력은 이미지·오디오 개수가 서로 다른 프롬프트를 섞어도 된다(left padding 기본). 카드는 로드한 모델에 `.half()`나 `.to(dtype)`로 재캐스팅하지 말라고 경고한다. 비전/오디오 토크나이저가 정밀도에 민감하기 때문이다.
+업스트림 릴리스에 아직 들어가지 않아 swiss-ai 포크의 특정 커밋에서 설치해야 한다(`pip install "transformers[torch,vision,audio] @ git+https://github.com/swiss-ai/transformers.git@<commit>"`). `AutoModelForMultimodalLM`과 `AutoProcessor`를 쓰고, 8B/70B가 같은 코드를 공유한다. 배치 입력은 이미지·오디오 개수가 서로 다른 프롬프트를 섞어도 된다(left padding 기본).
+
+카드는 로드한 모델에 `.half()`나 `.to(dtype)`로 재캐스팅하지 말라고 경고한다. 비전/오디오 토크나이저가 정밀도에 민감하기 때문이다.
 
 ### 접근 절차
 
@@ -105,7 +139,12 @@ gated "auto" 레포라서 HF 로그인 후 약관(Apache-2.0 + Acceptable Use Po
 ## 구조에서 확인한 것 (레포 파일/메타)
 
 - 평가 결과는 `.eval_results/lexam-hard.yaml` 한 건이 보인다. HF 페이지에는 LEXam-hard에서 24.44로 "Ranked #3 in the < 128B size range"로 표시되며, 출처는 joelniklaus의 SwissLegalEvals(lighteval, 스위스 법률 시험 문항 518개, DeepSeek-R1-0528을 judge로 사용, 독일어·영어 평균)다. 법률 도메인의 외부 평가 한 건일 뿐 일반 능력의 순위가 아니다.
-- 카드의 평가 항목 목록은 매우 넓다. 지식(MMLU, MMLU-Pro 등), instruction following(IFEval, Multi-IF, IFBench), 수학, 코딩(HumanEval, MBPP), 추론(BBH, GPQA), 다국어(Global-MMLU, MGSM, INCLUDE, XNLI 등), 문화 지식(BLEnD, CulturalBench, SwitzerlandQA), 안전·편향(BBQ, ToxiGen, WMDP, MultiJail), tool use(BFCL v3), 이미지(GQA, MMStar, ChartQA, DocVQA, OmniDocBench, MathVista, MMMU 등)까지 열거한다. 하지만 "Detailed benchmark evaluations ... will be provided in the technical report"라며 수치는 보고서로 미룬다. 즉 **현재 시점에 카드만으로는 어떤 벤치마크 수치도 재인용할 수 없다.**
+- **카드의 평가 항목**: 목록은 매우 넓지만, "Detailed benchmark evaluations ... will be provided in the technical report"라며 수치는 보고서로 미룬다. 즉 **현재 시점에 카드만으로는 어떤 벤치마크 수치도 재인용할 수 없다.** 열거된 항목은 다음과 같다.
+  - **지식·지시 이행**: MMLU, MMLU-Pro 등 / IFEval, Multi-IF, IFBench
+  - **수학·코딩·추론**: 수학, HumanEval, MBPP / BBH, GPQA
+  - **다국어·문화 지식**: Global-MMLU, MGSM, INCLUDE, XNLI 등 / BLEnD, CulturalBench, SwitzerlandQA
+  - **안전·편향·도구 사용**: BBQ, ToxiGen, WMDP, MultiJail / BFCL v3
+  - **이미지**: GQA, MMStar, ChartQA, DocVQA, OmniDocBench, MathVista, MMMU 등
 - `chat_template.jinja`가 있고 tool 정의를 TypeScript 타입으로 렌더링하는 매크로를 쓴다(API 응답의 chat_template_jinja 일부). tool-call parser가 vLLM 쪽에 `apertus`라는 이름으로 있어야 하므로 수정 vLLM 이미지가 필요한 이유가 여기에 있다고 보인다(추정).
 - 파생 모델: HF 페이지 기준 finetune 1개, quantization 7개, 이를 쓰는 Space 3개. 1.5 컬렉션에는 8B와 70B 두 항목(2026-08-21 갱신)이 있다.
 

@@ -1,5 +1,5 @@
 ---
-title: "Phase 0 results"
+title: "신경 메모리 실험 원장 — Phase 0–89"
 tags:
   - memory-research
   - research-archive
@@ -9,7 +9,30 @@ tags:
 > [원 저장소](https://github.com/donggyun112/neural-memory-research) · 원본 `neural-memory/RESULTS.md` · 수집 2026-10-16 · 커밋 `fd190b18f8e4113d7f451a7108911c1f89716b24`
 > 당시의 실험 조건·수정·철회를 보존한 문서입니다. 성능 수치를 서로 다른 실험 간에 합산하지 않습니다. [[메모리-연구/연구-안내|연구 안내와 해석 범위]]부터 읽으세요. 코드·데이터·체크포인트는 이 사이트에 포함하지 않았습니다.
 
+<span id="kb-phase-0"></span>
+
 # Phase 0 results
+
+## 읽기 길잡이
+
+처음 읽는다면 [[메모리-연구/신경-메모리-실험-흐름|실험을 바꿔 간 과정]]에서 시작하면 된다. 각 단계의 질문·비교 이유·결과·후속 정정을 한국어 설명으로 이어 놓았다. 이 원장은 실행 조건과 수치, 당시의 해석을 그대로 확인하는 상세 기록이다.
+
+이 문서는 Phase 0부터 Phase 89까지의 실험 조건, 결과와 후속 정정을 시간순으로 기록한 원장이다. 결론부터 보려면 [[메모리-연구/neural-memory/FINDINGS|연구 결론]]을, 사람 대화 실험과의 관계를 보려면 [[메모리-연구/신경-메모리-읽기|신경 메모리 읽기 안내]]를 먼저 읽으면 된다.
+
+| 확인하려는 내용 | 바로가기 |
+| --- | --- |
+| 쓰기 선택과 합성 회상 실험의 출발점 | [Phase 0](#kb-phase-0) |
+| 저장 용량을 제한한 뒤 지연 회상 평가 | [Phase 12](#kb-phase-12) |
+| 관찰 시점의 정보만으로 쓰기를 결정할 수 있는가 | [Phase 19](#kb-phase-19) |
+| 대리 지표와 실제 과제 결과의 차이 | [Phase 31](#kb-phase-31), [Phase 43](#kb-phase-43) |
+| 온라인 적응 결과의 철회와 평가 수정 | [Phase 59](#kb-phase-59), [Phase 62](#kb-phase-62) |
+| 에이전트 행동 평가로의 전환 | [Phase 70](#kb-phase-70) |
+| 기억 주입 경로에 대한 후속 진단 | [Phase 83](#kb-phase-83) |
+| 마지막 과제 풀 점검과 남은 검증 한계 | [Phase 89](#kb-phase-89) |
+
+초기 양성 결과는 후속 정정과 함께 읽어야 한다. 특히 Phase 55–58의 온라인 적응 해석은 Phase 59에서 철회됐다. 서로 다른 과제·모델·표본의 수치를 하나의 성능 추이로 합치지 않는다.
+
+### Phase 0 실행 조건
 
 Date: 2026-09-12
 
@@ -698,6 +721,8 @@ Training all candidates from one episode together also failed to improve balance
 evaluate all held-out episodes, and repeat every fold/seed; simply scaling adapter steps is not
 justified by the present evidence.
 
+<span id="kb-phase-12"></span>
+
 # Phase 12: capacity-constrained write then recall
 
 Date: 2026-09-13
@@ -834,6 +859,7 @@ by 0.0373 on MPS and 0.0275 on CPU; top-1 improves by 0.0254 and 0.0192. Positio
 also rises on both backends, rejecting an explanation based only on the non-uniform target-position
 distribution. Direct heuristics are much weaker: at 25% capacity recency retains 0.3885, causal
 novelty 0.3571, and causal surprise 0.3275.
+
 The neural gain therefore requires the learned interaction between frozen semantic features and the
 causal signals. Listwise supervision and the tested joint schedule are clean negative results.
 Using causal surprise directly as a teacher-free write rule retains 0.3275 and reaches 0.3223 BGE
@@ -874,6 +900,7 @@ baseline is 0.3868 against a learned 0.6195.
 The literature-directed next branch is `FastWeightRecallMemory`. Following the parametric-state view
 of TTT and Titans, it predicts a candidate value from the current associative matrix, exposes the
 online prediction error as surprise, and delta-updates the matrix only for hard-selected candidates.
+
 At memory width 12, its 12-by-12 matrix uses 144 persistent scalars, close to the two selected 64d
 traces' 128 scalars. It has only 14,463 trainable parameters. Across five Claude seeds it retains
 0.6066 +/- 0.0250, reaches 0.5575 +/- 0.0211 top-1, and has a 0.2178 +/- 0.0121 shuffle gap. The
@@ -1158,6 +1185,7 @@ This is positive evidence for two-stage deferral on real multi-evidence data, wi
 attributable to the later event by two independent controls. It is not evidence that weak delayed
 signals suffice: the event here is as informative as the query, so the result shows that a bounded
 memory can exploit clear later evidence, not that it can perform hard temporal credit assignment.
+
 The absolute numbers also remain far below what the same event supports — 0.6220 against a 0.9400
 cosine reference — so most of the available signal is still unused even after the fix.
 
@@ -1316,6 +1344,8 @@ event is still as informative as the query, and the corpus still has no deferral
 is that the learned layer now matches and slightly exceeds a training-free rule with the same inputs,
 which it previously could not do.
 
+<span id="kb-phase-19"></span>
+
 # Phase 19: the write gate is information-limited
 
 Date: 2026-09-14
@@ -1446,6 +1476,7 @@ This is a property of the code, not of a trained memory. Nothing here learns, so
 sparse expanded representation makes possible, not that a trained layer will exploit it. The
 documents are real session embeddings but the similarity axis is constructed by nearest-neighbour
 selection, which produces sets more uniformly alike than naturally co-occurring sessions would be.
+
 And the result transfers a Drosophila olfactory finding to text embeddings by analogy; the agreement
 is evidence that the mechanism generalises, not that the circuits correspond.
 
@@ -2006,6 +2037,7 @@ Date: 2026-09-14
 Everything from Phase 20 onward used random projections. `TrainableMemory` keeps the structure the
 ablation kept — a sparse expanded code whose width follows the state's magnitude, delta-rule storage,
 no decay — and learns the key and value projections against the only thing the store is asked to do.
+
 The loss is a listwise cross-entropy over which stored value each probe returns, which is the
 differentiable surrogate for discrimination. The width is read off the state and detached, so the
 projection is trained through the values at the chosen units rather than through how many there are.
@@ -2158,6 +2190,8 @@ The absolute numbers are also not comparable with Phase 29's. Episodes here are 
 that is a fraction of the corpus, so the nearest-neighbour sets are less alike and the task is
 easier: untrained discrimination is 0.89 here against 0.74 in the ablation at the same load. Only the
 gains within this phase should be read.
+
+<span id="kb-phase-31"></span>
 
 # Phase 31: the real task, and what the proxy was hiding
 
@@ -2771,6 +2805,7 @@ grows.
 into an evidence turn — 48 of 100 sampled questions were dropped because no turn contained the answer
 verbatim, and those may not be a random half. The loads run to 491 because that is one question's
 haystack; nothing here says what happens at 10,000, which is the regime the argument is really about.
+
 The top-64 row is the honest competitor and it is ahead; the claim is about how each side's cost
 behaves as N grows, not that the filter is more accurate today.
 
@@ -2854,6 +2889,8 @@ construction — the k nearest turns are already present at the smallest load, s
 cannot change a top-k sum — and their values are identical from 2,000 onward. So against near clutter
 the filter's advantage is a constant +0.09 rather than a growing one; the growth in the earlier table
 belongs to the distant-clutter case.
+
+<span id="kb-phase-43"></span>
 
 # Phase 43: the winning mechanism is worthless at the job it was built for
 
@@ -3769,6 +3806,8 @@ results together and is consistent with all of them, but it has never been manip
 experiment here varies headroom while holding the corpus fixed, which is what would turn it from a
 pattern into a cause.
 
+<span id="kb-phase-59"></span>
+
 # Phase 59: the online memory was never adapting — Phases 55 to 58 retracted
 
 Headroom can be manipulated within a corpus by changing the horizon: a one-action target is a
@@ -3959,6 +3998,8 @@ that the Codex conclusions cannot stand as written and that the Claude direction
 larger effect. The offline collapse of -0.3544 has not been re-measured with clean foils either, so
 whether training on action streams works at all is now an open question rather than a settled
 failure.
+
+<span id="kb-phase-62"></span>
 
 # Phase 62: with real foils, the transfer holds and training is worth more than reported
 
@@ -4395,6 +4436,8 @@ first 2,000 characters of a result — and fires on 21% of actions against 2.3% 
 AUCs are not comparable with Phase 67's. What it supports is the ordering, which noise attenuates
 rather than inverts, and the ordering is resolved. A structured failure field for these traces, if one
 exists in the full dataset rather than the downloaded subset, would settle the magnitudes.
+
+<span id="kb-phase-70"></span>
 
 # Phase 70: measuring behaviour, finally
 
@@ -5201,6 +5244,8 @@ shared parser that a dependent module exercises — rather than for difficulty i
 be its own confound if a memory condition happens to suit that kind. The peer is generating a
 cross-module pool now and reporting what it looks like before trusting a number from it.
 
+<span id="kb-phase-83"></span>
+
 # Phase 83: phase 77's diagnosis was wrong — the channel is closed, not the encoder
 
 Phase 77 injected a memory into the residual stream and own-trajectory versus foreign-trajectory came
@@ -5631,6 +5676,8 @@ rests on ranges at fourteen against version at five, and on file-opening counts,
 The finding that nothing explains it rests on five structural measures, any of which could be the
 wrong measure — a sixth might separate them. What it does rule out is building a pool on "large
 modules" and expecting difficulty to follow.
+
+<span id="kb-phase-89"></span>
 
 # Phase 89: three pools, three reasons, no dead-end material anywhere
 

@@ -16,6 +16,10 @@ tags:
 
 ## 결론
 
+이 후기는 결과가 좋아졌다는 이야기보다 **비교를 믿을 수 있게 만드는 과정**에 가깝다. 처음에는 PG 쪽에만 정답에 가까운 안내가 들어갔고, 다음에는 두 조건이 서로 다른 기억을 학습했으며, 이후에는 큐레이터 응답이 잘리는 버그가 결합 조건에 더 큰 손해를 주었다. 같은 ‘메모리 + PG’라는 이름 아래에서도 무엇을 고정했는지에 따라 전혀 다른 질문을 측정한 셈이다.
+
+그래서 아래 표는 시간순 관측으로 읽는다. 2026-09-22 정정이 철회한 것은 ‘PG가 기억을 방해한다’는 원인 해석이다. 원래 실행에서 낮은 점수가 나왔다는 사실까지 지운 것은 아니다. 수정 후에는 60.0% 대 62.5%로 방향이 바뀌었지만, 차이가 1문항이어서 결합의 우위는 여전히 미입증이다.
+
 현재 레포는 두 논문의 **방법 수준 메커니즘**을 각각 구현하고, semantic memory와 PG를 독립된
 branch로 resolve하는 결합 구조를 실제 OpenRouter LLM으로 끝까지 실행한다. Grounding 논문이 쓴
 공식 CLBench 40-question schema-drift task도 같은 runner/evaluator로 실행했다. 다만 비공개 GHCP
@@ -28,8 +32,7 @@ memory의 유효성을 판정하지 못한다.
 
 ## semantic memory를 어떻게 만들었나
 
-논문의 핵심은 task agent가 스스로 메모리를 쓰는 것이 아니라, task 종료 뒤 별도 역할들이
-evidence를 만들고 검증해 쓰는 데 있다.
+왜 기억을 쓰는 역할을 따로 둘까? 작업을 푸는 도중의 추측을 곧바로 장기 기억에 넣으면, 다음 작업도 같은 오류를 물려받을 수 있기 때문이다. 여기서는 작업이 끝난 뒤 Distiller가 실행 기록에서 근거를 추리고, Curator가 피드백과 필요할 경우 현재 환경을 확인한 뒤 저장·수정·삭제를 결정한다. 다음 작업의 에이전트는 완성된 기억을 읽기만 한다.
 
 ~~~text
 completed raw trajectory
@@ -106,6 +109,8 @@ Grounded가 trajectory memory보다 18개 net pass를 더 얻은 것은 환경 p
 
 ### sibling 구조 재실행
 
+두 종류의 기억을 나란히 전달하는 sibling 구조를 시험했다. 그런데 이때는 두 조건이 각자 자기 실행 기록으로 메모리를 만들었다. 따라서 결과 차이에 PG의 조언뿐 아니라 ‘처음에 어떤 규칙을 배웠는가’의 차이도 함께 들어간다. 아래 오류 분석은 이후 동일 메모리 스냅샷을 재생하는 비교가 왜 필요했는지를 보여준다.
+
 수정한 `dual_memory`와 현재 코드의 `grounded_memory`를 같은 40문항에 paired 실행했다.
 
 | 조건 | pass | total reward | SQL/question | pre/post |
@@ -146,6 +151,8 @@ ceiling이 있고, grounded-memory-only solver는 test 중 `memory_read`를 한 
 4/4였고 grounded 결합의 tool 효율도 더 좋지 않았다.
 
 ## 실제 self-evolution 1회
+
+이 실험의 목표는 정확도 향상을 주장하기 전에, ‘경험 수집 → 그래프 수정 제안 → 검증 → 채택’이라는 전체 고리가 실제로 도는지 확인하는 것이었다. validation이 처음부터 4/4이므로 더 높은 정확도를 낼 여지가 없고, 동률도 채택하는 규칙이라는 점을 먼저 기억해야 한다.
 
 minimal PG와 grounded memory로 training traces를 만든 후, 별도 Refiner LLM과 validation gate를
 실행했다.

@@ -9,7 +9,11 @@ researched: 2026-10-01
 # OpenWorker
 
 > [!summary] 한줄요약
-> 데스크톱에서 로컬로 도는 오픈소스(MIT) AI coworker. 채팅이 아니라 "완성된 산출물"을 목표로 하며, 모델이 스스로 권한을 올릴 수 없도록 hard floor, earned autonomy 사다리, 승인 provenance 감사 로그, OS 수준 sandbox 4단계 거버넌스를 코드(`permissions.py`, `risk.py`, `reviewer.py`, `audit.py`, `sandbox/`)로 구현했다. 기능 목록보다 **에이전트 권한 모델의 레퍼런스 구현**으로서 가치가 크다. 상태는 open beta, v0.3.0(2026-09-30).
+> 로컬 데스크톱에서 업무 산출물을 만드는 AI coworker로, 권한·승인·감사·샌드박스를 코드로 구현한 거버넌스 설계가 핵심이다.
+
+- **목표**: 채팅 응답을 넘어 완성된 산출물을 만드는 오픈소스(MIT) 프로젝트다.
+- **거버넌스**: 모델이 스스로 권한을 올리지 못하도록 hard floor, earned autonomy 사다리, 승인 provenance 감사 로그, OS 수준 sandbox의 4단계를 구현했다. 관련 코드는 `permissions.py`, `risk.py`, `reviewer.py`, `audit.py`, `sandbox/`다.
+- **읽을 가치와 상태**: 기능 목록보다 **에이전트 권한 모델의 레퍼런스 구현**으로서 가치가 크다. open beta이며 v0.3.0(2026-09-30)이다.
 
 ## 1. 배경 — 해결하려는 문제
 
@@ -89,7 +93,12 @@ Bypass 모드(이름이 `auto`에서 `bypass-approvals`로 바뀜)에서도 1~5�
 
 Mode는 `discuss / plan / interactive(기본) / bypass-approvals / auto-approve / custom` 여섯 가지다. 승인 범위는 좁은 것부터 다음 순서로 올라간다.
 
-- 한 번 승인(one-off) → `Allow for this request`(run grant, 해당 run이 끝나거나 중단되면 메모리에서 삭제) → 세션 grant(command 텍스트 정확 일치, tool, domain, read-only 셸 분류) → task-scoped standing rule(`tool → target` 정확 타깃 결합, 스케줄 작업 소유) → 지속 trust rule(`risk_overrides.json`, "Always allow this tool") → config allowlist(`allowed_commands`, `allowed_domains`, `auto_allow`).
+1. **한 번 승인(one-off)**: 해당 행동 한 번에 적용한다.
+2. **`Allow for this request`**: run grant다. 해당 run이 끝나거나 중단되면 메모리에서 삭제된다.
+3. **세션 grant**: command 텍스트 정확 일치, tool, domain, read-only 셸 분류를 기준으로 적용한다.
+4. **Task-scoped standing rule**: `tool → target`을 정확한 타깃에 결합하며 스케줄 작업이 소유한다.
+5. **지속 trust rule**: `risk_overrides.json`의 "Always allow this tool" 규칙이다.
+6. **Config allowlist**: `allowed_commands`, `allowed_domains`, `auto_allow` 설정이다.
 
 셸 allowlist 검증이 특히 꼼꼼하다(`_command_allowed`). `` ` ``, `$(`, `$`, `>`, `<`, `(` 같은 평가 불가 구문이 있으면 prefix 자동 실행 대상에서 제외하고, `&&`, `||`, `;`, `|` 등으로 복합 명령을 쪼개 각 부분이 독립적으로 allowlist에 맞아야 한다(`git status && rm -rf ~`는 불허). `xargs, env, sudo, ssh, docker, kubectl, npx, uvx` 등 인자로 다른 프로그램을 실행하는 래퍼, `python -c`/`node -e` 같은 인라인 코드, `find -exec/-delete/-fprint` 같은 위험 플래그는 prefix 규칙이 보증할 수 없으므로 항상 승인으로 넘긴다. 매칭은 텍스트가 아니라 파싱된 단어 기준이라 `git status`가 `git statusfoo`를 허용하지 않는다. 도메인 allowlist는 정확 일치 또는 서브도메인 접미사 일치만 허용(`evil-python.org`는 `python.org`와 불일치)한다.
 
@@ -110,7 +119,12 @@ Mode는 `discuss / plan / interactive(기본) / bypass-approvals / auto-approve 
 
 팀/coworker 쪽에는 `approval_guidance`(manifest 필드, 최대 2,400자)가 있어 coworker 작성자가 reviewer에게 "정상 작업과 명시적 경계"를 설명할 수 있다. 단 가이던스는 모델 판단의 참고일 뿐 도구 접근을 부여하거나 floor를 우회하지 못한다. 리드가 제안한 worker 가이던스는 사람이 staffing card에서 돌려준 텍스트만 저장되고, 이후 steering으로 바꿀 수 없다.
 
-**Reviewer 평가 증거**: 저장소 `reports/`에 모델별 평가 8건이 있다. 코퍼스는 benign / dangerous / injection 세 종류이며 "SHIP GATE"는 dangerous와 injection의 false-allow가 0이어야 통과다. 2026-08-31 기준 claude-sonnet-4-6, GLM-5.2, Kimi-K3 모두 benign 35/35 allow, dangerous 27건 중 allow 0, injection 18건 중 allow 0, errors 0으로 "ALL PASSED"다. 2026-08-18 코퍼스(31/19/16)에서 GPT-5.6-sol은 benign 30/31(97%), GLM-5.2도 30/31, Kimi-K3와 muse-spark는 31/31이고 위험 쪽은 전부 0 allow. 이 수치는 프로젝트가 자체 코퍼스로 낸 결과이며 코퍼스 규모(총 80건)가 작아서 일반적 안전성 보증으로 읽으면 안 된다. README 스스로도 "Reviewer verdicts are judgments, not guarantees - the floors and the audit trail are what backstop them"라고 쓴다.
+**Reviewer 평가 증거**: 저장소 `reports/`에는 모델별 평가 8건이 있다. 코퍼스는 benign / dangerous / injection 세 종류다. "SHIP GATE"를 통과하려면 dangerous와 injection의 false-allow가 0이어야 한다.
+
+- **2026-08-31 평가**: claude-sonnet-4-6, GLM-5.2, Kimi-K3 모두 benign 35/35 allow, dangerous 27건 중 allow 0, injection 18건 중 allow 0, errors 0으로 "ALL PASSED"다.
+- **2026-08-18 평가**: 코퍼스는 31/19/16건이다. benign에서 GPT-5.6-sol은 30/31(97%), GLM-5.2도 30/31, Kimi-K3와 muse-spark는 31/31이다. 위험 쪽은 전부 0 allow다.
+
+이 수치는 프로젝트 자체 코퍼스의 결과다. 코퍼스 규모(총 80건)가 작으므로 **일반적 안전성 보증으로 읽으면 안 된다**. README도 "Reviewer verdicts are judgments, not guarantees - the floors and the audit trail are what backstop them"라고 한계를 밝힌다.
 
 ### 3.4 Tier 3 — 감사 로그
 
@@ -126,7 +140,15 @@ Mode는 `discuss / plan / interactive(기본) / bypass-approvals / auto-approve 
 - **벽이 없으면 세션 거부**: sandbox가 켜진 머신에서 사용 불가 상태면 조용히 열린 채 실행하지 않고 세션을 거부한다. macOS는 시작 전에 내부에서 세션 폴더 접근 가능 + 홈 접근 불가를 검증한다. OpenShell은 Landlock을 hard requirement로 걸어 미지원 커널이면 실행을 거부한다.
 - 모든 tool 결과와 감사 로그에 enforcement 수준이 기록된다.
 
-플랫폼별로 보면, macOS는 내장 Seatbelt(프로필을 세션에서 렌더, 허용 로컬 포트 1개의 allowlist 프록시 경유 네트워크), Linux/Mac+Docker는 NVIDIA OpenShell 0.0.116(문서가 "tested against"라고 명시; 에이전트당 컨테이너, 기본 이미지 약 5GB, gateway가 Landlock/seccomp/network 적용), Windows는 숨겨진 로컬 계정 + 파일 ACL + Windows Firewall + WFP 필터 + job object(1회 관리자 권한 setup 필요)다. docs/openshell.md는 "OpenShell is not available on Windows yet"라고 쓴다. 기본값은 모든 플랫폼에서 `direct`(OpenWorker 프로세스에서 직접 실행)이므로 **sandbox는 사용자가 켜야 한다**. 설정 예:
+플랫폼별 구현은 다음과 같다.
+
+| 플랫폼 | 격리 방식 |
+|---|---|
+| macOS | 내장 Seatbelt. 세션에서 프로필을 렌더하고, 허용 로컬 포트 1개의 allowlist 프록시를 통해 네트워크에 접근한다. |
+| Linux/Mac+Docker | NVIDIA OpenShell 0.0.116. 문서가 "tested against"라고 명시한 버전이다. 에이전트당 컨테이너를 쓰며 기본 이미지는 약 5GB다. gateway가 Landlock/seccomp/network를 적용한다. |
+| Windows | 숨겨진 로컬 계정 + 파일 ACL + Windows Firewall + WFP 필터 + job object. 1회 관리자 권한 setup이 필요하다. |
+
+docs/openshell.md는 "OpenShell is not available on Windows yet"라고 명시한다. 모든 플랫폼의 기본값은 `direct`, 즉 OpenWorker 프로세스에서 직접 실행하는 방식이다. **Sandbox는 사용자가 켜야 한다.** 설정 예는 다음과 같다.
 
 ```toml
 # ~/.config/coworker/config.toml  (머신 단위; 프로젝트 config는 이 값을 못 바꿈)

@@ -9,7 +9,11 @@ researched: 2026-10-01
 # Qwen3.5-9B
 
 > [!summary] 한줄요약
-> 32개 레이어 중 24개가 Gated DeltaNet(선형 어텐션), 8개가 Gated Attention(풀 어텐션)인 하이브리드 구조의 9B 멀티모달(텍스트·이미지·비디오) 오픈웨이트. Apache-2.0, 네이티브 262,144 컨텍스트(YaRN으로 약 1,010,000까지), 기본이 thinking 모드. FFN은 dense(MoE 아님)이고, 풀 어텐션 레이어가 8개뿐이라 KV 캐시가 같은 크기의 일반 트랜스포머보다 크게 작다.
+> 하이브리드 어텐션으로 KV 캐시를 줄인 9B 멀티모달(텍스트·이미지·비디오) 오픈웨이트.
+>
+> - **구조**: 32개 레이어 중 Gated DeltaNet(선형 어텐션) 24개, Gated Attention(풀 어텐션) 8개. FFN은 dense(MoE 아님)
+> - **메모리**: 풀 어텐션 레이어가 8개뿐이라 같은 크기의 일반 트랜스포머보다 KV 캐시가 크게 작음
+> - **사용 조건**: Apache-2.0, 네이티브 262,144 컨텍스트(YaRN으로 약 1,010,000까지), 기본 thinking 모드
 
 > [!info] 조사 범위
 > HF 모델 카드 README 전문, `config.json`, 파일 목록(크기), HF API 메타데이터를 읽었고, vLLM 저장소(shallow clone)에서 `qwen3_5.py`, `qwen3_5_mtp.py`, `config/speculative.py`를 확인했다. 아래 "계산" 표시가 붙은 수치는 config 값에서 내가 직접 산술한 추정치이며, 모델 카드나 vLLM이 보고한 값이 아니다. 모델을 직접 내려받아 돌려 보지는 않았다.
@@ -47,7 +51,11 @@ Qwen3.5 계열은 2026-02-16에 Qwen3.5-397B-A17B를 첫 오픈웨이트로 공�
 
 ### 2.1 "sparse MoE" 문구 정리
 
-이전 판 노트는 "카드 소개에 sparse MoE가 나오지만 9B의 MoE 여부는 확인 못함"이라고 적었다. 이번에 확인했다. 카드 Highlights의 "Gated Delta Networks combined with sparse Mixture-of-Experts"는 시리즈 공통 문구다. 9B의 `config.json`에는 전문가 수·라우팅 관련 키가 하나도 없고(`num_experts` 등 부재), 레이어 레이아웃도 FFN이다. 결정적으로 vLLM 구현(`qwen3_5.py`)의 주석이 "Qwen3.5 use all layers for MLP / Qwen3.5-MoE use sparse MoE blocks"라고 명시하며, `model_type == "qwen3_5_text"`이면 일반 `Qwen3NextMLP`를, `qwen3_5_moe_text`이면 `Qwen3NextSparseMoeBlock`을 쓴다. 9B는 전자이므로 dense 모델이다.
+이전 판 노트는 "카드 소개에 sparse MoE가 나오지만 9B의 MoE 여부는 확인 못함"이라고 적었다. 이번에 확인했다. 카드 Highlights의 "Gated Delta Networks combined with sparse Mixture-of-Experts"는 시리즈 공통 문구다. 9B가 dense 모델이라는 근거는 다음과 같다.
+
+- **설정**: `config.json`에 전문가 수·라우팅 관련 키가 없다(`num_experts` 등 부재). 레이어 레이아웃도 FFN이다.
+- **구현 주석**: vLLM의 `qwen3_5.py`는 "Qwen3.5 use all layers for MLP / Qwen3.5-MoE use sparse MoE blocks"라고 명시한다.
+- **코드 분기**: `model_type == "qwen3_5_text"`이면 일반 `Qwen3NextMLP`, `qwen3_5_moe_text`이면 `Qwen3NextSparseMoeBlock`을 쓴다. 9B는 전자다.
 
 ## 3. 동작 원리 — 하이브리드 레이어와 KV 캐시
 
@@ -68,7 +76,9 @@ flowchart LR
   fa["Gated Attn: KV 캐시<br/>길이에 비례"] -.-> d
 ```
 
-**Gated DeltaNet(GDN)** 은 delta rule 기반의 선형 어텐션이다. 각 레이어가 (헤드 수 × key 차원 × value 차원) 크기의 재귀 상태 행렬과 짧은 합성곱(커널 4) 상태를 유지하며, 토큰이 들어올 때마다 이를 갱신한다. 시퀀스가 길어져도 상태 크기가 늘지 않는다는 것이 핵심이다. 이 설명은 Qwen3-Next/Gated DeltaNet 계열에 대한 일반 지식이며, 카드는 구조 이름과 헤드 수만 밝힌다. **Gated Attention** 은 출력 게이트(`attn_output_gate: true`)가 붙은 일반 GQA 어텐션이다(Q 16, KV 4).
+**Gated DeltaNet(GDN)** 은 delta rule 기반의 선형 어텐션이다. 각 레이어가 (헤드 수 × key 차원 × value 차원) 크기의 재귀 상태 행렬과 짧은 합성곱(커널 4) 상태를 유지하며, 토큰이 들어올 때마다 이를 갱신한다. 시퀀스가 길어져도 상태 크기가 늘지 않는다는 것이 핵심이다. 이 설명은 Qwen3-Next/Gated DeltaNet 계열에 대한 일반 지식이며, 카드는 구조 이름과 헤드 수만 밝힌다.
+
+**Gated Attention** 은 출력 게이트(`attn_output_gate: true`)가 붙은 일반 GQA 어텐션이다(Q 16, KV 4).
 
 ### 3.2 KV 캐시 크기 계산 (내 계산, 추정)
 
@@ -78,17 +88,34 @@ flowchart LR
 - 8개 레이어: 32,768바이트 = 32 KiB/토큰
 - 262,144 토큰 한 시퀀스: 8 GiB (131,072 토큰이면 4 GiB)
 
-같은 차원의 32층 전부가 풀 어텐션이라면 128 KiB/토큰, 262K 토큰에서 32 GiB가 된다. 하이브리드 구조는 KV를 1/4로 줄이는 셈이다. 여기에 GDN 레이어 24개의 재귀 상태가 시퀀스당 고정으로 붙는다. 상태 행렬만 대략 레이어당 32(V 헤드) × 128 × 128 = 524,288 원소이고, `mamba_ssm_dtype`이 float32이므로 레이어당 약 2 MiB, 24개면 약 48 MiB 수준이다(합성곱 상태는 이보다 훨씬 작다). 실제 vLLM 할당은 패딩·페이지 정렬 때문에 다를 수 있으므로 서빙할 때는 시작 로그의 KV 캐시 토큰 수와 가용 동시 시퀀스 수를 직접 보는 것이 맞다.
+같은 차원의 32층 전부가 풀 어텐션이라면 128 KiB/토큰, 262K 토큰에서 32 GiB가 된다. 하이브리드 구조는 KV를 1/4로 줄이는 셈이다.
+
+여기에 GDN 레이어 24개의 재귀 상태가 시퀀스당 고정으로 붙는다.
+
+- **상태 행렬**: 레이어당 대략 32(V 헤드) × 128 × 128 = 524,288 원소
+- **저장 정밀도**: `mamba_ssm_dtype`이 float32이므로 레이어당 약 2 MiB
+- **24개 레이어 합계**: 약 48 MiB(합성곱 상태는 이보다 훨씬 작다)
+
+실제 vLLM 할당은 패딩·페이지 정렬 때문에 다를 수 있으므로 서빙할 때는 시작 로그의 KV 캐시 토큰 수와 가용 동시 시퀀스 수를 직접 보는 것이 맞다.
 
 가중치 BF16 약 19.3GB에 시퀀스당 최대 약 8GiB(262K 풀 컨텍스트)를 더하면, 24GB GPU 한 장에서는 풀 컨텍스트 동시 처리가 어렵고, 80GB급 GPU 한 장이면 풀 컨텍스트 몇 개와 짧은 요청 다수를 병행할 수 있다는 감이 나온다(위 계산 기준, 활성화 메모리·CUDA 그래프 여유 제외). 카드도 OOM이 나면 컨텍스트를 줄이되 사고(thinking) 능력을 보존하려면 최소 128K를 유지하라고 권고한다.
 
 ### 3.3 MTP (Multi-Token Prediction)
 
-모델에는 1층짜리 MTP 헤드(`mtp_num_hidden_layers: 1`)가 포함되어, 다음 토큰 이후 여러 토큰을 초안으로 예측하는 추측 디코딩의 draft로 쓸 수 있다. vLLM 쪽에서는 `qwen3_5_mtp.py`에 `Qwen3_5MTP` 클래스가 있고, `config/speculative.py`가 `qwen3_5_text` 등 모델 타입을 `qwen3_5_mtp`로 변환하며 `n_predict`를 `mtp_num_hidden_layers`에서 가져온다. 카드는 vLLM에서 `{"method":"qwen3_next_mtp","num_speculative_tokens":2}`, SGLang에서 NEXTN 알고리즘(`--speculative-num-steps 3`, `--speculative-num-draft-tokens 4`)을 권장한다. 이 설정값들은 카드의 권장이고 내가 실행해 속도 이득을 측정하지는 않았다.
+모델에는 1층짜리 MTP 헤드(`mtp_num_hidden_layers: 1`)가 포함되어, 다음 토큰 이후 여러 토큰을 초안으로 예측하는 추측 디코딩의 draft로 쓸 수 있다. vLLM 쪽에서는 `qwen3_5_mtp.py`에 `Qwen3_5MTP` 클래스가 있고, `config/speculative.py`가 `qwen3_5_text` 등 모델 타입을 `qwen3_5_mtp`로 변환하며 `n_predict`를 `mtp_num_hidden_layers`에서 가져온다.
+
+카드의 엔진별 권장 설정은 다음과 같다.
+
+- **vLLM**: `{"method":"qwen3_next_mtp","num_speculative_tokens":2}`
+- **SGLang**: NEXTN 알고리즘, `--speculative-num-steps 3`, `--speculative-num-draft-tokens 4`
+
+이 설정값들은 카드의 권장이고 내가 실행해 속도 이득을 측정하지는 않았다.
 
 ### 3.4 vLLM 구현에서 확인한 것
 
-`vllm/model_executor/models/qwen3_5.py`의 `Qwen3_5ForConditionalGeneration`은 `IsHybrid` 인터페이스를 구현한다. 레이어 타입이 `linear_attention`이면 `QwenGatedDeltaNetAttention`, `full_attention`이면 Qwen3-Next의 어텐션을 쓰고, 정규화는 `Qwen3_5RMSNorm`이다. `IsHybrid`라는 점이 서빙 설계에서 중요하다. 하이브리드 모델은 KV 캐시 매니저가 어텐션 KV 블록과 GDN 재귀 상태 슬롯을 서로 다른 캐시 그룹으로 관리해야 하기 때문에, prefix caching이나 KV 전송 같은 기능의 지원 범위가 일반 트랜스포머와 다를 수 있다. 실제로 vLLM의 MoRIIO KV connector 코드에는 mamba/KDA 상태를 전송하는 별도 경로와 "WRITE 모드는 hybrid KV cache group을 지원하지 않는다"는 거부 로직이 있다([[vllm-moriio-kv-connector]] 참고).
+`vllm/model_executor/models/qwen3_5.py`의 `Qwen3_5ForConditionalGeneration`은 `IsHybrid` 인터페이스를 구현한다. 레이어 타입이 `linear_attention`이면 `QwenGatedDeltaNetAttention`, `full_attention`이면 Qwen3-Next의 어텐션을 쓰고, 정규화는 `Qwen3_5RMSNorm`이다.
+
+`IsHybrid`라는 점이 서빙 설계에서 중요하다. 하이브리드 모델은 KV 캐시 매니저가 어텐션 KV 블록과 GDN 재귀 상태 슬롯을 서로 다른 캐시 그룹으로 관리해야 하기 때문에, prefix caching이나 KV 전송 같은 기능의 지원 범위가 일반 트랜스포머와 다를 수 있다. 실제로 vLLM의 MoRIIO KV connector 코드에는 mamba/KDA 상태를 전송하는 별도 경로와 "WRITE 모드는 hybrid KV cache group을 지원하지 않는다"는 거부 로직이 있다([[vllm-moriio-kv-connector]] 참고).
 
 ## 4. 성능 — 모델 카드 벤치마크 (자체 평가)
 
@@ -108,9 +135,13 @@ flowchart LR
 | TAU2-Bench | 79.1 | -- | -- | 79.9 |
 | MMLU-ProX(29개 언어 평균) | 76.3 | 74.5 | 67.3 | 71.5 |
 
-해석 포인트: 9B가 지식·지시 이행·장문 항목에서는 GPT-OSS-120B와 비슷하거나 앞서지만, 코딩 대회류(LiveCodeBench v6, OJBench)와 고난도 수학(HMMT)에서는 크게 뒤진다. 에이전트 항목은 BFCL-V4, TAU2-Bench에서 높은 값이 나오지만 GPT-OSS 쪽 값이 "--"(미제공)라 직접 비교가 불가능하다. 이 표는 모델 제작사가 고른 항목이므로, 우리 업무(한국어 문서, 사내 도구 호출)에 대한 별도 평가가 반드시 필요하다.
+해석 포인트: 9B가 지식·지시 이행·장문 항목에서는 GPT-OSS-120B와 비슷하거나 앞서지만, 코딩 대회류(LiveCodeBench v6, OJBench)와 고난도 수학(HMMT)에서는 크게 뒤진다.
 
-Vision Language 표(비교군: GPT-5-Nano, Gemini-2.5-Flash-Lite, Qwen3-VL-30B-A3B, Qwen3.5-4B)에서 9B는 MMMU 78.4, MMMU-Pro 70.1, MathVision 78.9, MathVista(mini) 85.7, We-Math 75.2, DynaMath 83.6이다. 시각 수학·차트 추론 쪽이 강하다는 신호다. 다국어 항목(MMMLU 81.2, WMT24++ 72.6, MAXIFE 83.4)은 있으나 한국어만 분리한 수치는 카드에 없다. 한국어 품질은 확인하지 못했다.
+에이전트 항목은 BFCL-V4, TAU2-Bench에서 높은 값이 나오지만 GPT-OSS 쪽 값이 "--"(미제공)라 직접 비교가 불가능하다. 이 표는 모델 제작사가 고른 항목이므로, 우리 업무(한국어 문서, 사내 도구 호출)에 대한 별도 평가가 반드시 필요하다.
+
+Vision Language 표(비교군: GPT-5-Nano, Gemini-2.5-Flash-Lite, Qwen3-VL-30B-A3B, Qwen3.5-4B)에서 9B는 MMMU 78.4, MMMU-Pro 70.1, MathVision 78.9, MathVista(mini) 85.7, We-Math 75.2, DynaMath 83.6이다. 시각 수학·차트 추론 쪽이 강하다는 신호다.
+
+다국어 항목(MMMLU 81.2, WMT24++ 72.6, MAXIFE 83.4)은 있으나 한국어만 분리한 수치는 카드에 없다. 한국어 품질은 확인하지 못했다.
 
 ## 5. 설치·서빙 (모델 카드 기준)
 
@@ -156,7 +187,9 @@ python -m sglang.launch_server --model-path Qwen/Qwen3.5-9B --port 8000 --tp-siz
 
 출력 길이는 일반 32,768, 수학·코딩 대회류 벤치 시 81,920을 권장한다. 다중 턴에서는 이력에 사고 내용을 넣지 말고 최종 답만 남기라는 지침이 있으며, 제공되는 Jinja 채팅 템플릿(`chat_template.jinja`, 7,756바이트)이 이를 처리한다. 템플릿을 쓰지 않는 프레임워크는 직접 지켜야 한다.
 
-**초장문(1,010,000)**: `rope_parameters`를 YaRN으로 바꿔야 한다(`rope_type: yarn`, `factor: 4.0`, `original_max_position_embeddings: 262144`). vLLM에서는 `VLLM_ALLOW_LONG_MAX_MODEL_LEN=1`, `--hf-overrides '{...}'`, `--max-model-len 1010000`을 함께 준다. 카드는 모든 주요 프레임워크의 YaRN이 정적(static)이라 짧은 입력 성능에 영향이 있을 수 있으니, 정말 필요할 때만 켜고 평소 컨텍스트가 524,288이면 factor를 2.0으로 낮추라고 안내한다.
+**초장문(1,010,000)**: `rope_parameters`를 YaRN으로 바꿔야 한다(`rope_type: yarn`, `factor: 4.0`, `original_max_position_embeddings: 262144`). vLLM에서는 `VLLM_ALLOW_LONG_MAX_MODEL_LEN=1`, `--hf-overrides '{...}'`, `--max-model-len 1010000`을 함께 준다.
+
+카드는 모든 주요 프레임워크의 YaRN이 정적(static)이라 짧은 입력 성능에 영향이 있을 수 있으니, 정말 필요할 때만 켜고 평소 컨텍스트가 524,288이면 factor를 2.0으로 낮추라고 안내한다.
 
 **장시간 비디오**: 기본 `video_preprocessor_config.json`의 `size`는 보수적이다. 시간 단위 비디오를 다루려면 `longest_edge`를 469,762,048(224k 비디오 토큰에 해당)로 올리라는 안내와, vLLM PR #34330 / SGLang PR #18467이 링크되어 있다.
 
@@ -164,7 +197,9 @@ python -m sglang.launch_server --model-path Qwen/Qwen3.5-9B --port 8000 --tp-siz
 
 ## 6. 계보와 형제 모델
 
-HF에서 확인한 Qwen3.5 계열: 0.8B, 2B, 4B, 9B(각각 -Base 포함), 27B, 35B-A3B, 122B-A10B, 397B-A17B와 FP8/GPTQ-Int4 변형. 다운로드는 9B가 약 945만, 4B 약 742만, 0.8B 약 250만으로 소형 모델이 많이 쓰인다. 이후 세대인 Qwen3.8-27B(2026-08, Apache-2.0)가 같은 `Qwen3_5ForConditionalGeneration` 클래스를 쓰는 것을 config에서 확인했다. 즉 9B에서 얻은 서빙 경험(하이브리드 캐시 설정, MTP, 파서 옵션)은 이후 세대에도 이어질 가능성이 높다. 사이트 전체 지형은 [[qwen-ai-home]]에 정리했다.
+HF에서 확인한 Qwen3.5 계열: 0.8B, 2B, 4B, 9B(각각 -Base 포함), 27B, 35B-A3B, 122B-A10B, 397B-A17B와 FP8/GPTQ-Int4 변형. 다운로드는 9B가 약 945만, 4B 약 742만, 0.8B 약 250만으로 소형 모델이 많이 쓰인다.
+
+이후 세대인 Qwen3.8-27B(2026-08, Apache-2.0)가 같은 `Qwen3_5ForConditionalGeneration` 클래스를 쓰는 것을 config에서 확인했다. 즉 9B에서 얻은 서빙 경험(하이브리드 캐시 설정, MTP, 파서 옵션)은 이후 세대에도 이어질 가능성이 높다. 사이트 전체 지형은 [[qwen-ai-home]]에 정리했다.
 
 ## 7. 비교 대상
 

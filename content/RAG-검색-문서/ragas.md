@@ -9,11 +9,19 @@ researched: 2026-10-01
 # Ragas
 
 > [!summary] 한줄요약
-> RAG/LLM 애플리케이션을 "감"이 아니라 지표로 평가하는 Python 라이브러리. LLM-as-judge 기반 metric(faithfulness, context precision/recall 등)과 전통 metric(BLEU, ROUGE 등), 지식 그래프 기반 테스트셋 자동 생성, 실험(experiment) 러너를 제공한다. 현재 저장소 소유는 vibrantlabsai로 옮겨졌고(구 explodinggradients), 최신 릴리스는 2026-01의 v0.4.3로 최근 8개월은 릴리스가 없다.
+> RAG/LLM 애플리케이션을 지표로 평가하는 Python 라이브러리. 평가 metric, 테스트셋 자동 생성, 실험 러너를 제공한다.
+
+평가에는 LLM-as-judge 기반 metric(faithfulness, context precision/recall 등)과 전통 metric(BLEU, ROUGE 등)을 함께 지원한다. 테스트셋은 지식 그래프 기반으로 자동 생성하며, 실험(experiment) 러너로 실행한다.
+
+저장소 소유는 vibrantlabsai로 옮겨졌다(구 explodinggradients). 최신 릴리스는 2026-01의 v0.4.3으로, 조사 시점에는 최근 8개월간 릴리스가 없다.
 
 ## 배경: 해결하려는 문제
 
-RAG를 만들어 놓고 "좋아졌는지" 판단할 방법이 없으면 청킹, 임베딩 모델, 검색기, 리랭커, 프롬프트를 바꿀 때마다 눈으로 몇 개 답을 보고 결정하게 된다. Ragas의 출발점은 이 평가를 자동화하되 정답 라벨을 사람이 일일이 만들지 않아도 되게 하는 것이었다. 핵심 아이디어는 질문-검색 컨텍스트-답변-(선택)참조 답변 사이의 관계를 LLM이 분해해서 검사하는 것이다. 예를 들어 답변을 "주장(claim)" 단위로 쪼개 각 주장이 검색된 컨텍스트로 뒷받침되는지 판정해 비율을 낸다. 사람이 만든 정답이 없을 때도 질문+답변+컨텍스트만으로 점수를 내는 지표가 있고, 정답이 있을 때는 참조 답변을 이용하는 지표가 있다.
+RAG를 만들어 놓고 "좋아졌는지" 판단할 방법이 없으면 청킹, 임베딩 모델, 검색기, 리랭커, 프롬프트를 바꿀 때마다 눈으로 몇 개 답을 보고 결정하게 된다.
+
+Ragas의 출발점은 이 평가를 자동화하되 정답 라벨을 사람이 일일이 만들지 않아도 되게 하는 것이었다. 핵심 아이디어는 질문-검색 컨텍스트-답변-(선택)참조 답변 사이의 관계를 LLM이 분해해서 검사하는 것이다.
+
+예를 들어 답변을 "주장(claim)" 단위로 쪼개 각 주장이 검색된 컨텍스트로 뒷받침되는지 판정해 비율을 낸다. 사람이 만든 정답이 없을 때도 질문+답변+컨텍스트만으로 점수를 내는 지표가 있고, 정답이 있을 때는 참조 답변을 이용하는 지표가 있다.
 
 README는 이를 네 가지로 소개한다. 객관적 metric(LLM 기반과 전통적 방식 모두), 테스트 데이터 자동 생성, LangChain 등 프레임워크와 관측 도구와의 연동, 프로덕션 데이터를 이용한 피드백 루프.
 
@@ -21,9 +29,25 @@ README는 이를 네 가지로 소개한다. 객관적 metric(LLM 기반과 전�
 
 ### 평가의 기본 구성
 
-평가는 (1) 샘플(`user_input`, `response`, `retrieved_contexts`, `reference` 등), (2) metric, (3) 판정용 LLM(필요 시 임베딩 모델)의 조합이다. 현재 문서의 권장 방식은 `ragas.metrics.collections`의 새 metric 클래스를 만들어 `await metric.ascore(...)`로 샘플 하나씩 점수를 얻는 것이고(동기 버전은 `.score()`), 반환값은 `MetricResult`(`value`, `reason`)다. 기존 `SingleTurnSample`+`evaluate(dataset, metrics, llm, embeddings, ...)` 방식은 "legacy metrics API"로 분류되어 문서에 "0.4에서 deprecated, 1.0에서 제거 예정"이라고 적혀 있다. 즉 v0.4.x는 두 API가 공존하는 과도기다. 소스에서도 `src/ragas/metrics/_faithfulness.py`(구) 와 `src/ragas/metrics/collections/faithfulness/`(신)가 나란히 있다.
+평가는 세 요소의 조합이다.
 
-새 구현은 LLM 호출을 `instructor` 라이브러리 기반의 구조화 출력(Pydantic 모델)으로 한다. `llm_factory(model, provider="openai", client=..., adapter="auto")`가 공급자별 어댑터(Instructor 기본, Gemini는 LiteLLM)를 고르고, 새 Faithfulness는 "구형 LangChain 래퍼는 거부한다"고 클래스 docstring에 적혀 있다. 이 때문에 구 코드(LangChain LLM 래퍼를 넘기던 방식)는 마이그레이션이 필요하다(`docs/howtos/migrations`에 가이드 디렉터리가 있으나 열어 보지 않음).
+- **샘플:** `user_input`, `response`, `retrieved_contexts`, `reference` 등
+- **metric:** 측정할 평가 지표
+- **판정 모델:** LLM과, 필요한 경우 임베딩 모델
+
+현재 문서는 `ragas.metrics.collections`의 새 metric 클래스를 권장한다. 호출과 반환값은 다음과 같다.
+
+- **비동기 호출:** `await metric.ascore(...)`로 샘플 하나씩 평가
+- **동기 호출:** `.score()`
+- **반환값:** `MetricResult`의 `value`와 `reason`
+
+기존 `SingleTurnSample`+`evaluate(dataset, metrics, llm, embeddings, ...)` 방식은 "legacy metrics API"로 분류되어 문서에 "0.4에서 deprecated, 1.0에서 제거 예정"이라고 적혀 있다.
+
+즉 v0.4.x는 두 API가 공존하는 과도기다. 소스에서도 `src/ragas/metrics/_faithfulness.py`(구) 와 `src/ragas/metrics/collections/faithfulness/`(신)가 나란히 있다.
+
+새 구현은 LLM 호출을 `instructor` 라이브러리 기반의 구조화 출력(Pydantic 모델)으로 한다. `llm_factory(model, provider="openai", client=..., adapter="auto")`가 공급자별 어댑터(Instructor 기본, Gemini는 LiteLLM)를 고르고, 새 Faithfulness는 "구형 LangChain 래퍼는 거부한다"고 클래스 docstring에 적혀 있다.
+
+이 때문에 구 코드(LangChain LLM 래퍼를 넘기던 방식)는 마이그레이션이 필요하다(`docs/howtos/migrations`에 가이드 디렉터리가 있으나 열어 보지 않음).
 
 ```mermaid
 flowchart LR
@@ -45,15 +69,27 @@ flowchart LR
 - **Context Precision**: 검색 결과 순위에서 관련 chunk가 위에 있는지를 보는 지표로, 각 순위 k의 precision@k의 평균이다.
 - 그 외 문서 목록(`docs/concepts/metrics/available_metrics/index.md`): Context Entities Recall, Noise Sensitivity, Response Relevancy, Multimodal Faithfulness/Relevance, NVIDIA 계열(Answer Accuracy, Context Relevance, Response Groundedness), 에이전트용(Topic Adherence, Tool Call Accuracy, Tool Call F1, Agent Goal Accuracy), 자연어 비교(Factual Correctness, Semantic Similarity, BLEU, CHRF, ROUGE, String Presence, Exact Match), SQL(Datacompy 실행 기반 점수, SQL 의미 동등성), 범용(Aspect Critic, Simple Criteria Scoring, Rubrics 기반, Instance-specific Rubrics), 요약 점수.
 
-범용 metric은 직접 정의도 가능하다. README 예시는 `DiscreteMetric(name="summary_accuracy", allowed_values=["accurate","inaccurate"], prompt=...)`로 판정 기준을 자연어 프롬프트로 주고 `ascore(llm=..., response=...)`를 호출하는 방식이다. 사내 도메인에 맞는 "정책 준수", "톤", "개인정보 노출 없음" 같은 기준을 이 방식으로 만들 수 있다.
+범용 metric은 직접 정의도 가능하다. README 예시는 `DiscreteMetric(name="summary_accuracy", allowed_values=["accurate","inaccurate"], prompt=...)`로 판정 기준을 자연어 프롬프트로 주고 `ascore(llm=..., response=...)`를 호출하는 방식이다.
+
+사내 도메인에 맞는 "정책 준수", "톤", "개인정보 노출 없음" 같은 기준을 이 방식으로 만들 수 있다.
 
 ### 테스트셋 자동 생성
 
-`docs/concepts/test_data_generation/rag.md`에 방식이 설명되어 있다. 질의 유형을 단일 홉(single-hop)/다중 홉(multi-hop) × 구체(specific)/추상(abstract)으로 나누고, 이를 문서에서 만들어 내기 위해 문서를 지식 그래프로 변환한다. 변환 단계(`default_transforms`)는 문서 분할, 요약·키프레이즈·제목·헤드라인·테마·NER 추출, 요약 임베딩 생성, 코사인 유사도(임계 0.7 등)로 노드 간 관계 구축 등이다. 그 위에서 `SingleHopSpecificQuerySynthesizer`, `MultiHopAbstractQuerySynthesizer`, `MultiHopSpecificQuerySynthesizer`가 노드 군집을 골라 질의-참조 답변 쌍을 만들며, `persona.py`로 질문자 페르소나를 생성해 다양성을 준다. 이미 chunking이 된 데이터용 `default_transforms_for_prechunked`도 있다. 이 방식의 장점은 "서로 연관된 여러 문서 조각이 필요한" 다중 홉 질문을 만들 수 있다는 점이고, 단점은 생성된 질문과 정답의 품질 자체가 LLM에 달려 있어 사람의 검수가 필요하다는 점이다(문서도 judge 정렬과 데이터를 직접 보는 것의 중요성을 강조한다).
+`docs/concepts/test_data_generation/rag.md`에 방식이 설명되어 있다. 질의 유형을 단일 홉(single-hop)/다중 홉(multi-hop) × 구체(specific)/추상(abstract)으로 나누고, 이를 문서에서 만들어 내기 위해 문서를 지식 그래프로 변환한다.
+
+변환 단계(`default_transforms`)는 문서 분할, 요약·키프레이즈·제목·헤드라인·테마·NER 추출, 요약 임베딩 생성, 코사인 유사도(임계 0.7 등)로 노드 간 관계 구축 등이다.
+
+그 위에서 `SingleHopSpecificQuerySynthesizer`, `MultiHopAbstractQuerySynthesizer`, `MultiHopSpecificQuerySynthesizer`가 노드 군집을 골라 질의-참조 답변 쌍을 만들며, `persona.py`로 질문자 페르소나를 생성해 다양성을 준다. 이미 chunking이 된 데이터용 `default_transforms_for_prechunked`도 있다.
+
+이 방식의 장점은 "서로 연관된 여러 문서 조각이 필요한" 다중 홉 질문을 만들 수 있다는 점이고, 단점은 생성된 질문과 정답의 품질 자체가 LLM에 달려 있어 사람의 검수가 필요하다는 점이다(문서도 judge 정렬과 데이터를 직접 보는 것의 중요성을 강조한다).
 
 ### 실험(Experiment)과 judge 정렬
 
-`@experiment()` 데코레이터로 "데이터셋 행마다 내 애플리케이션을 실행하고 metric을 적용해 결과를 저장"하는 루프를 만든다. 문서의 원칙은 측정 가능한 metric 정의, 체계적 결과 저장, 변경 하나씩 격리, 반복이다. 결과 저장 백엔드는 `backends/`의 local_csv, local_jsonl, gdrive, inmemory다. 문서 `howtos/applications/align-llm-as-judge.md`는 LLM judge를 사람 전문가 라벨과 먼저 정렬하라고 강조한다("방향이 틀린 나침반"). 이 권고는 우리에게 중요하다. judge가 한국어/도메인에 잘 맞는지 확인하지 않고 쓰면 점수의 의미가 없다. 프롬프트를 다른 언어로 옮기는 `adapt`/`adapt_prompts` 기능이 소스(`prompt/pydantic_prompt.py`, `prompt/mixin.py`)에 있어 비영어 평가를 염두에 둔 설계로 보이지만, 한국어에서의 품질은 확인하지 못했다.
+`@experiment()` 데코레이터로 "데이터셋 행마다 내 애플리케이션을 실행하고 metric을 적용해 결과를 저장"하는 루프를 만든다. 문서의 원칙은 측정 가능한 metric 정의, 체계적 결과 저장, 변경 하나씩 격리, 반복이다. 결과 저장 백엔드는 `backends/`의 local_csv, local_jsonl, gdrive, inmemory다.
+
+문서 `howtos/applications/align-llm-as-judge.md`는 LLM judge를 사람 전문가 라벨과 먼저 정렬하라고 강조한다("방향이 틀린 나침반"). 이 권고는 우리에게 중요하다. judge가 한국어/도메인에 잘 맞는지 확인하지 않고 쓰면 점수의 의미가 없다.
+
+프롬프트를 다른 언어로 옮기는 `adapt`/`adapt_prompts` 기능이 소스(`prompt/pydantic_prompt.py`, `prompt/mixin.py`)에 있어 비영어 평가를 염두에 둔 설계로 보이지만, 한국어에서의 품질은 확인하지 못했다.
 
 ## 설치와 사용법
 
@@ -90,7 +126,9 @@ async def main():
 asyncio.run(main())
 ```
 
-Anthropic을 쓰려면 문서대로 `Anthropic(api_key=...)` 클라이언트와 `llm_factory("claude-...", provider="anthropic", client=client)`를 넘긴다. 사내 OpenAI 호환 게이트웨이(vLLM 등)는 `AsyncOpenAI(base_url=...)`로 연결하는 구성이 자연스럽지만 이번에 실제 호출로 검증하지는 않았다. 선택 extra로 `ragas[tracing]`(langfuse, mlflow), `ragas[gdrive]`, `ragas[dspy]`, `ragas[oci]`, `ragas[ai-frameworks]`(haystack), `ragas[ag-ui]`, `ragas[all]`이 있다.
+Anthropic을 쓰려면 문서대로 `Anthropic(api_key=...)` 클라이언트와 `llm_factory("claude-...", provider="anthropic", client=client)`를 넘긴다. 사내 OpenAI 호환 게이트웨이(vLLM 등)는 `AsyncOpenAI(base_url=...)`로 연결하는 구성이 자연스럽지만 이번에 실제 호출로 검증하지는 않았다.
+
+선택 extra로 `ragas[tracing]`(langfuse, mlflow), `ragas[gdrive]`, `ragas[dspy]`, `ragas[oci]`, `ragas[ai-frameworks]`(haystack), `ragas[ag-ui]`, `ragas[all]`이 있다.
 
 ## 디렉터리·코드 구조에서 확인한 것
 
@@ -101,7 +139,9 @@ Anthropic을 쓰려면 문서대로 `Anthropic(api_key=...)` 클라이언트와 
 
 ## 저장소 소유 이전(explodinggradients → vibrantlabsai)
 
-이전 노트에서 비어 있던 항목이다. GitHub API로 `explodinggradients/ragas`를 조회하면 `full_name`이 `vibrantlabsai/ragas`로 돌아오고(스타 15,894 동일), 같은 저장소로 리다이렉트된다. 즉 조직 이전/개명이다. 분석 엔드포인트 상수에 `explodinggradients.com`이 "legacy"로 남아 있다는 코드 주석도 같은 맥락이다. README는 VibrantLabs를 운영 주체로 소개하고 "AI 앱 평가 개선을 도와 드린다"는 컨설팅 연락처를 안내한다. 이전 시점과 사유는 확인하지 못했다.
+이전 노트에서 비어 있던 항목이다. GitHub API로 `explodinggradients/ragas`를 조회하면 `full_name`이 `vibrantlabsai/ragas`로 돌아오고(스타 15,894 동일), 같은 저장소로 리다이렉트된다. 즉 조직 이전/개명이다. 분석 엔드포인트 상수에 `explodinggradients.com`이 "legacy"로 남아 있다는 코드 주석도 같은 맥락이다.
+
+README는 VibrantLabs를 운영 주체로 소개하고 "AI 앱 평가 개선을 도와 드린다"는 컨설팅 연락처를 안내한다. 이전 시점과 사유는 확인하지 못했다.
 
 ## 비교 대상
 
@@ -113,7 +153,17 @@ Anthropic을 쓰려면 문서대로 `Anthropic(api_key=...)` 클라이언트와 
 
 장점: RAG 평가 개념(faithfulness, context precision/recall, noise sensitivity)을 코드와 문서로 사실상 표준처럼 정리했다. 문서가 풍부하다(CI 연동, judge 정렬, 비용 측정 등 how-to). 에이전트, SQL, 멀티모달, 멀티턴까지 확장했다. Apache-2.0이고 분석 수집을 끌 수 있다.
 
-한계: (1) LLM-as-judge 점수는 judge 모델의 편향·불안정성에 좌우되고 점수 간 비교는 같은 judge, 같은 프롬프트일 때만 의미가 있다. (2) 평가 호출 수가 많다. Faithfulness는 최소 두 단계(주장 추출 → NLI 판정) LLM 호출이라 데이터가 크면 비용과 시간이 든다(`cost.py`와 `howtos/applications/_cost.md`가 비용 추적을 돕는다). (3) API 이행기다. 구 `ragas.metrics`와 신 `ragas.metrics.collections`가 섞여 예제가 버전에 따라 깨질 수 있다. (4) 이슈 현황: 오픈 이슈+PR 621건(API의 open_issues_count). 최근 항목에 `answer_relevancy`가 동기 임베딩 호출 때문에 이벤트 루프를 막는다는 보고(#3040/#3043), 메타데이터 필터 검색 정확성 metric 제안(#3045), 문서 링크/CI 수정 등이 보인다. (5) 릴리스 정체: 최신 v0.4.3(2026-01-13), 마지막 push 2026-02-24, 이후 7개월간 커밋이 없고 이슈·PR만 쌓이는 상태로 보인다(clone의 마지막 커밋 날짜 2026-02-24와 일치). 유지 관리가 느려진 것인지 다른 저장소로 개발이 옮겨 간 것인지는 확인하지 못했다.
+한계:
+
+1. LLM-as-judge 점수는 judge 모델의 편향·불안정성에 좌우되고 점수 간 비교는 같은 judge, 같은 프롬프트일 때만 의미가 있다.
+
+2. 평가 호출 수가 많다. Faithfulness는 최소 두 단계(주장 추출 → NLI 판정) LLM 호출이라 데이터가 크면 비용과 시간이 든다(`cost.py`와 `howtos/applications/_cost.md`가 비용 추적을 돕는다).
+
+3. API 이행기다. 구 `ragas.metrics`와 신 `ragas.metrics.collections`가 섞여 예제가 버전에 따라 깨질 수 있다.
+
+4. 이슈 현황: 오픈 이슈+PR 621건(API의 open_issues_count). 최근 항목에 `answer_relevancy`가 동기 임베딩 호출 때문에 이벤트 루프를 막는다는 보고(#3040/#3043), 메타데이터 필터 검색 정확성 metric 제안(#3045), 문서 링크/CI 수정 등이 보인다.
+
+5. 릴리스 정체: 최신 v0.4.3(2026-01-13), 마지막 push 2026-02-24, 이후 7개월간 커밋이 없고 이슈·PR만 쌓이는 상태로 보인다(clone의 마지막 커밋 날짜 2026-02-24와 일치). 유지 관리가 느려진 것인지 다른 저장소로 개발이 옮겨 간 것인지는 확인하지 못했다.
 
 성숙도 사실: Stars 15,894, Forks 1,734, Apache-2.0, 생성 2023-05-08, 최신 릴리스 v0.4.3(2026-01-13), v0.4.2(2025-12-23), v0.4.1(2025-12-10).
 

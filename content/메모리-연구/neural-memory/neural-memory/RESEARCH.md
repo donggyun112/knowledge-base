@@ -11,8 +11,9 @@ tags:
 
 # Research reuse map
 
-This experiment deliberately combines established mechanisms instead of proposing a new
-architecture before the basic phenomenon is measured.
+이 문서는 ‘왜 이 메모리 구조를 선택했고, 실패한 뒤에는 왜 다른 질문으로 옮겼는가’를 기록한다. 처음부터 새 아키텍처를 제안하기보다, 이미 알려진 메커니즘을 조합해 기본 현상이 생기는지 먼저 측정하기로 했다.
+
+출발 질문은 **나중에 도움이 된 경험만 남기려면, 지금의 쓰기 결정을 어떻게 학습시켜야 하는가**였다. 아래 표는 각 선행 연구에서 이번 실험에 필요한 부분만 가져온 내역이다. 모델 전체를 복제하지 않고 온라인 상태 갱신, 예측 오차, 기억 감쇠, 경쟁적 할당을 나누어 시험하면, 어느 메커니즘이 실제로 작동했는지 따져 볼 수 있다.
 
 | Prior work | Mechanism reused here | Deferred from phase 0 |
 | --- | --- | --- |
@@ -23,48 +24,36 @@ architecture before the basic phenomenon is measured.
 | [Fast Weight Memory](https://arxiv.org/abs/2011.07831) | Evaluate compositional associative behavior as a learned recurrent state | Its LSTM controller and task-specific reasoning stack |
 | [Synaptic plasticity-dependent competition rule influences memory formation](https://doi.org/10.1038/s41467-021-24269-4) | Treat memory allocation as competition among plastic parameter groups, not only a global write/no-write decision | Any claim that mouse fear-memory allocation is a general model of human memory |
 
-The official [TTT PyTorch implementation](https://github.com/test-time-training/ttt-lm-pytorch)
-is a useful equation and tensor-shape reference, but its authors describe it as a slow tutorial
-implementation and do not recommend it for training. Copying the full language-model stack would
-therefore increase the first experiment's cost without testing the write-selection hypothesis.
+공식 [TTT PyTorch 구현](https://github.com/test-time-training/ttt-lm-pytorch)은 식과 텐서 형태를 확인하는 데 유용하다. 다만 저자들이 느린 튜토리얼용 구현이라고 설명하며 학습용으로 권하지 않는다. 전체 언어 모델 스택을 복사하면 첫 실험의 비용은 커지지만, ‘무엇을 쓸지 학습하는가’라는 가설을 더 직접적으로 시험하지는 못한다. 그래서 첫 단계에서는 작게 분리한 메모리만 다룬다.
 
 ## Frozen design choices for phase 0
 
-- **Memory representation:** one matrix-valued fast-weight model state per episode.
-- **Write rule:** normalized residual delta update.
-- **Attentional objective:** later key-to-value recall cross-entropy.
-- **Retention:** fixed multiplicative decay.
-- **Write selection:** learned scalar gate conditioned on the observation, noisy present-time
-  evidence, and prediction surprise.
-- **Outer supervision:** future recall only. `retained` is used for episode construction and
-  evaluation, never as a direct write-gate label.
-- **No graph or external store:** the changing parameter tensor is the memory.
+Phase 0에서는 아래 선택을 고정한다. 한 번에 여러 요소를 바꾸면 좋아진 이유가 저장 선택인지, 표현력인지, 용량인지 분리할 수 없기 때문이다.
 
-These choices isolate one question: can delayed future utility teach a model when to change its own
-fast weights? They do not yet establish semantic text memory.
+- **기억 표현:** 에피소드마다 하나의 행렬형 fast-weight 상태를 둔다. fast weights는 전체 학습이 끝난 뒤에도 해당 에피소드의 관찰을 따라 바뀌는 가중치다.
+- **쓰기 규칙:** 정규화한 residual delta update를 쓴다. 이미 읽히는 값과 이번 목표 값의 차이를 수정하는 규칙이다.
+- **주의 목적 함수:** 나중에 키에서 값을 회상할 때의 교차 엔트로피다.
+- **보존:** 고정된 비율을 곱해 감쇠한다.
+- **쓰기 선택:** 현재 관찰, 잡음이 있는 현재 증거, 예측 놀라움을 입력으로 받는 학습 스칼라 게이트다. 게이트는 이번 관찰로 기억을 얼마나 바꿀지 정한다.
+- **외부 학습 신호:** 미래 회상 결과만 사용한다. `retained`는 에피소드 구성과 평가에만 쓰며, 쓰기 게이트의 직접 정답 라벨로 주지 않는다.
+- **그래프·외부 저장소 없음:** 변하는 파라미터 텐서 자체가 기억이다.
+
+이렇게 하면 하나의 질문을 떼어 낼 수 있다. **뒤늦게 드러난 유용성이, 앞서 어느 순간 fast weights를 바꿨어야 하는지 가르칠 수 있는가?** 이 단계가 성공해도 아직 의미를 이해하는 텍스트 기억을 확립한 것은 아니다.
 
 ## Decision gates
 
-1. **Mechanism gate:** learned write gating must beat an identically trained always-write model on
-   held-out random bindings, while assigning higher mean gates to useful events.
-2. **Dynamics gate:** add correction, delayed decay, and multi-timescale consolidation only after
-   gate 1 passes.
-3. **Language gate:** replace symbolic IDs with frozen text encoder representations and add a small
-   decoder only after the state-update mechanism passes.
-4. **Agent gate:** connect the memory output to a frozen LLM and measure spontaneous recall without
-   memory instructions only after the standalone model passes.
+1. **메커니즘 관문:** 학습 쓰기 게이트가, 나머지 조건을 같게 학습한 always-write 모델보다 보지 않은 무작위 연결을 잘 회상해야 한다. 유용한 사건에는 평균적으로 더 큰 게이트를 주어야 한다.
+2. **동역학 관문:** 첫 관문을 통과한 다음에 수정, 지연 감쇠, 여러 시간 척도의 고착을 추가한다.
+3. **언어 관문:** 상태 갱신이 통과한 다음 기호 ID를 동결 텍스트 인코더 표현으로 바꾸고 작은 디코더를 더한다.
+4. **에이전트 관문:** 독립 모델이 통과한 다음 메모리 출력을 동결 LLM에 연결하고, 기억하라는 지시 없이 자발적으로 회상하는지 잰다.
 
-Moving in this order prevents a capable language decoder from hiding a failed memory mechanism.
+순서를 이렇게 잡은 이유는 강력한 언어 디코더가 메모리의 실패를 가리지 않게 하려는 것이다. 최종 답변만 좋으면 실제로 기억이 저장되었는지 알기 어렵다. 먼저 작은 상태의 쓰기·읽기를 확인하고, 그 뒤에 언어와 실제 행동으로 넘어간다.
 
 ## Biological allocation hypothesis for phase 1
 
-Jeong et al. manipulated potentiation and depression at auditory inputs to the lateral amygdala in
-mice. Potentiated inputs were preferentially recruited into the fear-memory engram; post-training
-depression could reverse that allocation. The total recall-active population remained approximately
-constant, which the authors interpret as evidence for competitive allocation under limited
-plasticity rather than independent binary selection by every neuron.
+Jeong 등의 연구는 생쥐 외측 편도체의 청각 입력에서 연결 강화와 약화를 조작했다. 강화된 입력은 공포 기억 engram, 즉 해당 기억과 관련된 활성 세포 집단에 우선 포함되었고, 학습 뒤 약화시키면 그 할당을 되돌릴 수 있었다. 회상 때 활성화되는 전체 집단 크기는 대체로 일정했다. 저자들은 이를 각 뉴런이 독립적으로 참여 여부를 고르는 것보다, 제한된 가소성을 놓고 경쟁하는 할당의 근거로 해석했다.
 
-This suggests a specific computational ablation, not a biological equivalence claim:
+여기서 가져온 아이디어는 ‘사람의 기억도 이렇게 동작한다’는 주장이 아니다. **전체를 하나의 게이트로 켜고 끄는 것과, 같은 쓰기 예산을 여러 블록이 나누어 갖는 것 중 어느 쪽이 나은가**라는 계산 실험이다.
 
 ```text
 single global write gate              competitive block allocation
@@ -72,31 +61,21 @@ g = sigmoid(controller(x))     vs.    a = sparse competition(score_1 ... score_n
 W <- W + g * delta                    W_i <- W_i + a_i * delta_i
 ```
 
-The competition should have a fixed plasticity budget (`sum(a) = 1` or top-k allocation). A recent
-event can still be reassigned during a short eligibility window: strengthening one block competes
-with or depresses neighboring blocks. The testable question is whether this improves capacity,
-correction, and memory linking over the scalar-gate phase-0 model at an equal parameter and update
-budget.
+경쟁에는 고정된 가소성 예산을 둔다(`sum(a) = 1` 또는 top-k 할당). 최근 사건은 짧은 eligibility window, 즉 나중 신호로 아직 갱신할 수 있는 기간 안에서는 다시 할당할 수 있다. 한 블록을 강화하면 다른 블록과 예산을 경쟁하거나 이웃을 약화시킨다. 비교할 것은 동일한 파라미터 수와 갱신 예산에서 Phase 0의 단일 스칼라 게이트보다 용량, 수정, 기억 연결이 좋아지는지다.
 
-Do not use this study as evidence that the same rule governs all human memory. It examined a
-specific fear-conditioning circuit in mice with artificial optogenetic LTP/LTD.
+이 논문은 생쥐의 특정 공포 조건화 회로에 인위적 광유전학 LTP/LTD를 가한 연구다. 같은 규칙이 인간 기억 전체를 지배한다는 근거로 쓰면 안 된다.
 
 # Survey, 2026-09-14: should the write decision be deferred?
 
-Phases 12 to 16 train a write gate to predict future utility from the present observation. Phase 7
-already measured the ceiling of that framing on real logs: 0.543 balanced accuracy from
-observation-time evidence against 0.980 once delayed feedback arrives. This survey asks whether the
-deferred alternative has support beyond that single measurement, and what shape it should take.
+Phases 12–16은 현재 관찰만으로 미래의 쓸모를 예측하는 쓰기 게이트를 학습한다. 그런데 실제 로그를 쓴 Phase 7은 이미 이 발상의 한계를 보여 주었다. 관찰 시점 증거만 있으면 balanced accuracy가 0.543이었고, 지연 피드백이 도착한 뒤에는 0.980이었다. balanced accuracy는 클래스별 정답률의 평균으로, 한쪽 라벨이 많은 자료에서 단순 정확도보다 균형 있게 본다.
 
-The boundary from phase 1 still applies, but it applies to one use only. Animal results are a source
-of *architecture* to test, never evidence for a claim about human memory or about our own numbers.
-Phase 1 is the precedent: competitive allocation came from Jeong et al. and beat a single matrix
-0.9243 to 0.2347, which is a result about our model, not about mice.
+이 차이는 ‘더 좋은 예측기를 만들자’ 외에 **판단을 나중으로 미루자**는 선택지를 연다. 이번 조사는 그 선택지가 한 실험 이상의 근거를 갖는지, 미룬다면 어떤 구조여야 하는지 알아보기 위한 것이다.
+
+Phase 1에서 정한 경계는 계속 적용한다. 동물 연구는 시험할 *아키텍처*의 출처이지, 인간 기억이나 이번 모델의 수치를 뒷받침하는 증거가 아니다. 예를 들어 Jeong 등의 연구에서 가져온 경쟁적 할당이 단일 행렬을 0.9243 대 0.2347로 이긴 것은 이 모델의 결과이며 생쥐에 대한 결과가 아니다.
 
 ## Deferred consolidation in biology
 
-Three independent mechanisms converge on writing cheaply from a local signal and letting a later
-event decide what survives. What they add beyond the principle is a time constant.
+세 독립적인 메커니즘은 같은 설계 방향을 가리킨다. 일단 국소 신호로 값싸게 흔적을 만들고, 뒤에 도착하는 사건이 무엇을 남길지 결정하게 한다. 여기에 회상 후 다시 불안정해지는 재고착까지 함께 검토했다. 중요한 추가 조건은 **그 유예 시간이 유한하다**는 점이다. 아래 표의 시간은 동물 실험의 시간 창이며, 모델의 스텝 수와 그대로 같다고 두지 않는다.
 
 | Mechanism | Deferral window | Source |
 | --- | --- | --- |
@@ -105,10 +84,7 @@ event decide what survives. What they add beyond the principle is a time constan
 | Replay selection biased by reward prediction, consolidated across sleep | hours to overnight | [Nat Commun 2026](https://www.nature.com/articles/s41467-025-65354-2); [eLife 2015](https://elifesciences.org/articles/07903) |
 | Reconsolidation: retrieval returns a trace to a labile state | about 6 h | [Nader et al., Nature 2000](https://pubmed.ncbi.nlm.nih.gov/35145138/) |
 
-The design consequence is that the deferral window is finite. "Hold every candidate until the query
-arrives" is retrieval, not memory, and has no biological counterpart. The measurable quantity is how
-far a bounded delay closes the gap between deciding at write time and deciding with the query
-visible, which on the Claude corpus is 0.5686 against 0.8206 top-1.
+설계에서는 무한히 기다리는 버퍼를 허용하지 않는다. 모든 후보를 질문이 나올 때까지 유지하면 여기서 시험하려는 제한된 기억 대신 전체 후보 검색을 하게 되고, 위 생물학적 시간 창과도 맞지 않는다. 측정할 것은 **제한된 지연이, 즉시 판단과 질문을 본 뒤 판단 사이의 격차를 얼마나 메우는가**다. Claude 말뭉치에서 그 두 조건의 top-1은 0.5686 대 0.8206이었다.
 
 ## The mushroom body as a specified circuit
 
@@ -119,7 +95,7 @@ The fly connectome makes a complete memory circuit available as architecture rat
 with neurotransmitter identity, already predicts behaviour in a whole-brain leaky integrate-and-fire
 model ([Shiu et al., Nature 2024](https://pubmed.ncbi.nlm.nih.gov/37205514/)).
 
-Four properties bear on our design.
+이 회로를 본 이유는 ‘뇌와 닮았다’는 인상 때문이 아니라 설계 요소를 더 구체적으로 고를 수 있기 때문이다. 아래 네 특성은 서로 다른 문제를 다룬다. 희소 확장은 비슷한 항목의 간섭을 줄이고, 도파민은 내용을 읽는 대신 결과 신호로 쓰기를 조절하며, 구획들은 시간 척도가 다른 저장소로 병렬 동작한다. 이미 나온 파생 알고리즘들이 어디까지 구현했는지도 분리해서 본다.
 
 - **Sparse expansion.** About 50 projection neurons fan out to roughly 2,000 Kenyon cells, each
   integrating 6 to 8 inputs across 5 or 6 claws. Reciprocal inhibition through the single GABAergic
@@ -152,7 +128,7 @@ Four properties bear on our design.
 
 ## The reinforcement side of the same circuit
 
-Surveyed 2026-09-14, after the modulatory pathway failed twice as a single scalar gain.
+2026-09-14 조사. 조절 경로를 하나의 스칼라 배율로 구현했으나 두 번 실패한 뒤, 생물 회로에서 빠뜨린 구조가 있는지 다시 보았다. 단순히 모든 기억을 같은 배율로 키워서는 후보 순위가 바뀌지 않는다. 그래서 아래에서는 입력 신호가 여러 종류인지, 출력에 반대 부호가 있는지, 현재 예측이 다시 쓰기 신호에 반영되는지를 나누어 살핀다.
 
 **The input side is genuinely multi-channel.** The hemibrain resolves 21 dopaminergic types, 6 PPL1
 and 15 PAM, tiling the 15 compartments roughly one type each, about 130 neurons in total
@@ -186,23 +162,13 @@ The two differ in sign alone, not in tuning or time constant.
 
 ### What this says about our failures
 
-Phase 18 and the associative attempts both ended with a modulatory gain saturating at its bound and
-contributing nothing. Two circuit properties we had omitted explain that directly. A gain with no
-prediction subtracted has no reason to stop growing, whereas a prediction-error drive falls to zero
-once the memory already answers the event. And a single positive channel can only rescale the state,
-which is rank-preserving and therefore provably unable to reorder what is retrieved; an opponent pair
-read as a difference expresses "strengthen this, weaken that", which is what competitive allocation
-needs.
+Phase 18과 연상 저장 시도에서는 조절 배율이 상한에 붙고 실제 기여는 없었다. 빠뜨렸던 회로 특성 두 가지가 이 실패를 설명한다.
 
-The licensed change is two signed channels sharing one eligibility trace, with the readout as their
-difference and the drive computed as reinforcement minus what the memory already predicts. Per-channel
-decay is the better second step than more channels, since Phase 22 showed tag decay is the parameter
-that creates the rescue window.
+첫째, 현재 예측을 빼지 않은 단순 이득에는 커지는 것을 멈출 이유가 없다. 반면 강화 신호에서 메모리의 예측을 뺀 **예측 오차**를 쓰면, 이미 잘 예측하는 사건에서는 갱신 신호가 0으로 줄어든다. 둘째, 양수 채널 하나는 상태 전체의 크기만 바꾸므로 순위를 보존한다. 검색 순서를 바꿀 수 없다는 뜻이다. 반대 부호 채널을 차이로 읽으면 ‘이것은 강화하고 저것은 약화하라’를 표현할 수 있어 경쟁적 할당과 맞는다.
 
-**Contested or unverified.** Whether one dopaminergic type per compartment is universal; DAN-to-DAN
-connectivity is absent from both sources, which is absence of evidence rather than a demonstrated
-negative; and the two-channel sufficiency is a modelling claim about conditioning assays, not about
-memory capacity or longevity.
+따라서 다음에 시험할 변화는 하나의 eligibility trace를 공유하는 두 부호 채널이다. 읽기는 두 채널의 차이, 구동 신호는 강화에서 현재 기억 예측을 뺀 값으로 만든다. 그다음에는 채널 수를 늘리기보다 채널별 감쇠를 시험하는 편이 낫다. Phase 22에서 약한 기억을 뒤늦게 살리는 시간 창을 만드는 변수가 tag decay였기 때문이다.
+
+**논쟁 중이거나 미확인인 부분도 남긴다.** 구획마다 도파민 유형이 하나라는 구조가 보편적인지는 확정되지 않았다. 두 출처에서 DAN-to-DAN 연결이 나오지 않는 것은 부재의 증거이지, 연결이 없다는 입증은 아니다. 두 채널로 충분하다는 주장 역시 조건화 검사에 대한 모델링 결과이며 기억 용량이나 수명에 대한 결과는 아니다.
 
 ## What forgetting research says about capacity
 
@@ -217,10 +183,8 @@ rate itself appears to adapt to update frequency, existing to limit interference
 Competition bounds *relative* excitability, not a counted slot budget, and Landauer explicitly
 disclaimed his capacity estimate as a bound on storage
 ([Landauer, Cognitive Science 1986](https://onlinelibrary.wiley.com/doi/abs/10.1207/s15516709cog1004_4)).
-A hard top-k at write time therefore collapses three separable knobs — encoding strength, decay
-rate, and retrieval threshold — into one irreversible switch. Phase 14 already screened an
-input-dependent retention gate and rejected it, attributing the failure to 775 training episodes
-being too few to identify a richer retention policy rather than to the formulation.
+
+이 관점에서 저장 시점의 hard top-k는 서로 다른 세 조절값, 즉 부호화 강도·감쇠율·검색 문턱을 하나의 되돌릴 수 없는 스위치로 합쳐 버린다. Phase 14는 입력에 따른 보존 게이트를 이미 시험했다가 기각했다. 당시 해석은 발상 자체의 실패라기보다, 훈련 에피소드 775개로 더 복잡한 보존 정책을 식별하기에는 부족하다는 것이었다. 이 구분을 남겨야 이후 결과가 그 해석을 유지하는지 검토할 수 있다.
 
 ## Where our novelty now sits
 
@@ -231,8 +195,7 @@ being too few to identify a richer retention policy rather than to the formulati
 | [What Eviction Destroys](https://arxiv.org/abs/2609.08279) | Independent support rather than competition: a restore-counterfactual audit attributing 60 to 73 percent of corrected errors to irreversible eviction at an 80k budget, and all of them at 8k. Corroborates the phase 15 finding that the whole task-level shortfall is write selection. |
 | [Agentic Memory](https://arxiv.org/abs/2601.01885) (ACL 2026) | Learns unified long- and short-term memory management with three-stage reinforcement learning and a step-wise GRPO variant for sparse memory-action rewards. Whether the backbone language model is itself updated is not stated in the abstract and was not verified. |
 
-The remaining differentiators are the two-stage deferral and the irreversible-discard semantic-trace
-setting, not learned write gating as such.
+따라서 ‘쓰기 게이트를 학습한다’는 사실만으로는 새로운 점이 되지 않는다. 남은 차별점은 두 단계로 판단을 유예한다는 점과, 의미 흔적을 되돌릴 수 없게 버리는 용량 제한 환경이다. 아래의 논쟁 목록까지 포함해, 문헌에서 확인한 것과 이번 연구가 아직 주장할 수 없는 것을 나누어야 한다.
 
 ## Contested — do not present as settled
 
@@ -257,27 +220,15 @@ All arXiv identifiers in this survey were checked against the listing pages on 2
 
 ## Why the previous design has to be abandoned
 
-Phases 12 to 19 asked a bounded layer to pick which of eight candidates a later query would need.
-Every result in that line collapsed to the same thing once controlled. On the deferred corpus an
-untrained random projection of the same width already reaches 0.4033 top-1 with no matrix and no
-learning; the trained associative model reaches 0.4956; a blank event scores 0.4956 against 0.4971
-for the correct one; and four different write policies land between 0.4825 and 0.5000. The slot
-model's large event effect came from feeding cosine-to-event in as a residual score rather than from
-anything the memory computed.
+Phases 12–19는 제한된 층에게 후보 8개 중 나중 질문이 필요로 할 것을 고르게 했다. 대조를 넣을수록 결과는 같은 한계로 모였다. deferred 말뭉치에서 같은 폭의 미학습 무작위 투영은 행렬도 학습도 없이 top-1 0.4033이었고, 학습 연상 모델은 0.4956이었다. 올바른 사건을 주면 0.4971, 빈 사건을 주어도 0.4956이었다. 서로 다른 쓰기 정책 네 개도 0.4825–0.5000에 모였다. 슬롯 모델에서 크게 보였던 사건 효과는 메모리가 계산한 것이 아니라, 사건과의 코사인 유사도를 잔차 점수로 직접 더한 데서 나왔다.
 
-The cause is the task shape. Presenting the candidates at recall time lets encoder cosine stand in
-for memory, and cosine is better at it than any bounded state we can train. Two further points
-sharpen this. Importance is not utility, so scoring a write decision against a future-utility oracle
-measures the wrong thing by construction. And memory is gist-preserving and detail-losing, so a
-metric rewarding exact reconstruction of a stored embedding rewards verbatim storage, which is not
-what memory does.
+과제 모양 자체가 문제였다. 회상할 때 후보들을 다시 보여 주면 인코더 코사인이 기억을 대신할 수 있고, 그 역할을 학습 가능한 제한 상태보다 더 잘한다. 또한 ‘중요함’과 ‘미래에 쓸모 있음’은 같은 정의가 아니다. 미래 유용성 정답으로 쓰기 결정을 채점하면 무엇을 기억이라고 부르는지부터 좁혀진다. 저장 임베딩의 정확한 복원을 보상하는 점수 역시 내용을 그대로 보관하는 능력을 보상하므로, 요지는 남기고 세부는 잃는 기억을 보려는 설계와 다르다.
 
-None of the survey's findings are about choosing from a candidate list. Every one of them is about
-how a bounded memory degrades: transience as a function, decay adapting to interference, compartment
-time constants, sparsening that helps only for similar items. The experiments must measure that
-instead.
+문헌 조사에서 가져온 현상들은 후보 목록에서 정답을 고르는 문제가 아니었다. 제한된 기억이 부하에 따라 어떻게 나빠지는지, 간섭에 맞춰 감쇠가 바뀌는지, 구획별 시간 상수가 어떤 차이를 만드는지, 희소화가 비슷한 항목에서만 도움이 되는지에 관한 것이었다. **다음 실험은 검색 순위 대신 이 보유 특성들을 직접 측정하기로 한다.**
 
 ## What the survey licenses, as constraints
+
+아래 열 가지는 다음 모델이 만족해야 할 설계 제약이자 시험할 가설이다. 생물학을 그대로 구현했다고 선언하는 체크리스트가 아니다. 특히 논쟁 중인 항목은 반박 가능한 실험 대상으로 유지한다.
 
 1. **The write signal must not read content.** Dopaminergic neurons carry reinforcement, not odour
    identity, and sign comes from the modulatory channel alone. Write strength may depend on the
@@ -309,23 +260,18 @@ instead.
 
 ## The replacement task
 
-Store N documents in a bounded state, probe with a cue, and measure what comes back. No candidate
-list exists at recall, so similarity between the cue and the stored items cannot substitute for the
-memory. The state is the only thing carried from write to read.
+N개 문서를 제한된 상태에 저장한 뒤 단서로 읽고, 무엇이 돌아오는지 잰다. 회상 시점에는 후보 목록을 다시 보여 주지 않는다. 따라서 단서와 후보의 유사도만으로 기억을 대신할 수 없다. 쓰기에서 읽기로 이어지는 것은 **저장 상태뿐**이다.
 
-Two scores per probe, because the survey says surface and gist should not be treated alike:
+각 단서에서 두 점수를 구분한다.
 
-- **gist recovery** — agreement between what is recalled and the fact the document carried;
-- **surface recovery** — agreement between what is recalled and the document's own form.
+- **gist recovery:** 되살린 내용이 문서가 담고 있던 사실·요지와 얼마나 일치하는가.
+- **surface recovery:** 되살린 내용이 문서의 원래 표현 형식과 얼마나 일치하는가.
 
-A memory that behaves like the literature describes should lose surface faster than gist as load
-rises. A verbatim store loses both together; a retriever loses neither until it fails entirely.
+설계 가설은 저장량이 늘어날수록 표면 표현이 요지보다 먼저 손실된다는 것이다. 원문 그대로 저장하는 장치는 둘을 함께 잃고, 단순 검색기는 검색에 완전히 실패하기 전까지 둘 다 잃지 않는다는 대비를 둔다. 이 차이가 실제로 생기는지는 아래의 별도 측정으로 확인해야 한다.
 
 ## Measurements, one per mechanism the survey established
 
-Every row names the finding it comes from, the prediction that follows, and what would falsify it.
-Elapsed time in the animal work maps onto intervening writes here, since interference rather than
-the clock is what the state actually experiences.
+각 행은 출발한 발견, 그로부터 세운 예측, 예측이 틀렸다고 판단할 결과를 함께 적었다. 동물 연구의 시간 경과는 여기서 중간에 끼어든 쓰기 횟수로 옮긴다. 이 상태를 실제로 바꾸는 것은 시계 자체가 아니라 새 쓰기로 생기는 간섭이기 때문이다. 예를 들어 2번은 희소화가 모든 문서를 균일하게 돕는지가 아니라, **서로 비슷한 문서에서 특히 더 돕는지**를 본다. 7번은 뒤늦게 주는 강한 신호가 약한 흔적을 살릴 수 있는 유한한 시간 창을 찾는다.
 
 | # | From | Measurement | Prediction | Fails if |
 | --- | --- | --- | --- | --- |
@@ -340,30 +286,20 @@ the clock is what the state actually experiences.
 | 9 | Retrieval returns a trace to a labile state (Nader et al. 2000) | Probe an item, then re-write, and measure drift | Recalled items drift, and repeated recall compounds it | The state is unchanged by being read |
 | 10 | The dopaminergic write signal never reads content, and a second activation with the item absent abolishes the response (Aso & Rubin 2016) | A modulatory signal applied after writing, with the item absent | Recall changes, and a mismatched signal does not produce that change | The signal is inert, as it was in every attempt today |
 
-Order matters. Measurement 2 runs first: it is the sharpest circuit-derived prediction available, it
-fails in a specific direction, and nothing in this project depends on it yet. Measurements 1 and 3
-come with it, since they share the load curve. Measurement 7 is the one worth the most, because it
-recovers the deferral window that LongMemEval-S could not show — there the later event stayed equally
-informative at every distance, whereas here the delay is ours to set. Measurement 10 has already
-failed twice in this project and should not be attempted again until 1 to 3 establish that the memory
-holds anything at all.
+실행 순서에도 이유가 있다. 먼저 측정 2를 한다. 회로에서 나온 예측 중 가장 구체적이고, 어떤 방향으로 틀릴 수 있는지 명확하며, 아직 다른 결과가 여기에 기대고 있지 않기 때문이다. 같은 저장 부하 곡선을 쓰는 1과 3은 함께 측정한다.
 
-Three of these are marked contested above and must be reported as tests of a disputed claim rather
-than as confirmations: 5 rests mainly on Jeong et al., 9 has a direct failed replication, and 4 sits
-against the older sequential-consolidation model.
+측정 7은 특히 중요하다. LongMemEval-S에서는 나중 사건이 거리에 관계없이 똑같이 정보를 주어 유예 시간 창을 볼 수 없었다. 여기서는 지연을 직접 정하므로 그 창을 시험할 수 있다. 측정 10은 이미 두 번 실패했다. 1–3에서 기억이 무엇인가를 보유한다는 점을 먼저 확인하기 전에는 다시 시도하지 않는다.
+
+확인된 생물학을 재현했다는 표현을 피해야 하는 항목도 있다. 5는 주로 Jeong 등의 연구에 기대고, 9에는 직접적인 재현 실패가 있으며, 4는 오래된 순차 고착 모델과 경쟁한다. 세 항목 모두 **논쟁 중인 주장을 시험한 결과**로 보고해야 한다.
 
 ## What has to be built
 
-Controlled document sets rather than found episodes, because measurements 1 and 2 need the number of
-stored items and the similarity between them as independent variables. LongMemEval sessions supply
-the documents and their facts; grouping them by encoder similarity supplies the similarity axis. The
-teacher disappears entirely: the objective is reconstruction of what was stored from its own cue, so
-no label about which document will matter later enters training at any point.
+찾아낸 에피소드를 그대로 쓰기보다 통제된 문서 집합을 만들어야 한다. 측정 1과 2에서는 저장 항목 수와 항목 간 유사도를 독립적으로 바꿔야 하기 때문이다. 문서와 사실은 LongMemEval 세션에서 가져오고, 인코더 유사도로 묶어 유사도 축을 만든다.
+
+이때 미래 유용성을 알려 주는 교사 라벨은 완전히 없앤다. 목적은 저장했던 것을 그 단서에서 복원하는 것이므로, 나중에 어느 문서가 중요할지에 대한 라벨이 학습에 들어갈 필요가 없다.
 
 ## What this design deliberately gives up
 
-It stops asking whether the layer can predict future utility, which Phase 19 measured as
-information-limited anyway, and it stops competing with retrieval on retrieval's own ground. If the
-memory cannot beat cosine at picking a candidate, that is no longer a finding about the memory. The
-claim available at the end of this program is narrower and about capacity: how much a bounded state
-holds, how it fails, and whether it fails the way the biology says it should.
+이 재설계는 미래 유용성을 미리 맞히는 문제를 내려놓는다. Phase 19에서 이미 정보 부족으로 제한된다는 결과가 나왔기 때문이다. 검색이 잘하는 후보 고르기에서 억지로 경쟁하는 것도 멈춘다. 후보 선택에서 코사인을 못 이겼다는 사실을 곧바로 기억 보유 능력의 실패로 읽지 않겠다는 뜻이다.
+
+그 대신 얻을 수 있는 주장은 더 좁고 명확하다. **한정된 상태는 얼마나 담는가, 부하가 늘면 어떻게 실패하는가, 그 실패 양상이 문헌에서 가져온 예측과 맞는가.** 이후 `PAPER.md`와 `RESULTS.md`는 이 재설계가 무엇을 보였고, 그 성과가 다시 실제 검색으로는 왜 이어지지 않았는지를 기록한다.

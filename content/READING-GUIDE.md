@@ -6,8 +6,12 @@ researched: 2026-10-01
 # Research 읽기 순서 가이드
 
 > [!info] 이 가이드의 기준
-> 전체 목차는 [[index|홈 목차]]. 아래 우선순위는 노트의 요약을 바탕으로 한 **제 판단**이다(노트를 정독한 결과가 아니다). 기준은 사내 RAG·LLM 도입·에이전트 개발에 얼마나 직접 연결되는지다. 관심사가 바뀌면 순서도 바뀐다.
-> 표기: 📖 노트만 읽어도 충분 / 🔗 노트로 윤곽을 잡고 원문(코드·논문)도 볼 가치 있음
+> 전체 자료는 [[index|홈 목차]]에서 찾을 수 있다. 이 가이드는 **노트 요약을 바탕으로 정한 읽기 순서**이며, 정독 후의 평가가 아니다.
+>
+> 사내 RAG·LLM 도입·에이전트 개발에 얼마나 직접 연결되는지를 기준으로 삼았다. 관심사가 바뀌면 순서도 바뀐다.
+
+- 📖 **노트 중심으로 읽기**: 우선 노트로 내용을 파악한다.
+- 🔗 **원문까지 이어 읽기**: 노트로 윤곽을 잡은 뒤 코드·논문을 확인한다.
 
 ## 1순위 — 업무에 바로 연결
 
@@ -43,11 +47,34 @@ researched: 2026-10-01
 6. [[k-skill]] 📖 — 한국 생활·업무용 skill 번들. AGPL 구성요소는 법무 확인 필요.
 
 ### E. 에이전트 메모리·스킬 진화 (연구 흐름)
-읽는 순서: [[karpathy-llm-wiki]] 📖 → [[llm-agent-skill-memory-without-finetuning]] 📖(8편 비교, 길잡이) → [[wikiskill]] → [[skillzip-pro]] → [[procedural-graphs-self-evolving]] → [[aces-agentic-continuous-evaluation-of-skills]] → [[hyperagents]]. 앞의 두 개를 읽고 관심 가는 논문만 이어서 보면 된다. [[unclejobs-llm-wiki-fork]]는 원본과 동일하니 번역 주석에 관심 있을 때만.
-- 메모리 구현 쪽: [[openviking]](AGPL 주의), [[graphify]](패키지명 `graphifyy` typosquatting 주의), [[semantica]], [[ragu]]
+먼저 두 개의 길잡이로 연구 흐름을 파악한다.
+
+1. [[karpathy-llm-wiki]] 📖
+2. [[llm-agent-skill-memory-without-finetuning]] 📖 — 8편 비교
+
+이후에는 관심 있는 논문을 골라 읽는다. 순서대로 읽는다면 다음 흐름을 따른다.
+
+1. [[wikiskill]]
+2. [[skillzip-pro]]
+3. [[procedural-graphs-self-evolving]]
+4. [[aces-agentic-continuous-evaluation-of-skills]]
+5. [[hyperagents]]
+
+[[unclejobs-llm-wiki-fork]]는 원본과 동일하므로 번역 주석에 관심 있을 때 참고한다.
+
+구현을 살펴보려면 다음 노트로 이어간다.
+
+- [[openviking]] — AGPL 주의
+- [[graphify]] — 패키지명 `graphifyy`와 typosquatting 주의
+- [[semantica]]
+- [[ragu]]
 
 ### F. 에이전트 UI·프로토콜
-[[ag-ui-docs]] → [[pytorchkr-ag-ui-copilotkit]] → [[copilotkit-openbot]]. AG-UI 이벤트는 문서 기준으로 `RUN_*`/`STEP_*`이고, 한국어 해설글의 `LIFECYCLE_SIGNAL`은 현재 스펙에 없다.
+1. [[ag-ui-docs]]
+2. [[pytorchkr-ag-ui-copilotkit]]
+3. [[copilotkit-openbot]]
+
+AG-UI 이벤트는 문서 기준으로 `RUN_*`/`STEP_*`다. 한국어 해설글의 `LIFECYCLE_SIGNAL`은 조사 당시 스펙에 없다.
 
 ## 3순위 — 온프렘 LLM·추론 (필요해질 때)
 - [[vllm-moriio-kv-connector]] 🔗 (AMD 하드웨어 전제), [[lucebox-hub]], [[neurons]] — 소비자 GPU·Apple Silicon 추론. 지금 인프라와 맞는지 먼저 확인.
@@ -56,7 +83,16 @@ researched: 2026-10-01
 - [[univa-ai]] — 국내 상용 에이전트(HWP 파싱) 경쟁/참고 사례.
 
 ## 4순위 — 참고·기록용
-- 에이전트 플랫폼 구경: [[agentspace]](권한 우회 플래그 주의), [[multica]], [[openworker]], [[nullclaw]], [[generic-agent]](XOR 난독화 keychain·`curl | bash`), [[claw-code]], [[firecrawl-web-agent]], [[hermes-bot-mode]], [[agency-agents]], [[mengto-skills]], [[insane-search]](안티봇 우회, 정책 검토 필요)
+### 에이전트 플랫폼
+
+- [[agentspace]] — 권한 우회 플래그 주의
+- [[multica]], [[openworker]], [[nullclaw]]
+- [[generic-agent]] — XOR 난독화 keychain·`curl | bash`
+- [[claw-code]], [[firecrawl-web-agent]], [[hermes-bot-mode]]
+- [[agency-agents]], [[mengto-skills]]
+- [[insane-search]] — 안티봇 우회, 정책 검토 필요
+
+### 그 밖의 참고 자료
 - 디자인·콘텐츠: [[huashu-design]], [[diagram-design]], [[im-not-ai]], [[openclip]], [[opencut]], [[multi-agent-cad]]
 - 학습 자료: [[ai-engineering-from-scratch]] (523개 레슨 커리큘럼, 필요한 phase만)
 - 그 외 논문: [[llm-online-deanonymization]](프라이버시 위협 관점), [[wisv-wireless-informed-semantic-verification]](device-edge speculative decoding)

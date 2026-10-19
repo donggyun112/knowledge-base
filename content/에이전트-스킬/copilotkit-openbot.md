@@ -9,7 +9,9 @@ researched: 2026-10-01
 # OpenBot (CopilotKit)
 
 > [!summary] 한줄요약
-> 어떤 AG-UI 에이전트든 "coworker"로 붙일 수 있는 자체 호스팅 에이전트 플랫폼 **템플릿**. Bot마다 브라우저·파일·셸이 있는 전용 컴퓨터(컨테이너)를 주고, 모든 행동을 단일 gateway에서 CEL 정책으로 판정(deny 우선, fail closed)한 뒤 PostgreSQL에 감사 기록을 남긴다. MIT, TypeScript(Bun), alpha(v0.0.15).
+> AG-UI 에이전트에 컴퓨터·정책 통제·감사 기록을 붙이는 자체 호스팅 플랫폼 템플릿이다. 영속 스레드와 메모리는 CopilotKit Intelligence에 의존한다.
+
+어떤 AG-UI 에이전트든 "coworker"로 붙일 수 있는 자체 호스팅 에이전트 플랫폼 **템플릿**. Bot마다 브라우저·파일·셸이 있는 전용 컴퓨터(컨테이너)를 주고, 모든 행동을 단일 gateway에서 CEL 정책으로 판정(deny 우선, fail closed)한 뒤 PostgreSQL에 감사 기록을 남긴다. MIT, TypeScript(Bun), alpha(v0.0.15).
 
 > [!warning] 템플릿이지 제품이 아니다
 > README: "A template, not a product." 호스티드 버전이 없고, 저장소의 모든 workspace가 `private`라 패키지로 의존할 수 없다. clone한 뒤 `examples/` 아래 예시 tenant package를 자기 coworker·channel·skill로 교체해서 쓰는 구조다. 또한 영속 스레드·메모리는 상용 **CopilotKit Intelligence**에 의존한다.
@@ -84,7 +86,9 @@ sequenceDiagram
 
 ### 2.4 initiator(누가 시작했나) 추적
 
-감사 row의 `actor.id`는 "누구의 권한으로 실행됐는가"를 말하지만, routine은 소유자 권한으로, Bot 간 hop은 대화를 시작한 사람 권한으로 실행되기 때문에 사람이 지켜보고 있었는지 알 수 없다. 그래서 `initiator_kind`가 추가로 기록된다: `person`(사람이 있었음), `deployment`(시작 시 경계 등), `routine`(스케줄), `handoff`(다른 Bot이 부탁). Audit 화면의 **Nobody watching** 필터는 routine+handoff를 합쳐 "사람이 자리를 비운 사이 누구 권한으로 무엇이 실행됐나"를 답한다. 값은 배포가 서명한 run assertion 안에 `depth`와 함께 실려 Bot이 자기 라벨을 바꿀 수 없다.
+감사 row의 `actor.id`는 "누구의 권한으로 실행됐는가"를 말하지만, routine은 소유자 권한으로, Bot 간 hop은 대화를 시작한 사람 권한으로 실행되기 때문에 사람이 지켜보고 있었는지 알 수 없다. 그래서 `initiator_kind`가 추가로 기록된다: `person`(사람이 있었음), `deployment`(시작 시 경계 등), `routine`(스케줄), `handoff`(다른 Bot이 부탁). Audit 화면의 **Nobody watching** 필터는 routine+handoff를 합쳐 "사람이 자리를 비운 사이 누구 권한으로 무엇이 실행됐나"를 답한다.
+
+값은 배포가 서명한 run assertion 안에 `depth`와 함께 실려 Bot이 자기 라벨을 바꿀 수 없다.
 
 ### 2.5 Bot 간 위임 (`message_bot`)
 
@@ -92,7 +96,15 @@ sequenceDiagram
 
 ### 2.6 Routine과 공유 work queue
 
-routine은 폼이 아니라 "평일 9시에 요약해줘"라는 대화로 만든다. 제약: 최소 15분 간격, 사용자당 활성 20개 상한, 실패는 성공 이후 첫 실패만 1회 알리고 **연속 10회 실패면 자동 비활성**(재시도 정책이 아니라 "이 routine을 계속 돌릴 가치가 있나"의 판단). 누락된 시간대는 재생하지 않고 스탬프만 앞으로 이동한다(한 달 뒤 worker가 살아나도 30개의 낡은 요약이 쏟아지지 않음). 구현은 `work_items` 하나의 PostgreSQL 테이블을 `select ... for update skip locked`로 claim하고 lease는 DB 시계 기준, 시도 횟수 상한이 있다. 타이머를 API 프로세스 안에 두지 않는 이유는 replica마다 독립적으로 "발화 시점"을 판단하기 때문이다. routine을 만들려면 관리자가 `/admin/plugins/routines`에서 Bot별로 `create_routine/update_routine/delete_routine`을 grant해야 한다.
+routine은 폼이 아니라 "평일 9시에 요약해줘"라는 대화로 만든다. 운영 제약은 다음과 같다.
+
+- 최소 15분 간격으로 실행한다.
+- 사용자당 활성 routine은 20개가 상한이다.
+- 실패 알림은 성공 이후 첫 실패만 1회 보낸다.
+- **연속 10회 실패면 자동 비활성** 처리한다. 이는 재시도 정책이 아니라 "이 routine을 계속 돌릴 가치가 있나"의 판단이다.
+ 누락된 시간대는 재생하지 않고 스탬프만 앞으로 이동한다(한 달 뒤 worker가 살아나도 30개의 낡은 요약이 쏟아지지 않음). 구현은 `work_items` 하나의 PostgreSQL 테이블을 `select ... for update skip locked`로 claim하고 lease는 DB 시계 기준, 시도 횟수 상한이 있다.
+
+타이머를 API 프로세스 안에 두지 않는 이유는 replica마다 독립적으로 "발화 시점"을 판단하기 때문이다. routine을 만들려면 관리자가 `/admin/plugins/routines`에서 Bot별로 `create_routine/update_routine/delete_routine`을 grant해야 한다.
 
 ## 3. 핵심 기능 상세
 

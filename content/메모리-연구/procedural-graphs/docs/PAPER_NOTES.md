@@ -16,7 +16,9 @@ Primary sources:
 1. [Grounding Agent Memory: Environment-Probing Curation for Enterprise Agents](https://arxiv.org/html/2609.11060)
 2. [Procedural Graphs: Self-Evolving Execution Structures for LLM Agents](https://arxiv.org/html/2609.09153v1)
 
-이 문서는 논문 주장, 구현된 메커니즘, 아직 재현하지 않은 benchmark 주장을 구분한다.
+이 문서는 ‘논문이 주장한 것’, ‘코드에 구현한 것’, ‘실험으로 확인한 것’을 대조하는 장부다. 역할 분리나 그래프 수정이 실제로 실행됐다고 해서 논문의 정확도까지 재현한 것은 아니다. 표의 검증 상태가 단위 테스트인지, 실제 LLM 실행인지, 성능 비교인지 구별해 읽는다.
+
+또한 초기 구현 시점의 기록이므로, 아래의 function calling과 일부 미재현 표시는 후속 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|텍스트 ReAct·MultiChallenge 실행]] 이전 상태다. 결합 37.5% 대 grounded 62.5%의 해석은 큐레이터 잘림 버그로 철회됐으며, 원래 관측과 철회 이유를 함께 보존한다.
 
 ## Grounded memory
 
@@ -75,6 +77,8 @@ combined paired 결과는 both 12, combined-only 3, grounded-only 13, neither 12
 grounded 62.5%를 순수한 procedural generalization으로 해석하지 않는다.
 
 ### 작은 로컬 6조건 live pilot
+
+이 소규모 실험은 여섯 연결 방식이 실제로 돌아가는지 확인하는 시험이다. 기본 조건부터 4/4라 더 높은 정확도를 낼 여지가 없고, 메모리를 만들었어도 읽지 않았다면 기억 효과를 측정한 것이 아니다. 그래서 표에는 성공률뿐 아니라 memory reads와 records도 함께 남겼다.
 
 | condition | test success | mean environment tools | memory reads | records |
 |---|---:|---:|---:|---:|

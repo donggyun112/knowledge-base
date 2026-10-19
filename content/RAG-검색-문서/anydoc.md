@@ -9,13 +9,25 @@ researched: 2026-10-01
 # anydoc
 
 > [!summary] 한줄요약
-> Firecrawl이 만든 순수 Rust 문서 변환 라이브러리로, Word/PowerPoint/Excel/OpenDocument/RTF/EPUB/CSV/PDF를 ML 모델 없이 "포맷별 parser -> 공통 Document 모델 -> 단일 GFM serializer" 경로로 Markdown으로 바꾼다. 벤더 벤치마크상 문서당 median 4.4ms. 스캔 PDF는 OCR 대신 `NeedsOcr` 에러로 돌려주며, 생성 2개월짜리 신생 프로젝트다.
+> Firecrawl의 순수 Rust 문서 변환 라이브러리. ML 모델 없이 여러 문서 포맷을 일관된 Markdown으로 바꾼다.
+
+지원 입력은 Word/PowerPoint/Excel/OpenDocument/RTF/EPUB/CSV/PDF이며, 기본 경로는 **포맷별 parser → 공통 Document 모델 → 단일 GFM serializer**다.
+
+벤더 벤치마크상 문서당 median은 4.4ms다. 스캔 PDF는 OCR 대신 `NeedsOcr` 에러로 돌려주며, 조사 시점에는 생성 2개월짜리 신생 프로젝트다.
 
 ## 배경 / 해결하는 문제
 
-LLM·RAG 파이프라인에서 가장 먼저 부딪히는 문제는 입력 문서가 너무 다양하다는 점이다. 사내에는 2003년식 `.doc`, 병합 셀이 가득한 `.xls`, 발표용 `.pptx`, 매뉴얼 `.pdf`, 전자책 `.epub`이 섞여 있고, 포맷마다 파서도 다르고 출력 Markdown의 표·목록·각주 처리도 제각각이다. 기존 선택지는 크게 세 갈래였다. (1) LibreOffice headless로 HTML을 뽑고 pandoc으로 변환(정확하지만 프로세스 기동이 무겁고 느림), (2) `unstructured`/`docling` 같은 ML 기반 파이프라인(무겁고 수 GB 의존성), (3) 포맷별 전용 라이브러리를 이어붙인 가벼운 도구([[markitdown]] 등, 포맷마다 품질 편차).
+LLM·RAG 파이프라인에서 가장 먼저 부딪히는 문제는 입력 문서가 너무 다양하다는 점이다. 사내에는 2003년식 `.doc`, 병합 셀이 가득한 `.xls`, 발표용 `.pptx`, 매뉴얼 `.pdf`, 전자책 `.epub`이 섞여 있고, 포맷마다 파서도 다르고 출력 Markdown의 표·목록·각주 처리도 제각각이다.
 
-anydoc의 문제의식은 README 표현 그대로 "어떤 포맷이 들어와도 하나의 일관된 출력"이다. 포맷마다 파서는 따로 두되 모두 같은 중간 표현(Document 모델)으로 내리고 Markdown 직렬화는 한 곳에서만 한다. 그래서 표 이스케이프 버그를 한 번 고치면 docx/rtf/odt 전부에 적용된다는 것이 설계 논리다. Firecrawl이 자사 상용 서비스(Firecrawl Parse)의 변환 엔진으로 쓰는 코드를 MIT로 공개한 것으로, README가 "It powers Firecrawl Parse"라고 직접 밝힌다.
+기존 선택지는 크게 세 갈래였다.
+
+1. **LibreOffice headless + pandoc:** HTML을 뽑은 뒤 변환한다. 정확하지만 프로세스 기동이 무겁고 느리다.
+2. **ML 기반 파이프라인:** `unstructured`/`docling` 등이 해당한다. 무겁고 의존성이 수 GB에 이른다.
+3. **포맷별 전용 라이브러리 조합:** [[markitdown]] 같은 가벼운 도구다. 포맷마다 품질 편차가 있다.
+
+anydoc의 문제의식은 README 표현 그대로 "어떤 포맷이 들어와도 하나의 일관된 출력"이다. 포맷마다 파서는 따로 두되 모두 같은 중간 표현(Document 모델)으로 내리고 Markdown 직렬화는 한 곳에서만 한다. 그래서 표 이스케이프 버그를 한 번 고치면 docx/rtf/odt 전부에 적용된다는 것이 설계 논리다.
+
+Firecrawl이 자사 상용 서비스(Firecrawl Parse)의 변환 엔진으로 쓰는 코드를 MIT로 공개한 것으로, README가 "It powers Firecrawl Parse"라고 직접 밝힌다.
 
 ## 동작 원리 / 아키텍처
 
@@ -34,15 +46,33 @@ flowchart TD
   G -.opt-in ocr=hosted.-> H[Firecrawl Parse API]
 ```
 
-**포맷 감지.** `Format::from_bytes`는 확장자를 보지 않고 PDF 헤더, RTF의 여는 그룹, OLE 스트림 이름, ZIP 패키지의 mimetype/content types를 본다. 확장자가 틀린 파일도 제대로 변환되며, 시그니처가 없는 CSV만 확장자나 명시적 `Format::Csv`가 필요하다. `to_markdown(path)`는 내용 감지를 먼저 하고 실패하면 확장자로 폴백한다(`src/lib.rs`).
+### 포맷 감지
 
-**Document 모델.** `src/model/`은 정보 보존형 중간 표현이다. `Block`은 Heading(레벨, anchor, 인라인), Paragraph, List, Table, BlockQuote, CodeBlock, Rule, Math(LaTeX)로 구성된다. `Document`는 본문 `blocks`, 각주/미주 `notes`, 임베디드 `assets`(바이트와 media type)를 가진다. 포맷 프런트엔드가 스타일 캐스케이드·번호 매기기·참조를 모두 해소한 뒤 모델을 만들기 때문에 serializer는 단순하다. 표는 병합 셀을 포함한 grid(`table.rs` 495줄)로 표현된다.
+`Format::from_bytes`는 확장자를 보지 않고 PDF 헤더, RTF의 여는 그룹, OLE 스트림 이름, ZIP 패키지의 mimetype/content types를 본다. 확장자가 틀린 파일도 제대로 변환되며, 시그니처가 없는 CSV만 확장자나 명시적 `Format::Csv`가 필요하다. `to_markdown(path)`는 내용 감지를 먼저 하고 실패하면 확장자로 폴백한다(`src/lib.rs`).
 
-**Serializer.** `src/render/markdown/`(escape, inline, table, anchors)가 GFM을 만든다. 병합 셀 표, 제목 anchor(문서 내 링크 대상), 각주, LaTeX 수식(`$...$`, `$$`)을 처리한다. PDF만 예외로 Document 모델을 거치지 않으며, `to_document()`는 PDF에 대해 미지원이라고 코드 주석에 명시돼 있다.
+### Document 모델
 
-**PDF 경로.** `src/formats/pdf.rs`(52줄)는 같은 조직의 `pdf-inspector` 크레이트(Cargo.toml에서 1.14.2)를 호출해 분류와 Markdown 추출을 맡긴다. 특이한 설계 결정은 스캔/이미지 전용 페이지가 한 장이라도 있으면 일부가 빠진 결과를 완전한 것처럼 내보내지 않고 `NeedsOcr { pages, page_count }`로 실패시킨다는 점이다. 코드 주석의 이유는 "누락 페이지가 있는 출력은 완전해 보이기 때문"이다. v0.2.4 릴리스 노트에는 이전에 스캔 페이지가 조용히 빠졌다고 쓰여 있어 실제로 한 번 고친 문제다. RAG 인제스트에서는 조용한 누락(silent drop)보다 바람직한 동작이다.
+`src/model/`은 정보 보존형 중간 표현이다. `Block`은 Heading(레벨, anchor, 인라인), Paragraph, List, Table, BlockQuote, CodeBlock, Rule, Math(LaTeX)로 구성된다. `Document`는 본문 `blocks`, 각주/미주 `notes`, 임베디드 `assets`(바이트와 media type)를 가진다.
 
-**안전 한계.** `src/package/limits.rs`에는 고정 상수가 있다. 엔트리 1개 압축 해제 128MiB, 아카이브 합계 512MiB, 엔트리 수 10만, XML 중첩 256, XML 노드 200만, 스프레드시트 grid 400만 슬롯, 임베디드 에셋 총 128MiB 등이다. 주석은 "공격·남용 입력(decompression bomb 등)에 대한 하드 캡이며 의도적으로 설정 불가"라고 말한다. 초과하면 `ResourceLimit` 에러. 신뢰할 수 없는 업로드 문서를 받는 서비스에서 중요한 속성이다. `fuzz/`에는 csv/doc/docx/epub/numfmt/odf/pdf/ppt/rtf/xls/xlsb/xlsx용 cargo-fuzz 타겟이 있고, `tests/robustness.rs`가 모든 fixture를 변이 테스트한다고 README가 설명한다.
+포맷 프런트엔드가 스타일 캐스케이드·번호 매기기·참조를 모두 해소한 뒤 모델을 만들기 때문에 serializer는 단순하다. 표는 병합 셀을 포함한 grid(`table.rs` 495줄)로 표현된다.
+
+### Serializer
+
+`src/render/markdown/`(escape, inline, table, anchors)가 GFM을 만든다. 병합 셀 표, 제목 anchor(문서 내 링크 대상), 각주, LaTeX 수식(`$...$`, `$$`)을 처리한다. PDF만 예외로 Document 모델을 거치지 않으며, `to_document()`는 PDF에 대해 미지원이라고 코드 주석에 명시돼 있다.
+
+### PDF 경로
+
+`src/formats/pdf.rs`(52줄)는 같은 조직의 `pdf-inspector` 크레이트(Cargo.toml에서 1.14.2)를 호출해 분류와 Markdown 추출을 맡긴다.
+
+특이한 설계 결정은 스캔/이미지 전용 페이지가 한 장이라도 있으면 일부가 빠진 결과를 완전한 것처럼 내보내지 않고 `NeedsOcr { pages, page_count }`로 실패시킨다는 점이다. 코드 주석의 이유는 "누락 페이지가 있는 출력은 완전해 보이기 때문"이다.
+
+v0.2.4 릴리스 노트에는 이전에 스캔 페이지가 조용히 빠졌다고 쓰여 있어 실제로 한 번 고친 문제다. RAG 인제스트에서는 조용한 누락(silent drop)보다 바람직한 동작이다.
+
+### 안전 한계
+
+`src/package/limits.rs`에는 고정 상수가 있다. 엔트리 1개 압축 해제 128MiB, 아카이브 합계 512MiB, 엔트리 수 10만, XML 중첩 256, XML 노드 200만, 스프레드시트 grid 400만 슬롯, 임베디드 에셋 총 128MiB 등이다. 주석은 "공격·남용 입력(decompression bomb 등)에 대한 하드 캡이며 의도적으로 설정 불가"라고 말한다. 초과하면 `ResourceLimit` 에러. 신뢰할 수 없는 업로드 문서를 받는 서비스에서 중요한 속성이다.
+
+`fuzz/`에는 csv/doc/docx/epub/numfmt/odf/pdf/ppt/rtf/xls/xlsb/xlsx용 cargo-fuzz 타겟이 있고, `tests/robustness.rs`가 모든 fixture를 변이 테스트한다고 README가 설명한다.
 
 ## 핵심 기능 상세
 
@@ -91,7 +121,9 @@ match anydoc::to_markdown(path) {
 }
 ```
 
-OCR은 선택 사항이다. `anydoc scan.pdf --ocr hosted` 또는 `toMarkdown('scan.pdf', { ocr: 'hosted' })`. README에 따르면 OCR이 필요한 문서 전체(페이지 선택 불가)가 Firecrawl Parse로 전송되며 가입 없이 쓸 수 있고 `FIRECRAWL_API_KEY`로 한도를 올린다. `--api-url`/`FIRECRAWL_API_URL`로 다른 Parse 배포를 가리킬 수 있다. Rust 크레이트에는 ocr 옵션이 없고 네트워크 호출도 하지 않는다. 소스 빌드 요구사항은 Cargo.toml 기준 Rust 1.88 / edition 2024.
+OCR은 선택 사항이다. `anydoc scan.pdf --ocr hosted` 또는 `toMarkdown('scan.pdf', { ocr: 'hosted' })`. README에 따르면 OCR이 필요한 문서 전체(페이지 선택 불가)가 Firecrawl Parse로 전송되며 가입 없이 쓸 수 있고 `FIRECRAWL_API_KEY`로 한도를 올린다. `--api-url`/`FIRECRAWL_API_URL`로 다른 Parse 배포를 가리킬 수 있다.
+
+Rust 크레이트에는 ocr 옵션이 없고 네트워크 호출도 하지 않는다. 소스 빌드 요구사항은 Cargo.toml 기준 Rust 1.88 / edition 2024.
 
 ## 디렉터리 · 코드 구조에서 확인한 것
 
@@ -111,15 +143,33 @@ OCR은 선택 사항이다. `anydoc scan.pdf --ocr hosted` 또는 `toMarkdown('s
 | OCR | hosted(opt-in) | plugin / Azure | 내장 가능 | 없음 |
 | 브라우저 실행 | WASM 가능 | 불가 | 불가 | 불가 |
 
-README의 자체 벤치마크(100개 실문서, 14개 포맷, LLM judge로 Claude Sonnet 5 사용, 위치 편향 상쇄를 위해 순서를 바꿔 2번씩 판정해 482 verdict)에서 anydoc은 포맷 커버리지 14/14, median 4.4ms, 평균 점수 81이다. markitdown은 6/14 포맷, 134.8ms, 점수 65이고 LibreOffice는 1129.5ms, 점수 40이다. 포맷별로는 docx 88 대 71(markitdown), pptx 74 대 66, xlsx 72 대 55로 표에 나온다. 이 수치는 벤더 자체 측정(Ryzen 9 9950X3D, Windows 11)이며 코퍼스가 비공개라 독립 재현은 불가능하다. 평균 점수가 도구마다 다른 포맷 집합 위에서 계산돼 포맷별 표가 공정한 비교라고 README 스스로 단서를 단다. 또한 README의 포맷별 표에는 csv와 xlsb 행이 없어 "14개 포맷" 서술과 표(13행)가 정확히 맞지는 않는다.
+README의 자체 벤치마크(100개 실문서, 14개 포맷, LLM judge로 Claude Sonnet 5 사용, 위치 편향 상쇄를 위해 순서를 바꿔 2번씩 판정해 482 verdict)에서 anydoc은 포맷 커버리지 14/14, median 4.4ms, 평균 점수 81이다. markitdown은 6/14 포맷, 134.8ms, 점수 65이고 LibreOffice는 1129.5ms, 점수 40이다. 포맷별로는 docx 88 대 71(markitdown), pptx 74 대 66, xlsx 72 대 55로 표에 나온다.
+
+이 수치는 벤더 자체 측정(Ryzen 9 9950X3D, Windows 11)이며 코퍼스가 비공개라 독립 재현은 불가능하다.
+
+평균 점수가 도구마다 다른 포맷 집합 위에서 계산돼 포맷별 표가 공정한 비교라고 README 스스로 단서를 단다.
+
+또한 README의 포맷별 표에는 csv와 xlsb 행이 없어 "14개 포맷" 서술과 표(13행)가 정확히 맞지는 않는다.
 
 ## 장단점 · 한계 · 성숙도
 
-사실(GitHub API, 2026-10-01 조회): Stars 22,312, Forks 1,412, 라이선스 MIT, 주 언어 Rust, 생성 2026-08-03, 마지막 push 2026-08-28, 최신 릴리스 v0.2.4(2026-08-27). open_issues_count는 103(PR 포함 수치). 열린 이슈 샘플에는 PPTX 이미지 누락(AlternateContent), mobi 지원 요청, ligature 처리, RTL 텍스트 추출 수정 등이 보여, 포맷별 엣지 케이스가 아직 활발히 발견·수정되는 단계다. 기여자 수는 API상 5로 스타 대비 코어 기여자가 매우 적다(Firecrawl 팀 중심).
+사실(GitHub API, 2026-10-01 조회): Stars 22,312, Forks 1,412, 라이선스 MIT, 주 언어 Rust, 생성 2026-08-03, 마지막 push 2026-08-28, 최신 릴리스 v0.2.4(2026-08-27). open_issues_count는 103(PR 포함 수치).
+
+열린 이슈 샘플에는 PPTX 이미지 누락(AlternateContent), mobi 지원 요청, ligature 처리, RTL 텍스트 추출 수정 등이 보여, 포맷별 엣지 케이스가 아직 활발히 발견·수정되는 단계다. 기여자 수는 API상 5로 스타 대비 코어 기여자가 매우 적다(Firecrawl 팀 중심).
 
 장점은 극도로 빠르고 가볍다는 점, 단일 바이너리/WASM으로 배포 가능하다는 점, 레거시 오피스 포맷을 직접 파싱한다는 점, 악성 입력 대비 하드 캡과 fuzz, 에러를 명시적으로 분류해 조용한 누락을 막는다는 점, Agent Skill 동봉이다.
 
-한계는 다음과 같다. (1) OCR이 없다. 스캔 PDF는 hosted Parse로 보내야 하는데 이는 문서 전체가 외부로 나간다는 뜻이다. (2) PDF 품질은 pdf-inspector에 전적으로 의존하며, 복잡한 레이아웃·표·다단 PDF 품질은 검증하지 못했다. bench/README도 PDF는 벤치 범위 밖이라고 적었다. (3) 한국 사내 문서의 상당수인 `.hwp`/`.hwpx`는 지원 포맷에 없다. 한글 PDF 품질도 확인 못함. (4) 이미지·도형 안 텍스트는 alt text 수준. (5) 생성 2개월, v0.2.x라 API 안정성이 보장되지 않는다.
+한계는 다음과 같다.
+
+1. OCR이 없다. 스캔 PDF는 hosted Parse로 보내야 하는데 이는 문서 전체가 외부로 나간다는 뜻이다.
+
+2. PDF 품질은 pdf-inspector에 전적으로 의존하며, 복잡한 레이아웃·표·다단 PDF 품질은 검증하지 못했다. bench/README도 PDF는 벤치 범위 밖이라고 적었다.
+
+3. 한국 사내 문서의 상당수인 `.hwp`/`.hwpx`는 지원 포맷에 없다. 한글 PDF 품질도 확인 못함.
+
+4. 이미지·도형 안 텍스트는 alt text 수준.
+
+5. 생성 2개월, v0.2.x라 API 안정성이 보장되지 않는다.
 
 ## 보안 · 라이선스 · 운영 리스크
 

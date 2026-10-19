@@ -9,7 +9,11 @@ researched: 2026-10-01
 # WeKnora (Tencent)
 
 > [!summary] 한줄요약
-> 문서를 RAG(질의응답)·Agent(다단계 작업)·Wiki(지식 정리) 세 모드로 활용하는 Tencent의 오픈소스 엔터프라이즈 지식 플랫폼. Go 백엔드 + Python docreader(gRPC) + Vue 3 프런트로 구성되고, 자체 호스팅·워크스페이스 RBAC·내장 MCP Server·스킬 샌드박스를 갖춘, "문서 검색기"보다 훨씬 넓은 범위의 제품이다. (스타 약 31.5k, v0.8.2, 라이선스는 MIT + 서드파티 예외)
+> 같은 문서 지식베이스를 RAG 질의응답·다단계 Agent 작업·Wiki 지식 정리에 활용하는 Tencent의 오픈소스 플랫폼이다.
+
+- **구성**: Go 백엔드 + Python docreader(gRPC) + Vue 3 프런트.
+- **제품 범위**: 자체 호스팅, 워크스페이스 RBAC, 내장 MCP Server, 스킬 샌드박스를 갖춘 엔터프라이즈 지식 플랫폼으로, 문서 검색보다 넓은 기능을 제공한다.
+- **조사 시점 상태**: 스타 약 31.5k, v0.8.2, MIT + 서드파티 예외 라이선스.
 
 > [!info] 조사 방법
 > `git clone --depth 1`(커밋 `bccb4b1`, 2026-09-30)로 README 전문, `website-docs/`(아키텍처·기능 문서), `docker-compose.yml`, `.env.example`, `go.mod`, `docreader/pyproject.toml`, `internal/` 디렉터리 구조, LICENSE/THIRD_PARTY_NOTICES를 직접 읽고 `gh api`로 통계를 확인했다. 소스 코드 전체를 정독한 것은 아니며, 동작 서술은 저장소 내 공식 문서(`website-docs/`)와 디렉터리/파일 구성 기준이다. 문서 기반인지 구조 기반인지는 본문에서 구분했다.
@@ -171,7 +175,21 @@ KB 편집의 "인덱스 전략"에서 Wiki를 켜면 문서에서 엔티티/개�
 
 ### 3.10 테넌트와 권한
 
-`01-tenant-auth.md`: 워크스페이스(백엔드에서는 Tenant)가 자원·권한 경계이며 KB, 모델, 에이전트, 세션, 스토리지 쿼터가 여기에 속한다. 한 사용자가 여러 워크스페이스에 서로 다른 역할로 참여한다. 역할은 Owner / Admin / Contributor / Viewer 4단계(Viewer는 열람·질문, Contributor는 KB 생성·업로드, Admin은 멤버·설정, Owner는 삭제·이전). "조직"을 통해 여러 워크스페이스가 KB와 에이전트를 공유하는데, 공유는 수신 쪽 역할을 자동 상향하지 않는다. 로그인은 비밀번호 또는 OIDC, 프로그램 접근은 `X-API-Key` 헤더의 API Key(검색/질의/입고/관리 능력과 KB 범위를 선택). 전체 배포 관리는 워크스페이스 Owner와 별도로 부여되는 시스템 관리자 권한이다.
+`01-tenant-auth.md`에 따르면 **워크스페이스(백엔드의 Tenant)가 자원·권한 경계**다. KB, 모델, 에이전트, 세션, 스토리지 쿼터가 여기에 속한다. 한 사용자는 여러 워크스페이스에 서로 다른 역할로 참여할 수 있다.
+
+| 역할 | 권한 범위 |
+|---|---|
+| Viewer | 열람·질문 |
+| Contributor | KB 생성·업로드 |
+| Admin | 멤버·설정 관리 |
+| Owner | 삭제·이전 |
+
+역할은 위 4단계다. "조직"을 통해 워크스페이스끼리 KB와 에이전트를 공유할 수 있지만, 공유가 수신 쪽 역할을 자동으로 높이지는 않는다. 전체 배포를 관리하는 시스템 관리자 권한도 워크스페이스 Owner와 별도로 부여한다.
+
+접근 방식은 두 가지다.
+
+- **사용자 로그인**: 비밀번호 또는 OIDC.
+- **프로그램 접근**: `X-API-Key` 헤더의 API Key. 검색/질의/입고/관리 능력과 KB 범위를 선택한다.
 
 ## 4. 핵심 기능 상세
 
@@ -183,7 +201,13 @@ KB 편집의 "인덱스 전략"에서 Wiki를 켜면 문서에서 엔티티/개�
 
 ### 4.3 내장 MCP Server (v0.8.2)
 `website-docs/03-features/08-mcp.md` 요약은 다음과 같다.
-- 두 방향이 있다. (1) WeKnora가 **MCP 클라이언트**로 외부 서버(SSE / Streamable HTTP, stdio는 보안상 미지원)를 붙인다. API Key/Bearer/OAuth2.0(DCR + PKCE)을 지원한다. (2) WeKnora가 **MCP 서버**로서 워크스페이스별 `/mcp/<endpoint_id>` 엔드포인트를 발급한다.
+MCP 연결은 두 방향을 지원한다.
+
+1. **외부 도구 사용**: WeKnora가 MCP 클라이언트로 외부 서버에 연결한다. SSE / Streamable HTTP를 지원하며 stdio는 보안상 지원하지 않는다. 인증은 API Key/Bearer/OAuth2.0(DCR + PKCE)이다.
+2. **지식베이스 제공**: WeKnora가 MCP 서버가 되어 워크스페이스별 `/mcp/<endpoint_id>` 엔드포인트를 발급한다.
+
+서버 엔드포인트의 설정과 제약은 다음과 같다.
+
 - 엔드포인트마다 토큰(`Authorization: Bearer mcp_…`, SHA-256 저장, 재발급 가능, 생성 시 1회만 표시), KB 범위, 분당 호출 한도(기본 60), 도구 그룹을 지정한다. 도구 그룹은 4개다. 검색·읽기(`list_knowledge_bases`, `search_knowledge`, `grep_chunks`, `list_documents`, `read_document`), 질의(`ask`), Wiki(`wiki_search`, `wiki_read_page`, `wiki_index`), 쓰기(`add_document`, `update_document`, `delete_document`). **기본은 읽기 전용이고 쓰기는 꺼져 있다.**
 - 구현은 mark3labs/mcp-go의 stateless Streamable HTTP이며 에이전트의 네이티브 도구를 재사용하고, 권한은 API Key 스코프 모델로 환산한다(문서 설명).
 - 문서가 스스로 한계를 적은 부분이 있다. `grep_chunks`는 인덱스에서 후보를 최대 30개 뽑은 뒤 정규식으로 거르므로 "있으면 반드시 찾는다"는 보장이 없다.
@@ -228,7 +252,16 @@ docker compose --profile neo4j --profile minio up -d
 docker compose down
 ```
 
-`.env.example`(760줄 안팎, 섹션 A~H)의 주요 항목은 `WEKNORA_VERSION`(기본 latest — 운영에서는 고정 권장), `DB_DRIVER=postgres`, `STREAM_MANAGER_TYPE=redis`, `RETRIEVE_DRIVER=postgres`, `STORAGE_TYPE=local`, `AUTO_MIGRATE=true`, `OLLAMA_BASE_URL`, `JWT_SECRET` / `SYSTEM_AES_KEY` / `SYSTEM_SIGNING_KEY`(빈 값으로 제공되므로 운영 전에 직접 생성해 채워야 함), `WEKNORA_SANDBOX_DOCKER_ENABLED=false`, Langfuse 키다. 예시 파일에는 DB/Redis용 데모 비밀번호가 기본값으로 들어 있어 그대로 쓰면 안 된다(여기에는 값을 옮기지 않았다).
+`.env.example`은 760줄 안팎이며 섹션 A~H로 나뉜다. 주요 항목은 용도별로 확인하면 된다.
+
+- **버전**: `WEKNORA_VERSION`. 기본값은 latest이므로 운영에서는 버전 고정을 권장한다.
+- **저장·검색·큐**: `DB_DRIVER=postgres`, `STREAM_MANAGER_TYPE=redis`, `RETRIEVE_DRIVER=postgres`, `STORAGE_TYPE=local`.
+- **마이그레이션**: `AUTO_MIGRATE=true`.
+- **모델·관측 연동**: `OLLAMA_BASE_URL`, Langfuse 키.
+- **운영 시크릿**: `JWT_SECRET` / `SYSTEM_AES_KEY` / `SYSTEM_SIGNING_KEY`. 빈 값으로 제공되므로 운영 전에 직접 생성해 채워야 한다.
+- **Docker 샌드박스**: `WEKNORA_SANDBOX_DOCKER_ENABLED=false`.
+
+예시 파일의 DB/Redis용 데모 비밀번호도 교체해야 한다. 이 노트에는 해당 값을 옮기지 않았다.
 
 로컬 Ollama를 쓰려면 `ollama serve`를 먼저 띄운다. 업그레이드 시 `.env`의 `WEKNORA_VERSION`을 목표 릴리스로 바꾸고 `docker compose pull && docker compose up -d`를 실행한다. `up -d`만 하면 캐시된 이미지가 재사용돼 UI 버전이 어긋날 수 있다는 README 경고가 있고, v0.8.0에서 올라올 때는 업그레이드 노트 확인이 필요하다.
 

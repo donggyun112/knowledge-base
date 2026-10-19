@@ -11,51 +11,33 @@ tags:
 
 # neural-memory-research
 
-Whether a memory of past work makes an LLM agent better. Split out of the keymem
-repository so that research history and product history stop sharing a log.
+이 연구는 **과거 작업을 기억하면 LLM 에이전트가 다음 일을 더 잘할 수 있는가**라는 질문에서 출발했다. keymem 저장소에서 연구를 분리한 이유는 제품 개발 기록과 실험 기록이 하나의 로그에 섞이지 않게 하려는 것이었다.
 
-**Start with [[메모리-연구/neural-memory/FINDINGS|FINDINGS.md]]** — what this repository establishes, what
-it does not, and the limit on each. The results files below are chronological and
-run to seven thousand lines between them; the findings file is the hundred-line
-version for someone who needs the conclusions rather than the path that produced
-them.
+전체 경로를 한국어로 따라가려면 [[메모리-연구/신경-메모리-실험-흐름|신경 메모리 실험 흐름]]을 먼저 읽는다.
 
-The short version: the central question is **not answered**. What is established is
-a family of approaches that does not work, and why — a memory built on judging
-whether the present resembles something seen before loses to a signal the model
-already emits for free. Explicit procedural knowledge is a separate case and does
-help, slightly.
+처음부터 답이 있었던 것은 아니다. 어떤 내용을 저장할지 학습하는 작은 메모리 모델, 초파리 기억 회로를 본뜬 구조, 과거 작업을 노트로 만들어 에이전트에게 주는 방법을 차례로 시험했다. 이 저장소는 그 과정에서 무엇이 실제로 측정되었고, 어떤 설명이 대조 실험 앞에서 무너졌는지를 남긴 기록이다.
+
+**결론부터 읽으려면 [[메모리-연구/neural-memory/FINDINGS|FINDINGS.md]]에서 시작한다.** 아래 결과 파일들은 시간순으로 쌓여 합계 약 7천 줄에 이른다. FINDINGS는 그 경로 전체를 따라가지 않고도 결론과 각 결론의 한계를 확인할 수 있도록 약 100줄로 추린 문서다.
+
+짧게 말하면, 중심 질문은 아직 **답하지 못했다**. 대신 작동하지 않은 접근과 그 이유는 좁혀졌다. 현재 상황이 과거와 얼마나 닮았는지를 판단하는 메모리 신호는 모델이 이미 출력하는 신호보다 낫지 않았다. 명시적인 절차 지식은 별개로, 작지만 도움이 되는 효과가 있었다. 따라서 여기서 얻은 결론은 ‘메모리는 쓸모없다’가 아니라 ‘이 조건에서 이 방식의 기억은 무엇을 더해 주지 못했는가’에 관한 것이다.
 
 ## Layout
 
-- **`neural-memory/`** — the agent experiments. The endpoint runs a coding agent on
-  mutation-injected bugs and lets pytest decide, because scoring the likelihood of
-  a recorded action cannot separate a better agent from a better predictor of one.
-  Results in `RESULTS.md`, numbered by phase.
-- **`fly-connectome/`** — what the fly's mushroom body wiring is organised for,
-  measured against a rewiring that holds every degree fixed. Results in
-  `README.md`, numbered by phase.
-- **`board/`** — a shared notice board from a stretch where two agent sessions
-  worked this repository at once. `claims.md` holds what is believed and what
-  measured it; `004-harness-hazards.md` is the list of measurement defects found
-  the hard way, and is probably more transferable than any result here.
+- **`neural-memory/`**: 에이전트 실험이다. 최종 평가에서는 코드에 변이를 넣어 버그를 만든 뒤 에이전트가 고치게 하고, pytest로 성공 여부를 판정한다. 기록된 행동의 가능도를 잘 예측하는 것과 실제로 일을 더 잘하는 것은 다르므로, 행동 예측 점수만으로 결론 내리지 않기 위해 이 평가로 옮겼다. 결과는 `RESULTS.md`에 Phase 번호순으로 있다.
+- **`fly-connectome/`**: 초파리 버섯체의 연결 구조가 어떤 기능에 유리한지 조사한다. 실제 배선과 각 뉴런의 연결 수를 그대로 유지한 재배선을 비교한다. 연결 수 차이를 성능 차이로 오해하지 않기 위한 대조다. 결과는 `README.md`에 Phase 번호순으로 있다.
+- **`board/`**: 두 에이전트 세션이 같은 저장소에서 동시에 연구하던 기간의 공동 게시판이다. `claims.md`는 현재 유지되는 주장과 측정 근거를, `004-harness-hazards.md`는 시행착오로 발견한 평가 도구의 결함을 담는다. 다른 연구에 재사용하기에는 개별 성능 결과보다 이 결함 목록이 더 유용할 수 있다.
 
 ## Regenerating the data
 
-Every corpus and derived feature is gitignored and has been deleted. Nothing here
-depends on them being present — the scripts rebuild them:
+모든 말뭉치와 파생 특징은 gitignored 상태였으며 삭제되었다. 아래 스크립트가 다시 만들 수 있으므로 기존 파일이 남아 있어야만 재현할 수 있는 구조는 아니다.
 
 ```bash
 cd neural-memory && ./recover_artifacts.sh      # corpora, then the encoded streams
 cd fly-connectome && uv run python fetch_mushroom_body.py
 ```
 
-The Qwen encode is hours. Everything else is a download or minutes.
+Qwen 인코딩에는 수 시간이 걸린다. 나머지는 다운로드하거나 수 분 안에 끝나는 작업이다. 이 공개 사이트에는 코드·데이터·체크포인트가 포함되지 않으므로 실행은 원 저장소를 기준으로 한다.
 
 ## One thing worth knowing before reusing the harness
 
-Task difficulty in the repair harness is almost entirely a property of *which
-module* a task mutates, and no measured property of a module predicts it — not
-size, not structure, not how many tests break. A pool drawn without stratifying by
-module produces condition effects that are module effects wearing condition
-labels. Phases 87 and 88.
+수리 평가에서 과제 난이도는 거의 전적으로 **어느 모듈에 변이를 넣었는가**에 달려 있었다. 그런데 모듈 크기, 구조, 실패한 테스트 수 중 어느 측정값도 그 난이도를 설명하지 못했다. 어려운 모듈이 한 조건에 더 많이 섞이면, 메모리 조건의 효과처럼 보이는 차이가 사실은 모듈 구성의 차이일 수 있다. 따라서 과제 풀을 만들 때 모듈별 구성을 맞추어 비교해야 한다. 이 경고의 근거는 Phases 87과 88이다.

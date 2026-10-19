@@ -8,8 +8,12 @@ researched: 2026-10-01
 ---
 # Procedural Graphs
 
-> [!summary] 한줄요약
-> 절차 지식을 `(procedure, relation, procedure)` 트리플의 방향 그래프로 외재화하고, 추론 시에는 "현재 노드의 2-hop 이웃"만 LLM이 step 단위 guidance로 번역해 solver에 붙이며, 오프라인에서는 성공/실패 trajectory를 대조하는 LLM refiner가 그래프를 편집하되 **held-out validation 점수가 떨어지지 않을 때만 커밋하고 거부된 편집은 rejection memory로 남기는** 에이전트 절차 메모리.
+> [!summary] 핵심 요약
+> 절차 지식을 **방향 그래프로 외재화하고 경험에 따라 편집**하는 에이전트 절차 메모리다. 그래프는 `(procedure, relation, procedure)` 트리플로 구성된다.
+>
+> 추론 시에는 현재 노드의 2-hop 이웃만 LLM이 step 단위 guidance로 번역해 solver에 붙인다. 오프라인에서는 LLM refiner가 성공·실패 trajectory를 대조해 그래프를 편집한다.
+>
+> **Held-out validation 점수가 떨어지지 않을 때만 커밋**하며, 거부된 편집은 rejection memory로 남긴다.
 
 > [!info] 조사 범위
 > arXiv HTML 전문(`https://arxiv.org/html/2609.09153`, v1, 2026-09-08)의 본문 1~6절과 부록 A~F를 직접 읽고 작성했다. 논문 내에서 공식 코드 저장소 링크는 찾지 못했다(본문에 GitHub URL 없음). 이하 수치는 모두 논문의 표/절 번호를 병기한다. 논문은 Google 소속 저자들(Yuxing Lu는 Georgia Tech, Peking University 소속도 병기)의 preprint이며 peer review를 거친 것이 아니다.
@@ -17,7 +21,11 @@ researched: 2026-10-01
 ## 1. 문제의식·배경
 
 ### 1.1 무엇이 문제인가
-논문이 출발하는 관찰은 단순하다. 대부분의 LLM agent는 "계속 늘어나는 flat한 action/observation 로그"를 조건으로 free-form generation을 통해 다음 행동을 고른다(ReAct 계열). 이때 "무엇을 어떤 순서로, 어떤 조건에서 해야 하는가"라는 **절차 지식(procedural knowledge)** 은 암묵적으로 모델 내부에만 있고, 궤적이 길어질수록 (a) 목표를 놓치고, (b) 도구를 순서에 어긋나게 호출하고, (c) 비생산적 행동을 반복한다(서론 첫 문단). 저자들은 이를 planning hallucination, drift, repetitive loop라는 기존 문헌의 실패 양상과 연결한다(2절, Zhu et al. 2025; Xiao et al. 2024 인용).
+논문이 출발하는 관찰은 단순하다. 대부분의 LLM agent는 "계속 늘어나는 flat한 action/observation 로그"를 조건으로 free-form generation을 통해 다음 행동을 고른다(ReAct 계열).
+
+이때 "무엇을 어떤 순서로, 어떤 조건에서 해야 하는가"라는 **절차 지식(procedural knowledge)** 은 암묵적으로 모델 내부에만 있고, 궤적이 길어질수록 (a) 목표를 놓치고, (b) 도구를 순서에 어긋나게 호출하고, (c) 비생산적 행동을 반복한다(서론 첫 문단).
+
+저자들은 이를 planning hallucination, drift, repetitive loop라는 기존 문헌의 실패 양상과 연결한다(2절, Zhu et al. 2025; Xiao et al. 2024 인용).
 
 ### 1.2 기존 접근과의 차이 (1절·2절·부록 A)
 논문은 절차 구조를 제공하는 기존 방식을 네 부류로 정리하고 각각의 부족한 점을 짚는다.
@@ -32,7 +40,14 @@ researched: 2026-10-01
 저자들의 포지셔닝은 "편집 가능한 절차 표현"과 "현재 진행 상황에 조건화된 guidance"를 한 틀에서 결합한다는 것이다. 부록 A.1은 이를 CoALA(Sumers et al. 2023)의 procedural memory 관점으로 해석하며, 24개 방법을 8개 차원으로 비교하는 표(A.5)를 제공한다. 이 노트에는 그 표의 개별 칸 값까지는 옮기지 않았다.
 
 ### 1.3 설계 요구사항 네 가지
-서론은 에이전트에게 필요한 절차 지식의 성질을 네 가지로 제시한다. (1) 잘못된 행동을 걸러낼 만큼 **구조화**되어 있을 것, (2) 추론 자유도를 보존할 만큼 **유연**할 것, (3) 현재 진행 상황에 **반응**할 것, (4) 경험으로부터 **개선**될 수 있을 것. Procedural Graph(PG)는 이 네 요구를 각각 (1) 방향 그래프의 admissible transition, (2) 지시가 아닌 "bias" 형태의 soft guidance, (3) active node 기반 localized retrieval, (4) self-evolution loop로 대응시킨다.
+서론은 에이전트에게 필요한 절차 지식의 성질을 네 가지로 제시한다.
+
+1. 잘못된 행동을 걸러낼 만큼 **구조화**되어 있어야 한다.
+2. 추론 자유도를 보존할 만큼 **유연**해야 한다.
+3. 현재 진행 상황에 **반응**해야 한다.
+4. 경험으로부터 **개선**될 수 있어야 한다.
+
+Procedural Graph(PG)는 이 네 요구를 각각 (1) 방향 그래프의 admissible transition, (2) 지시가 아닌 "bias" 형태의 soft guidance, (3) active node 기반 localized retrieval, (4) self-evolution loop로 대응시킨다.
 
 ## 2. 방법 상세
 
@@ -48,10 +63,14 @@ $$\mathcal{G} = (\mathcal{V}, \mathcal{R}, \mathcal{E}, \Phi),\qquad \mathcal{E}
 
 논문 예시: 엣지 `(cash_flow_forecast, LEADS_TO, fund_raising_request)`에 "projected runway falls below the safety buffer / submit the request early to allow for the financing delivery delay / do not stack a second request while one is pending"이 붙는다. 이 예시가 보여주듯 속성은 도메인 휴리스틱을 자연어로 담는 그릇이다.
 
-그래프는 **작다**. 부록 B.4 Table 7 기준으로 BFCL v3(131 노드, 265 트리플; 함수 카탈로그가 크기 때문)를 제외하면 7~17 노드, 7~27 트리플이다(HotpotQA 9/9, MultiChallenge 7/7, GDPval 15/22, ALFWorld 11/27, τ-bench 17/18, EnterpriseArena 11/13). 즉 이 프레임워크의 주장은 "거대한 지식 그래프"가 아니라 "10개 안팎 노드의 압축된 절차 스케치"로도 효과가 난다는 쪽이다.
+그래프는 **작다**. 부록 B.4 Table 7 기준으로 BFCL v3(131 노드, 265 트리플; 함수 카탈로그가 크기 때문)를 제외하면 7~17 노드, 7~27 트리플이다(HotpotQA 9/9, MultiChallenge 7/7, GDPval 15/22, ALFWorld 11/27, τ-bench 17/18, EnterpriseArena 11/13).
+
+즉 이 프레임워크의 주장은 "거대한 지식 그래프"가 아니라 "10개 안팎 노드의 압축된 절차 스케치"로도 효과가 난다는 쪽이다.
 
 ### 2.2 추론 시 Generative Guidance (3.2절)
-핵심 설계 선택은 "top-k 유사도 검색으로 엣지 속성을 독립적으로 가져오지 않는다"는 점이다. 논문은 `submit` 단계의 guidance만 단독 검색하면 선행 `check_answer` 전이가 빠져 검증 단계가 누락될 수 있다고 예시한다. 그래서 locate → extract → generate의 세 연산을 쓴다.
+핵심 설계 선택은 "top-k 유사도 검색으로 엣지 속성을 독립적으로 가져오지 않는다"는 점이다. 논문은 `submit` 단계의 guidance만 단독 검색하면 선행 `check_answer` 전이가 빠져 검증 단계가 누락될 수 있다고 예시한다.
+
+그래서 locate → extract → generate의 세 연산을 쓴다.
 
 ```text
 u_t   = Match(a_{t-1}, V)             # 직전 procedure(예: tool call)를 노드에 exact match
@@ -95,8 +114,15 @@ flowchart LR
 2. **Feedback-Driven Mutation**: 오프라인 LLM refiner가 실패 trajectory의 반복 오류 루프와 성공 trajectory의 추론 지름길을 찾고 구조화된 edit set을 낸다. 위상 편집 연산은 **Add**(누락된 검증 노드/엣지 삽입)와 **Delete**(실패로 이끄는 노드/엣지 제거) 둘뿐이고, 속성 수정은 "엣지를 삭제 후 새 속성으로 재추가"로 표현한다. 부록 B.5에 따르면 `delete_edges`는 source/target이 같은 모든 엣지를 relation 무관하게 지우고, 유지하려는 전이는 이후 적용되는 `add_edges`에 다시 포함시켜야 한다.
 3. **Validation Gating**: 후보가 edit 적용과 구조 검사를 통과하면 별도 $\mathcal{D}_{val}$에서 평가한다.
    $$\mathcal{G}_k = \begin{cases}\mathcal{G}_k^{cand} & S_{val}(\mathcal{G}_k^{cand}) \ge S_{val}(\mathcal{G}_{k-1})\\ \mathcal{G}_{k-1} & \text{otherwise}\end{cases}$$
-   등호 포함이므로 **동점도 채택**한다(Algorithm 1의 "Accept, including ties"). 기준 점수는 캐시된 이전 그래프의 값이며 재측정하지 않는다. 논문 본문도 "stochastic evaluation 하에서의 결정은 5.4절에서 검토"라고 선을 긋는다.
-4. **Rejection Memory**: 검증 점수가 내려간 후보는 (edit set, 후보 그래프, 학습 trajectory, 검증 결과)를 $\mathcal{H}_{rejected}$에 기록하고, 이후 refiner 입력에 음의 증거로 제공한다. 구조 검증 실패도 diagnostic 형태로 기록되지만 이 경우 validation rollout은 건너뛰고 채택 그래프/점수는 그대로다. 학습 trajectory가 너무 길면 $L_{max}$ 토큰을 넘는 앞부분을 잘라내고 **끝부분을 보존**한다("Tail").
+
+   등호 포함이므로 **동점도 채택**한다(Algorithm 1의 "Accept, including ties").
+
+   기준 점수는 캐시된 이전 그래프의 값이며 재측정하지 않는다. 논문 본문도 "stochastic evaluation 하에서의 결정은 5.4절에서 검토"라고 선을 긋는다.
+4. **Rejection Memory**: 검증 점수가 내려간 후보는 (edit set, 후보 그래프, 학습 trajectory, 검증 결과)를 $\mathcal{H}_{rejected}$에 기록하고, 이후 refiner 입력에 음의 증거로 제공한다.
+
+   구조 검증 실패도 diagnostic 형태로 기록되지만 이 경우 validation rollout은 건너뛰고 채택 그래프/점수는 그대로다.
+
+   학습 trajectory가 너무 길면 $L_{max}$ 토큰을 넘는 앞부분을 잘라내고 **끝부분을 보존**한다("Tail").
 
 $$\Delta\mathcal{G}_{k+1}\sim P_{refiner}(\cdot \mid \mathcal{G}_k, \mathcal{C}_{k+1}, \mathcal{H}_{rejected})$$
 
@@ -124,7 +150,13 @@ $$\Delta\mathcal{G}_{k+1}\sim P_{refiner}(\cdot \mid \mathcal{G}_k, \mathcal{C}_
 ### 4.2 장기 의사결정: EnterpriseArena (5.2절, 부록 C, Table 8)
 시뮬레이터는 마이크로파이낸스 대출기관의 월별 대차대조표 상태 $\mathcal{S}_t=(C_t,L_t,A_t,IR_t,PR_t,AP_t,D_t,E_t,U_t)$를 다루며, 에이전트는 `book_closing()`으로 월을 넘기고 `fund_raising_request(type, amount)`로 자금을 조달한다. 자금은 요청 후 **1~6개월 지연**되어 도착하고 월별 상한이 있다. 현금이 음수가 되면 즉시 파산. 위기는 32개월(상환율 98%→90%), 59개월(60%로 급락), 112개월(40%, 자금조달 상한 급축소)에 에이전트에게 알리지 않고 발생한다. 점수식은 $s=5\,Rev^{(12)}+C-5{,}000N$(파산 시 0)이다.
 
-결과: 전 모델에서 PG가 최고 또는 공동 최고 full-horizon 생존율과 최장 평균 수명. Claude Sonnet 4.6 44.0%→58.0%, Gemini 3.1 Pro 6.0%→34.0%, Grok 4.1 Fast 26.0%→40.0%(Grok에서 평균 enterprise score도 최고 \$39.62M). 도구 호출 수는 모델별로 다르게 움직인다: Gemini 3.5 Flash는 월 18.94회→12.53회로 줄고, Claude는 0.13→0.36, Gemini 3.1 Pro는 0.89→3.18회로 오히려 늘면서 생존율이 오른다. 저자의 해석은 "호출 횟수가 아니라 어떤 도구를 언제 호출하는가가 바뀐다"이며, 생존과 일관되게 연관된 행동은 "anticipatory fundraising"(안정기에 미리 자금 요청)이다. 평균 조달액이 Flash baseline \$0.00M, PG-Flash \$9.39M, PG-Grok $30.11M으로 제시된다. 단, Claude 블록(Table 8)에서 PG의 Avg. Score $70.38M는 Baseline $78.86M보다 낮다. 생존은 늘었지만 시간평균 점수가 모든 곳에서 오른 것은 아니라는 뜻이다.
+결과: 전 모델에서 PG가 최고 또는 공동 최고 full-horizon 생존율과 최장 평균 수명. Claude Sonnet 4.6 44.0%→58.0%, Gemini 3.1 Pro 6.0%→34.0%, Grok 4.1 Fast 26.0%→40.0%(Grok에서 평균 enterprise score도 최고 \$39.62M).
+
+도구 호출 수는 모델별로 다르게 움직인다: Gemini 3.5 Flash는 월 18.94회→12.53회로 줄고, Claude는 0.13→0.36, Gemini 3.1 Pro는 0.89→3.18회로 오히려 늘면서 생존율이 오른다.
+
+저자의 해석은 "호출 횟수가 아니라 어떤 도구를 언제 호출하는가가 바뀐다"이며, 생존과 일관되게 연관된 행동은 "anticipatory fundraising"(안정기에 미리 자금 요청)이다. 평균 조달액이 Flash baseline \$0.00M, PG-Flash \$9.39M, PG-Grok $30.11M으로 제시된다.
+
+단, Claude 블록(Table 8)에서 PG의 Avg. Score $70.38M는 Baseline $78.86M보다 낮다. 생존은 늘었지만 시간평균 점수가 모든 곳에서 오른 것은 아니라는 뜻이다.
 
 ### 4.3 구성 전략 비교와 prior 교정 (5.3절, Table 2, 부록 D.1 Table 9/10)
 다섯 모드: (1) 손으로 만든 expert 그래프 고정, (2) expert + 1회 static update, (3) expert + online evolution(반복 + gate), (4) scratch(최소 skeleton) + 1회 static build, (5) scratch + online evolution.
@@ -138,7 +170,11 @@ $$\Delta\mathcal{G}_{k+1}\sim P_{refiner}(\cdot \mid \mathcal{G}_k, \mathcal{C}_
 | 4 Scratch+Static | 55.40 / 69.49 | 89.29 |
 | 5 Scratch+Online | **66.30 / 78.79** | 91.07 |
 
-해석: (a) HotpotQA에서는 scratch+online이 expert 설계를 넘어선다(F1 +7.58, EM +7.50 vs 무가이드). (b) MultiChallenge에서 손으로 만든 expert 그래프는 오히려 성공률을 87.50→58.93으로 **떨어뜨렸고**, 1회 static update는 53.57까지 더 악화시켰다. 반복 진화(Mode 3)만이 92.86으로 회복했다(+33.93). 부록 E.4.2는 이 회복을 "엣지 수 13→10으로 가지치기(Generation 5), 이후 제어흐름 재구성, validation 정확도 54.0%→93.9%"의 두 단계로 서술한다. (c) 1회성 static 방식은 둘 다 불안정하다는 것이 이 표의 가장 실용적인 교훈으로 보인다. 단 MultiChallenge 실험은 56샘플 fast split이므로(부록 B.1) 한 문항이 약 1.8포인트다.
+해석: (a) HotpotQA에서는 scratch+online이 expert 설계를 넘어선다(F1 +7.58, EM +7.50 vs 무가이드). (b) MultiChallenge에서 손으로 만든 expert 그래프는 오히려 성공률을 87.50→58.93으로 **떨어뜨렸고**, 1회 static update는 53.57까지 더 악화시켰다. 반복 진화(Mode 3)만이 92.86으로 회복했다(+33.93).
+
+부록 E.4.2는 이 회복을 "엣지 수 13→10으로 가지치기(Generation 5), 이후 제어흐름 재구성, validation 정확도 54.0%→93.9%"의 두 단계로 서술한다. (c) 1회성 static 방식은 둘 다 불안정하다는 것이 이 표의 가장 실용적인 교훈으로 보인다.
+
+단 MultiChallenge 실험은 56샘플 fast split이므로(부록 B.1) 한 문항이 약 1.8포인트다.
 
 부수 효과: 부록 D.1 Table 9에서 가이드는 토큰을 크게 늘린다(HotpotQA 무가이드 4,003 토큰 → Mode 5 10,116 토큰, 레이턴시 18.06s → 31.53s). 5.3절은 파싱 실패 45.7% 감소도 보고한다.
 
@@ -159,7 +195,11 @@ EnterpriseArena에서 20/20/20(train/val/test 에피소드) 설정으로 10라�
 | full graph, generative | 87.35 / 14,434 / 3.08 | 56.75 / 448,972 / 22.07 | 54.48 / 96,360 / 30.05 |
 | subgraph, generative (ours) | **89.31** / 12,295 / 4.22 | **63.99** / 367,738 / **18.57** | **81.53** / 28,064 / **18.80** |
 
-핵심: 전체 그래프를 생성형 guidance로 쓰면 ALFWorld가 54.48까지 무너지고 토큰이 5배 이상 늘어난다. 국소 부분그래프가 같은 그래프에서 세 벤치마크 모두 최고이며, full-graph generative 대비 토큰을 ALFWorld 70.9%, GDPval 18.1%, MultiChallenge 14.8% 줄인다. 다만 무가이드 대비로는 GDPval +33.4%, ALFWorld +55.4% 토큰이 더 든다(결론에서도 "guidance는 step 수를 줄여도 토큰은 늘린다"고 인정, 선택적/재사용 guidance를 future work로 제시). 이 ablation은 Gemini 3.5 Flash 하나, "fixed subsets"에서만 했고 h(홉 수)나 w(윈도우) 민감도는 제시되지 않았다.
+핵심: 전체 그래프를 생성형 guidance로 쓰면 ALFWorld가 54.48까지 무너지고 토큰이 5배 이상 늘어난다. 국소 부분그래프가 같은 그래프에서 세 벤치마크 모두 최고이며, full-graph generative 대비 토큰을 ALFWorld 70.9%, GDPval 18.1%, MultiChallenge 14.8% 줄인다.
+
+다만 무가이드 대비로는 GDPval +33.4%, ALFWorld +55.4% 토큰이 더 든다(결론에서도 "guidance는 step 수를 줄여도 토큰은 늘린다"고 인정, 선택적/재사용 guidance를 future work로 제시).
+
+이 ablation은 Gemini 3.5 Flash 하나, "fixed subsets"에서만 했고 h(홉 수)나 w(윈도우) 민감도는 제시되지 않았다.
 
 ## 5. 저자가 밝힌 한계 + 비판적 평가
 
@@ -186,7 +226,11 @@ EnterpriseArena에서 20/20/20(train/val/test 에피소드) 설정으로 10라�
 - 초기 그래프는 `Start → End`뿐이어도 된다(EnterpriseArena Round 0). 단 노이즈 억제를 위해 validation 세트를 충분히 크게(논문은 20~1,000 사이) 잡아야 한다.
 
 ## 관련 노트
-[[wikiskill]] [[hyperagents]] [[skillzip-pro]] [[aces-agentic-continuous-evaluation-of-skills]] [[probe-process-based-hallucination-benchmark]]
+- [[wikiskill]]
+- [[hyperagents]]
+- [[skillzip-pro]]
+- [[aces-agentic-continuous-evaluation-of-skills]]
+- [[probe-process-based-hallucination-benchmark]]
 
 ## 출처
 - Yuxing Lu, Yicheng Chen, Shanchan Wu, Sercan Ö. Arık. "Procedural Graphs: Self-Evolving Execution Structures for LLM Agents." arXiv:2609.09153v1 [cs.AI], 2026-09-08. 초록 https://arxiv.org/abs/2609.09153 , 전문 HTML https://arxiv.org/html/2609.09153 (실제 열람, 본문 1~6절·부록 A~F).

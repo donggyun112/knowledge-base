@@ -9,13 +9,21 @@ researched: 2026-10-01
 # classifier.dev
 
 > [!summary] 한줄요약
-> 라벨 목록과 텍스트만 HTTP로 보내면 라벨과 보정된(calibrated) confidence를 돌려주는 zero-shot 분류 SaaS의 소스 저장소. 핵심 모델은 TypeSafe의 결정 모델 "Jev"이고, 불확실한 건은 reasoning LLM으로 승격(smart tier)한다. 익명 무료 사용이 가능하지만 요청 텍스트가 외부 업체(TypeSafe, OpenRouter 등)로 전달되는 호스팅 서비스이므로 사내 데이터에는 쓸 수 없다. 자체 호스팅용 오픈소스라기보다 "서비스 + 그 운영 코드"에 가깝다.
+> 라벨 목록과 텍스트를 HTTP로 보내면 라벨과 보정된(calibrated) confidence를 돌려주는 zero-shot 분류 SaaS의 소스 저장소다.
+
+핵심 모델은 TypeSafe의 결정 모델 **Jev**이며, 불확실한 건은 reasoning LLM으로 승격(smart tier)한다. 익명 무료 사용이 가능하다.
+
+다만 요청 텍스트가 외부 업체(TypeSafe, OpenRouter 등)로 전달되는 호스팅 서비스이므로 사내 데이터에는 쓸 수 없다. 자체 호스팅용 오픈소스라기보다 **서비스와 그 운영 코드**에 가깝다.
 
 ## 배경 / 해결하는 문제
 
-텍스트 분류는 RAG·에이전트 파이프라인에서 질의 라우팅, 티켓 분류, 검색 결과 필터링, 로그 버킷팅처럼 자주 필요하지만, 라벨마다 학습 데이터를 모으거나 LLM 프롬프트를 짜서 확률을 보정하기는 번거롭다. LLM에게 직접 분류시키면 토큰 비용이 들고 응답의 "confidence"(logprob 기반)가 실제 정답률과 어긋나는 문제도 있다. classifier.dev는 이를 `curl https://classifier.dev/spam,not+spam/Win+a+free+iPhone` 한 줄로 해결하겠다는 서비스다. README는 "No key, no signup. Up to a thousand texts per request"라고 소개하고, 스택은 "단일 Cloudflare Worker, DB 없음, 프레임워크 없음"이라고 밝힌다(다만 후술하듯 계정·결제 기능이 추가되며 이 설명은 이미 사실과 다르다).
+텍스트 분류는 RAG·에이전트 파이프라인에서 질의 라우팅, 티켓 분류, 검색 결과 필터링, 로그 버킷팅처럼 자주 필요하지만, 라벨마다 학습 데이터를 모으거나 LLM 프롬프트를 짜서 확률을 보정하기는 번거롭다. LLM에게 직접 분류시키면 토큰 비용이 들고 응답의 "confidence"(logprob 기반)가 실제 정답률과 어긋나는 문제도 있다.
 
-흥미로운 점은 이 저장소가 에이전트 에코시스템을 직접 겨냥한다는 것이다. 에이전트용 Skill(`bulk-classify`), MCP 서버, Claude Code/Codex 플러그인 마켓플레이스, OpenAPI, `llms.txt`, feedback.now 프로토콜 엔드포인트까지 모두 제공한다. SKILL.md는 "당신은 이미 언어 모델이라 보이는 텍스트는 무료로 분류할 수 있다. 외부 호출의 이유는 능력이 아니라 컨텍스트(읽는 비용)다"라고 쓰고, 검색 스니펫 40개를 읽지 않고 6개로 거르는 사용 사례를 든다.
+classifier.dev는 이를 `curl https://classifier.dev/spam,not+spam/Win+a+free+iPhone` 한 줄로 해결하겠다는 서비스다. README는 "No key, no signup. Up to a thousand texts per request"라고 소개하고, 스택은 "단일 Cloudflare Worker, DB 없음, 프레임워크 없음"이라고 밝힌다(다만 후술하듯 계정·결제 기능이 추가되며 이 설명은 이미 사실과 다르다).
+
+흥미로운 점은 이 저장소가 에이전트 에코시스템을 직접 겨냥한다는 것이다. 에이전트용 Skill(`bulk-classify`), MCP 서버, Claude Code/Codex 플러그인 마켓플레이스, OpenAPI, `llms.txt`, feedback.now 프로토콜 엔드포인트까지 모두 제공한다.
+
+SKILL.md는 "당신은 이미 언어 모델이라 보이는 텍스트는 무료로 분류할 수 있다. 외부 호출의 이유는 능력이 아니라 컨텍스트(읽는 비용)다"라고 쓰고, 검색 스니펫 40개를 읽지 않고 6개로 거르는 사용 사례를 든다.
 
 ## 동작 원리 / 아키텍처
 
@@ -92,11 +100,27 @@ for r in classify(["the checkout button does nothing", "love the new dark mode"]
 }
 ```
 
-자체 배포(운영 코드 재현)는 `cp wrangler.example.toml wrangler.toml` 후 `npx wrangler deploy`이며, 필요한 Worker 시크릿은 `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY`, `OPENROUTER_API_KEY`, `RESEND_API_KEY`, `CF_ANALYTICS_TOKEN`, `REPORT_KEY`, `PRIVACY_SALT` 등이다. 즉 자체 호스팅해도 분류 엔진은 여전히 TypeSafe의 외부 API에 의존한다. 이 저장소만으로 로컬/오프라인 분류기가 되지는 않는다.
+자체 배포(운영 코드 재현)는 `cp wrangler.example.toml wrangler.toml` 후 `npx wrangler deploy`이며, 필요한 Worker 시크릿은 `TYPESAFE_API_KEY`, `AI_GATEWAY_API_KEY`, `OPENROUTER_API_KEY`, `RESEND_API_KEY`, `CF_ANALYTICS_TOKEN`, `REPORT_KEY`, `PRIVACY_SALT` 등이다.
+
+즉 자체 호스팅해도 분류 엔진은 여전히 TypeSafe의 외부 API에 의존한다. 이 저장소만으로 로컬/오프라인 분류기가 되지는 않는다.
 
 ## 디렉터리 · 코드 구조에서 확인한 것
 
-저장소는 README의 "Single Cloudflare Worker, no database" 설명보다 훨씬 커졌다. `src/` 합계 약 1.77만 줄 TypeScript(`src/*.ts` 기준)이고 파일에는 `account-openapi.ts`, `billing-identity.ts`, `spending/`, `server/`, `routes/`, `components/`(React UI), `chat.ts`, `market.ts`, `dgemma.ts`, `laya.ts` 등이 있다. `drizzle/`·`migrations/postgres/`에는 계정, 토큰 과금, API 키 관리, 조직(organizations), 선결제/자동 충전, 뉴스레터 테이블 등 17개 마이그레이션이 있다. `BILLING.md`에 따르면 Pro는 월 $20(사용량 \$20, 3 seats, 쿼터 10x), Scale은 월 $200(무제한 seat, 쿼터 100x)이고 WorkOS 로그인, Autumn(Stripe 결제), Neon Postgres를 쓴다. 즉 "키도 계정도 필요 없다"는 것은 익명 무료 티어에 한한 이야기이고, 유료 워크스페이스 키(`classifier_agent_` 접두사)와 잔액 기반 과금이 별도로 존재한다. `eval/`에는 AG News/emotion 단일 라벨 벤치(`single.py`), 다중 라벨 7케이스(`run.py`, `bench.py`), `vs_jev.py`(배포 서비스 vs Jev 직접 호출)가 있고 `eval/README.md`는 "수치를 인용하기 전에 읽으라"고 주의를 준다. `e2e/`는 실제 프로덕션 API에 대한 live 테스트(모킹 없음)다. 의존성(package.json)에는 `@typesafe-ai/sdk`, `@chonkiejs/core`, `@neondatabase/serverless`, vite, wrangler 등이 보이고 `author`는 Michael Ryaboy, 라이선스 MIT. 클론은 depth 1이라 커밋 이력은 확인하지 못했다.
+저장소는 README의 "Single Cloudflare Worker, no database" 설명보다 훨씬 커졌다.
+
+`src/` 합계 약 1.77만 줄 TypeScript(`src/*.ts` 기준)이고 파일에는 `account-openapi.ts`, `billing-identity.ts`, `spending/`, `server/`, `routes/`, `components/`(React UI), `chat.ts`, `market.ts`, `dgemma.ts`, `laya.ts` 등이 있다.
+
+`drizzle/`·`migrations/postgres/`에는 계정, 토큰 과금, API 키 관리, 조직(organizations), 선결제/자동 충전, 뉴스레터 테이블 등 17개 마이그레이션이 있다.
+
+`BILLING.md`에 따르면 Pro는 월 $20(사용량 \$20, 3 seats, 쿼터 10x), Scale은 월 $200(무제한 seat, 쿼터 100x)이고 WorkOS 로그인, Autumn(Stripe 결제), Neon Postgres를 쓴다.
+
+즉 "키도 계정도 필요 없다"는 것은 익명 무료 티어에 한한 이야기이고, 유료 워크스페이스 키(`classifier_agent_` 접두사)와 잔액 기반 과금이 별도로 존재한다.
+
+`eval/`에는 AG News/emotion 단일 라벨 벤치(`single.py`), 다중 라벨 7케이스(`run.py`, `bench.py`), `vs_jev.py`(배포 서비스 vs Jev 직접 호출)가 있고 `eval/README.md`는 "수치를 인용하기 전에 읽으라"고 주의를 준다.
+
+`e2e/`는 실제 프로덕션 API에 대한 live 테스트(모킹 없음)다.
+
+의존성(package.json)에는 `@typesafe-ai/sdk`, `@chonkiejs/core`, `@neondatabase/serverless`, vite, wrangler 등이 보이고 `author`는 Michael Ryaboy, 라이선스 MIT. 클론은 depth 1이라 커밋 이력은 확인하지 못했다.
 
 ## 비교 대상
 
@@ -112,9 +136,23 @@ for r in classify(["the checkout button does nothing", "love the new dark mode"]
 
 ## 장단점 · 한계 · 성숙도
 
-사실(GitHub API, 2026-10-01): Stars 423, Forks 34, 라이선스 MIT, 주 언어 TypeScript, 생성 2026-08-13, 마지막 push 2026-09-28, 기여자 2명, open_issues_count 14(PR 포함). 릴리스(GitHub Releases)는 조회 결과 없음. CLI는 npm에서 0.1.x. 즉 사실상 1인 주도의 신생 제품 저장소다. 이슈에는 audio/video 입력 거부, 이미지 분류(Beam DiffusionGemma), Python User-Agent 안내, SPF는 있으나 DMARC가 없어 From 헤더 스푸핑이 가능하다는 보안 이슈(#77) 등이 있다.
+사실(GitHub API, 2026-10-01): Stars 423, Forks 34, 라이선스 MIT, 주 언어 TypeScript, 생성 2026-08-13, 마지막 push 2026-09-28, 기여자 2명, open_issues_count 14(PR 포함). 릴리스(GitHub Releases)는 조회 결과 없음. CLI는 npm에서 0.1.x. 즉 사실상 1인 주도의 신생 제품 저장소다.
 
-장점은 사용 장벽이 극히 낮고(curl 한 줄), 에이전트 배포 채널(MCP, Skill, 플러그인)이 완비돼 있으며, 운영 관측·fallback 실패 사례·측정 표 등 투명한 엔지니어링 기록이 풍부하다는 점이다. 한계: (1) 분류 엔진의 실체가 외부 상용 모델(TypeSafe Jev, OpenRouter)이라 가용성·가격·모델 변경에 종속된다. SKILL.md가 "모델 업데이트, fallback, smart reasoning이 결과를 바꿀 수 있으며 어느 tier도 호출 간 동일 결과를 보장하지 않는다"고 직접 쓴다. (2) 정확도 수치는 모두 영어 공개 데이터(AG News, dair-ai/emotion)이며 한국어 성능에 관한 기록은 저장소에서 찾지 못했다(문서 내 "korean"/"한국" 검색 결과 없음). (3) 익명 무료 쿼터는 IP당이라 공유 NAT에서는 금방 소진된다. (4) 공개 smart 배치는 200건 상한. (5) 문서화되지 않은 SLA. 실제 호스트 서비스(classifier.dev)의 가용성은 직접 확인하지 않았다.
+이슈에는 audio/video 입력 거부, 이미지 분류(Beam DiffusionGemma), Python User-Agent 안내, SPF는 있으나 DMARC가 없어 From 헤더 스푸핑이 가능하다는 보안 이슈(#77) 등이 있다.
+
+장점은 사용 장벽이 극히 낮고(curl 한 줄), 에이전트 배포 채널(MCP, Skill, 플러그인)이 완비돼 있으며, 운영 관측·fallback 실패 사례·측정 표 등 투명한 엔지니어링 기록이 풍부하다는 점이다.
+
+한계:
+
+1. 분류 엔진의 실체가 외부 상용 모델(TypeSafe Jev, OpenRouter)이라 가용성·가격·모델 변경에 종속된다. SKILL.md가 "모델 업데이트, fallback, smart reasoning이 결과를 바꿀 수 있으며 어느 tier도 호출 간 동일 결과를 보장하지 않는다"고 직접 쓴다.
+
+2. 정확도 수치는 모두 영어 공개 데이터(AG News, dair-ai/emotion)이며 한국어 성능에 관한 기록은 저장소에서 찾지 못했다(문서 내 "korean"/"한국" 검색 결과 없음).
+
+3. 익명 무료 쿼터는 IP당이라 공유 NAT에서는 금방 소진된다.
+
+4. 공개 smart 배치는 200건 상한.
+
+5. 문서화되지 않은 SLA. 실제 호스트 서비스(classifier.dev)의 가용성은 직접 확인하지 않았다.
 
 ## 보안 · 라이선스 · 운영 리스크
 

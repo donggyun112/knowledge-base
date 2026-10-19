@@ -13,12 +13,9 @@ tags:
 
 ## The gap — from open.md, asked implicitly by the phase-74/78 history
 
-Everything tried in this project stores everything a run produced and selects
-at read time (similarity, spread, random, distillation). That is backwards from
-what the fly does: dopamine decides what gets written into synaptic weight at
-all, and there is no search step afterward. Nothing here has tried write-time
-selection — storing only what an outcome marked as mattering, in particular
-failures, which the current pipeline discards outright.
+여기서 다루는 에이전트 실행 기록 활용은 먼저 결과를 모으고, 읽을 때 similarity·spread·random·distillation 중 한 방식으로 고르는 접근이었다. 초파리에서 착안한 다른 질문은 **결과가 나온 시점에 중요한 경험만 남기면 어떨까**였다. 도파민은 애초에 무엇을 시냅스 가중치에 쓸지 결정하고, 나중에 별도로 검색하지 않는다. 특히 실패 기록을 버리지 않고 ‘다음에는 이 길을 피하라’로 저장하는 방식은 아직 시험하지 않았다.
+
+아래는 이 아이디어를 검증하려다 실패 자료 자체를 얻지 못한 기록이다. 결론은 ‘실패에서 배워도 소용없다’가 아니라, **현재 과제에는 가설을 시험할 종류의 실패가 없었다**는 것이다.
 
 ## What's actually there — neural-memory-research-6d, 2026-09-19
 
@@ -41,38 +38,17 @@ actual mechanism nothing here has copied yet.
 
 ## Proposed design, falsification stated first
 
-**Condition.** A new `build_repair_memory` condition, call it `taught`: keep
-failed-run actions instead of dropping them (`load_actions(solved_only=False)`
-already returns them, tagged by trial). Mine them for explicit "avoid" lines,
-paired with "do" lines mined from solved runs the way `distill_repair_memory.py`
-already distills successes — same distiller, run twice with an outcome-signed
-prompt instead of once with a success-only one.
+**조건.** `build_repair_memory`에 `taught`라는 조건을 제안한다. `load_actions(solved_only=False)`는 이미 시행 표시를 붙여 실패 행동도 돌려주므로 이를 버리지 않는다. 실패에서는 명시적인 “avoid” 문장을, 해결된 실행에서는 기존 `distill_repair_memory.py`처럼 “do” 문장을 뽑는다. 같은 요약기를 성공 전용으로 한 번 돌리는 대신 결과 부호가 다른 프롬프트로 두 번 돌리는 설계다.
 
-**Test.** Score on the existing repair harness (`run_repair_trials.py`, the same
-paired task set `run_repair_budget.sh` already uses) — real pytest-verified
-resolution, not next-action likelihood, the same standard the valence fork was
-just held to.
+**평가.** 기존 수리 도구 `run_repair_trials.py`와 `run_repair_budget.sh`의 같은 짝지은 과제 집합에서 시험한다. 점수는 pytest로 확인한 실제 해결 여부다. 다음 행동 가능도를 높였다는 것만으로 과제 개선으로 읽지 않도록, 바로 앞 valence 실험과 같은 기준을 쓴다.
 
-**Falsification, before running.** `taught` must beat the current best
-solved-only-notes condition, paired, on the same task set. If it doesn't, the
-direction closes and the pattern from board/001 extends one level further: even
-the one mechanism the fly demonstrably uses — learning from punishment rather
-than discarding it — doesn't transfer to note-based agent memory either.
+**실행 전 반박 기준.** 게시판 001의 후속 비교로, 같은 과제에서 짝지어 비교했을 때 `taught`가 당시 가장 좋은 성공 전용 노트 조건을 이겨야 한다. 충분한 검정력 아래에서도 이기지 못하면 이 방향을 닫고, 처벌 경험을 버리지 않고 학습한다는 메커니즘도 노트 기반 에이전트 기억으로 옮겨지지 않았다고 판단하기로 했다. 단, 바로 아래 표본 수 경고가 이 판정의 전제다.
 
-**Power caveat, stated up front rather than after a null.** open.md's other live
-question — whether anything beats no-memory on task success — already couldn't
-separate existing conditions from baseline at n=28; all intervals span zero. A
-null on `taught` at the same n is "not detected," not "not there," and should
-not be written up as a second closed direction without either a larger n or an
-effect size big enough to clear that noise floor.
+**표본 수 경고도 미리 적는다.** `open.md`의 다른 질문, 즉 어떤 기억 조건이 무기억보다 과제 성공률을 높이는지는 이미 n=28에서 구별되지 않았다. 모든 구간이 0을 포함했다. 같은 n에서 `taught`의 차이가 안 보이면 ‘없다’가 아니라 ‘검출되지 않았다’다. 더 큰 표본이나 잡음 수준을 넘는 큰 효과 없이 두 번째 종료 사례로 쓰면 안 된다.
 
 ## Task pool didn't test the hypothesis at any budget — the giveaway was structural
 
-Two rounds of the run were wasted on the same task pool before the actual cause
-surfaced. 25-turn round one resolved 20/20 (no failures to mine). 12/9-turn
-split still resolved 20/20 and 15/15. `--blind` (withholding failing-test names)
-still resolved most tasks, because the agent's own first pytest run prints them
-anyway — blind delays the giveaway by one turn, it doesn't remove it.
+실패에서 배울 노트를 만들려는데, 두 라운드 모두 실패가 나오지 않았다. 25턴 첫 라운드는 20/20, 12/9턴 분할도 각각 20/20과 15/15였다. 실패 테스트 이름을 처음 숨기는 `--blind`도 대부분 해결했다. 에이전트가 처음 pytest를 실행하면 이름이 다시 출력되므로, 위치 단서를 제거한 것이 아니라 한 턴 늦췄을 뿐이었다.
 
 keymem-20 found the real cause with no agent calls, from the task file alone:
 39 of 45 generated tasks have their failing tests in a file named after the
@@ -96,10 +72,7 @@ crossmod pool *replaces* the local one for testing the hypothesis rather than
 being compared against it as a second sample — but the two pools are not
 independent replicates if anyone ever treats them that way later.
 
-The local-pool round one (blind, 12 turns, 20/20 resolved) is kept as a
-documented negative: not "memory didn't help," but "this task shape cannot
-test whether memory helps regardless of runtime knobs," which is a different
-and more useful thing to have on record than a null result would have been.
+로컬 첫 라운드(blind, 12턴, 20/20 해결)는 부정적 기록으로 남긴다. 다만 부정된 것은 메모리 효과가 아니라 시험 설계다. 실행 설정을 바꿔도 이 과제 모양으로는 메모리가 도울 여지를 검사할 수 없었다. 단순한 효과 없음보다 다음 실험 설계에 더 직접적인 정보다.
 
 ## Cross-module pool: one generator defect found and fixed, and n=5 reframed
 
@@ -130,13 +103,7 @@ actually contain.
 
 ## Module identity, not task shape, dominates the resolved rate
 
-keymem-20 broke their 28-task 9-turn `none` run down by which module each
-task mutates: `ranges` resolves 21% (3/14), every other module (`version`,
-`_parser`, `direct_url`, `_musllinux`) resolves 80-100%. Their "60% baseline"
-was the proportion of `ranges` tasks in the sample, not a property of the
-budget or the condition. This is phase 84's orientation-cost-by-location
-finding with a number attached, and it is strong enough to swamp the
-cross-module manipulation entirely.
+과제 모양을 바꾸던 중 더 큰 차이가 모듈에 있다는 사실을 찾았다. keymem-20의 28과제·9턴 `none` 실행을 모듈별로 나누자 `ranges`는 21%(3/14), 나머지 `version`, `_parser`, `direct_url`, `_musllinux`는 80-100%가 해결되었다. ‘기준 성공률 60%’는 예산이나 조건 자체보다 표본에 섞인 `ranges` 비율을 반영했다. Phase 84의 위치별 저장소 파악 비용에 수치가 붙은 것이며, 교차 모듈 조작 효과를 가릴 만큼 컸다.
 
 This project's crossmod round one is 8 of 10 `_parser.py` -- the module that
 went 5-for-5 in keymem-20's data. A high resolved rate here would not mean
@@ -147,9 +114,7 @@ from the first. The qualitative check (did any failure reach an edit) is
 unaffected, since it is a property of whichever failures occur, not of the
 module mix producing them.
 
-**If a properly-powered pool is ever generated, stratify by module rather
-than drawing raw counts** -- an 80-task pool drawn unevenly would reproduce
-this confound at larger n instead of resolving it.
+**나중에 충분한 표본의 풀을 만들더라도 개수만 늘리지 말고 모듈별로 층화해야 한다.** 80개 과제를 불균등하게 뽑으면, 더 큰 n에서 같은 혼란을 재현할 뿐이다. 여기서 층화는 각 비교 조건의 모듈 구성을 의도적으로 맞춰 모듈 효과와 기억 조건 효과를 나누는 뜻이다.
 
 Follow-up on why `ranges` is hard: keymem-20 checked size, sibling-file
 confusion, name-stem repetition, and comparison-operator density. None of it
@@ -164,6 +129,7 @@ near-ceiling cluster. Round two is 2 `specifiers.py` + 2 `_ranges.py` + 1
 `_tokenizer.py` -- `_ranges` being the one module their data shows actually
 resists the agent. The whole-module split (no module in both rounds) handed
 every hard-by-precedent module to round two and every easy one to round one.
+
 Round one cannot produce a genuine dead-end failure regardless of how the run
 finishes, because the modules capable of producing one aren't in it. Declined
 an offer to substitute a different pool's zero-edit (by construction,
@@ -200,24 +166,17 @@ worth reading its two tasks closely regardless of the count.
 
 ## Close: the crossmod line produced zero avoid-content, and the reason is module identity
 
-Round one: 10/10 resolved, 0 failed -- `taught` degenerated to a 12-line
-do-only block exactly as the module composition predicted. Round two
-`none`: 5/5 resolved -- also zero failures, so there was nothing for
-`taught` to be tested against beyond the check that already failed to
-materialize.
+최종 결과도 피해야 할 경로를 만들지 못했다. 첫 라운드는 10/10 해결, 실패 0개여서 `taught`는 예측대로 “do”만 있는 12줄 블록이 되었다. 두 번째 라운드의 `none`도 5/5 해결했다. 실패가 없으므로 `taught`의 실패 학습 효과를 비교할 대상 자체가 생기지 않았다.
 
-The 1-2/5 prediction for round two was wrong, but not because the pool
-behaved unexpectedly: `ranges.py` and `_ranges.py` are two different real
-files in this repo (`wc -l`: 2066 and 845 lines respectively), and
-keymem-20's relayed resolved-rate figure for the hard one (`ranges`, 21%,
-budget9 data) got attached to the task-name prefix that actually belongs to
-the easy one (`_ranges`, 11/12 resolved, from the 25-turn round-one data).
+두 번째 라운드의 1-2/5 예측은 틀렸다. 그러나 과제가 예상 밖으로 쉬워진 것이 아니라 **파일 이름을 혼동했다**. `ranges.py`와 `_ranges.py`는 서로 다른 실제 파일이며 `wc -l` 기준 각각 2066줄, 845줄이다. 전달 과정에서 어려운 `ranges`의 21% 해결률(budget9 자료)을 쉬운 `_ranges`의 과제 접두사에 붙였다. `_ranges`는 25턴 첫 라운드 자료에서 이미 11/12 해결된 파일이었다. 아래 결론은 이 정정을 반영하며, 앞쪽의 잘못된 예측은 역사로 남긴다.
+
 Round two's two `_ranges.py` tasks resolving is the expected outcome once
 the two files are told apart, not evidence about the budget or about
 `specifiers`/`_tokenizer` being unusually easy. Checked and confirmed:
 phase 87's structural table (name-repetition, operator density) was
 computed on the real `ranges.py` throughout, so that rejection stands --
 only the resolved-rate label was swapped when relayed, not the analysis.
+
 `specifiers` resolving 2/2 is still new, real data, and still argues against
 the "similarly-shaped functions" reading a second way (84% name-stem overlap,
 resolved cleanly).
@@ -244,21 +203,10 @@ in this task family -- mutation injection verified by a pytest suite, fixed
 by an agent reading failing-test output -- that yields dead-end material,
 including the one built from the only module that fails.
 
-That makes this finishable rather than merely paused: **write-time selection
-is untestable on this task family, not untested for want of effort.** Three
-pools, three distinct reasons, plus the knowledge that a fourth attempt
-inside the same family would fail for a fourth reason. Testing the
-hypothesis needs a setting where locating the defect is genuinely the work
-*and* failures come from wrong hypotheses rather than exhausted clocks --
-a requirement statable in advance, and mutation-injection-on-a-well-tested-
-library does not meet it regardless of which module gets sampled.
+그래서 이 갈래는 단순 대기가 아니라 종료할 수 있다. **저장 시점 선택은 노력이 부족해 미검증인 것이 아니라, 이 과제군에서는 검증할 수 없다.** 세 풀에서 서로 다른 이유로 avoid 자료가 없었고, 같은 과제군의 네 번째 시도도 다른 이유로 실패할 것임을 기존 기록이 보여 준다.
+
+다음 가설 검증에는 결함 위치를 찾는 일 자체가 실제 과업이고, 실패가 시간 소진이 아니라 잘못된 가설을 따라간 결과인 환경이 필요하다. 이 조건은 실행 전에 명시할 수 있다. 테스트가 잘 갖춰진 라이브러리에 변이를 주입하는 현재 방식은 어느 모듈을 뽑아도 이를 충족하지 못했다.
 
 ## Status
 
-Blocked on one thing before touching code: `run_repair_trials.py`,
-`run_repair_budget.sh`, `run_repair_experiment.sh`, and
-`tests/test_repair_harness.py` all show uncommitted changes in git status.
-Diffed `run_repair_trials.py` — it's a `refusal()` guard against spend-limit /
-auth-error transcripts being miscounted as clean failures, unrelated to this
-design. Asked keymem-20 whether it's in-progress and safe to build on top of,
-or whether to branch from HEAD instead, before writing the `taught` condition.
+아래는 당시 구현 착수 전 협업 상태를 남긴 기록이다. 위의 최종 종료 판정을 지금의 ‘작업 진행 중’으로 되돌리는 내용은 아니다. 당시 `run_repair_trials.py`, `run_repair_budget.sh`, `run_repair_experiment.sh`, `tests/test_repair_harness.py`에 모두 미커밋 변경이 있었다. `run_repair_trials.py` diff는 지출 한도·인증 오류를 정상 실패로 잘못 세지 않게 하는 `refusal()` 방어였다. 이 설계와 무관한 변경이라 `taught`를 쓰기 전에 keymem-20에게 진행 중인 코드 위에 안전하게 이어 써도 되는지, 아니면 HEAD에서 분기해야 하는지 물었다.

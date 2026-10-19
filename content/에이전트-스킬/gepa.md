@@ -9,11 +9,17 @@ researched: 2026-10-01
 # GEPA (Genetic-Pareto)
 
 > [!summary] 한줄요약
-> 시스템의 "텍스트 파라미터"(프롬프트, 코드, 설정, 에이전트 스캐폴드, 도구 설명 등)를 **LLM이 실행 trace를 자연어로 읽고 반성(reflect)해 변이시키고, Pareto frontier로 후보를 보존·선택**하는 방식으로 최적화하는 프레임워크. 논문 "GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning"(arXiv 2507.19457)의 공식 구현이며, 코어 라이브러리는 런타임 의존성이 0개(`dependencies = []`)다. MIT, Python, PyPI `gepa`, 최신 v0.1.4.
+> 실행 기록과 평가 피드백을 읽어 프롬프트·코드 같은 텍스트 후보를 반복 개선하는 최적화 프레임워크다. 평가 함수의 품질이 성과를 좌우한다.
+
+시스템의 "텍스트 파라미터"(프롬프트, 코드, 설정, 에이전트 스캐폴드, 도구 설명 등)를 **LLM이 실행 trace를 자연어로 읽고 반성(reflect)해 변이시키고, Pareto frontier로 후보를 보존·선택**하는 방식으로 최적화하는 프레임워크. 논문 "GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning"(arXiv 2507.19457)의 공식 구현이며, 코어 라이브러리는 런타임 의존성이 0개(`dependencies = []`)다.
+
+MIT, Python, PyPI `gepa`, 최신 v0.1.4.
 
 ## 1. 배경 — 해결하는 문제
 
-LLM 기반 시스템을 개선하는 전통적 선택지는 (a) 사람이 프롬프트를 손으로 고치는 것, (b) RL(GRPO 등)이나 fine-tuning으로 가중치를 바꾸는 것이다. (b)는 스칼라 보상 하나로 롤아웃 전체를 압축하므로 수천~수만 번의 롤아웃이 필요하고 API 전용 모델에는 쓸 수 없다. GEPA의 문제의식은 "롤아웃은 결국 자연어로 직렬화 가능한 trace(지시문, 추론 과정, 도구 호출, 도구 출력, 에러 메시지, 프로파일링 결과)이고, 이 텍스트 안에는 스칼라보다 훨씬 풍부한 학습 신호가 있다"는 것이다. 그래서 LLM이 trace를 직접 읽고 "왜 실패했는지"를 진단해 프롬프트를 고치게 한다.
+LLM 기반 시스템을 개선하는 전통적 선택지는 (a) 사람이 프롬프트를 손으로 고치는 것, (b) RL(GRPO 등)이나 fine-tuning으로 가중치를 바꾸는 것이다. (b)는 스칼라 보상 하나로 롤아웃 전체를 압축하므로 수천~수만 번의 롤아웃이 필요하고 API 전용 모델에는 쓸 수 없다. GEPA의 문제의식은 "롤아웃은 결국 자연어로 직렬화 가능한 trace(지시문, 추론 과정, 도구 호출, 도구 출력, 에러 메시지, 프로파일링 결과)이고, 이 텍스트 안에는 스칼라보다 훨씬 풍부한 학습 신호가 있다"는 것이다.
+
+그래서 LLM이 trace를 직접 읽고 "왜 실패했는지"를 진단해 프롬프트를 고치게 한다.
 
 논문 초록(arXiv, 2025-07 제출)의 핵심 주장: 6개 과제에서 GEPA는 GRPO를 평균 6%, 최대 20% 앞서면서 롤아웃은 최대 35배 적게 사용하고, 당시 대표 프롬프트 최적화기 MIPROv2를 10% 이상(예: AIME-2025에서 +12%p) 앞서며, 코드 최적화의 inference-time search로도 가능성을 보였다. README는 "If you can measure it, you can optimize it"이라는 문구로 범위를 확장한다.
 
@@ -61,13 +67,25 @@ flowchart TD
 | `oa/` | optimize_anything 엔진 계열: `ensemble.py`(778), `eval_server.py`(744, 에이전틱 최적화용 HTTP 평가 서버), `sandbox.py`(369), `budget.py`, `config.py` |
 | `gskill/` | 코딩 에이전트용 저장소별 skill 자동 학습 |
 
-설치 의존성이 `dependencies = []`이고 `full` extra에 `litellm>=1.83,<1.92`, `tqdm`, `cloudpickle`, `datasets`, `mlflow`, `wandb` 등이 들어간다. `pyproject.toml` 주석이 흥미롭다: litellm 1.92가 manylinux 휠만 배포해 macOS/Windows/3.14에서 설치가 깨지므로 상한을 고정했다는 설명이다. 즉 최신 litellm을 쓰는 환경에서는 버전 충돌 가능성을 확인해야 한다. 요구 Python은 `>=3.10,<3.15`.
+설치 의존성이 `dependencies = []`이고 `full` extra에 `litellm>=1.83,<1.92`, `tqdm`, `cloudpickle`, `datasets`, `mlflow`, `wandb` 등이 들어간다. `pyproject.toml` 주석이 흥미롭다: litellm 1.92가 manylinux 휠만 배포해 macOS/Windows/3.14에서 설치가 깨지므로 상한을 고정했다는 설명이다.
+
+즉 최신 litellm을 쓰는 환경에서는 버전 충돌 가능성을 확인해야 한다. 요구 Python은 `>=3.10,<3.15`.
 
 ### 2.3 optimize_anything과 에이전틱 백엔드
 
-최근 버전에서 `optimize_anything`은 단일 인터페이스 아래 여러 backend(`engine=`)를 갖는다. `.claude/skills/gepa-optimize-anything/SKILL.md`에 따르면 `gepa`(기본, 반성 기반 진화 탐색), `autoresearch`(Claude Code 서브프로세스 하나가 work dir에서 연구자처럼 반복하며 HTTP 평가 서버로 점수를 받음), `meta_harness`(Claude 서브프로세스가 frontier/히스토리를 읽고 새 후보를 쓰면 엔진이 벤치마크), 그리고 비교 기준용 `best_of_n`이 있고, `optimize_sequential/parallel/best_of/vote` 같은 조합 헬퍼와 plateau 시 backend를 바꾸는 스케줄러도 있다. 에이전틱 백엔드는 `claude` CLI를 `subprocess.Popen`으로 띄우며, Linux에서는 `bwrap`(bubblewrap) 기반의 자체 샌드박스(`oa/sandbox.py`: `/usr` 읽기 전용 바인드, `work_dir`만 쓰기 가능, `WebFetch`/`WebSearch` 도구는 차단, 네트워크 네임스페이스는 호스트와 공유)를 쓰고 macOS는 Claude Code 내장 Seatbelt 샌드박스를 쓴다. `sandbox=False`는 무방비 실행이므로 경고가 표시된다.
+최근 버전에서 `optimize_anything`은 단일 인터페이스 아래 여러 backend(`engine=`)를 갖는다. `.claude/skills/gepa-optimize-anything/SKILL.md`에 따르면 `gepa`(기본, 반성 기반 진화 탐색), `autoresearch`(Claude Code 서브프로세스 하나가 work dir에서 연구자처럼 반복하며 HTTP 평가 서버로 점수를 받음), `meta_harness`(Claude 서브프로세스가 frontier/히스토리를 읽고 새 후보를 쓰면 엔진이 벤치마크), 그리고 비교 기준용 `best_of_n`이 있고, `optimize_sequential/parallel/best_of/vote` 같은 조합 헬퍼와 plateau 시 backend를 바꾸는 스케줄러도 있다.
 
-SKILL의 `references/gotchas.md`는 실전 함정을 솔직히 적어 놓았다. 요약하면 (1) **보상 해킹**: KernelBench에서 정확성만 점수로 주자 "참조 구현을 감싸라"는 프롬프트를 찾아 pass@1 약 0.87이지만 실제 목표(빠른 커널)는 기준선 수준으로 붕괴, 해결책은 정확성 게이트 후 목표 지표에 비례하는 gated objective, (2) **winner's curse**: 검증 집합에서 max를 취하므로 best_score는 낙관적이고 held-out `test_set`으로 정직한 수치를 따로 봐야 함, (3) N=1 확률적 평가의 분산, (4) 기본 `max_evals=100`은 대개 부족하고(선택 집합의 15~20배 이상 권장), (5) `engine_config`는 엄격 검증되어 오타 키는 `TypeError`, (6) 에이전틱 백엔드의 사전 요건(`claude` CLI 인증, `bwrap`, `jq`), (7) 점수 상한이 있는 지표에는 `stop_at_score` 필수.
+에이전틱 백엔드는 `claude` CLI를 `subprocess.Popen`으로 띄우며, Linux에서는 `bwrap`(bubblewrap) 기반의 자체 샌드박스(`oa/sandbox.py`: `/usr` 읽기 전용 바인드, `work_dir`만 쓰기 가능, `WebFetch`/`WebSearch` 도구는 차단, 네트워크 네임스페이스는 호스트와 공유)를 쓰고 macOS는 Claude Code 내장 Seatbelt 샌드박스를 쓴다. `sandbox=False`는 무방비 실행이므로 경고가 표시된다.
+
+SKILL의 `references/gotchas.md`는 실전 함정을 솔직히 적어 놓았다. 주요 주의점은 다음과 같다.
+
+1. **보상 해킹**: KernelBench에서 정확성만 점수로 주자 "참조 구현을 감싸라"는 프롬프트를 찾아 pass@1 약 0.87을 얻었지만 실제 목표(빠른 커널)는 기준선 수준으로 붕괴했다. 해결책은 정확성 게이트 후 목표 지표에 비례하는 gated objective다.
+2. **winner's curse**: 검증 집합에서 max를 취하므로 best_score는 낙관적이고 held-out `test_set`으로 정직한 수치를 따로 봐야 한다.
+3. N=1 확률적 평가에서는 분산에 주의해야 한다.
+4. 기본 `max_evals=100`은 대개 부족하다(선택 집합의 15~20배 이상 권장).
+5. `engine_config`는 엄격 검증되므로 오타 키는 `TypeError`를 낸다.
+6. 에이전틱 백엔드는 사전 요건(`claude` CLI 인증, `bwrap`, `jq`)을 갖춰야 한다.
+7. 점수 상한이 있는 지표에는 `stop_at_score`가 필수다.
 
 ## 3. 핵심 기능 상세
 
@@ -91,7 +109,12 @@ SKILL의 `references/gotchas.md`는 실전 함정을 솔직히 적어 놓았다.
 | ARC-AGI 에이전트 32%→89%, 클라우드 스케줄링 40.2% 비용 절감, Jinja 코딩 에이전트 55%→82% | README Key Results(블로그 링크) | 블로그는 열지 않음. 확인 못함 |
 | 50+ production uses (Shopify, Databricks, Dropbox, OpenAI, Pydantic, MLflow 등) | README | 확인 못함(문구만) |
 
-해석 주의: (1) "90x cheaper"는 **추론 단가** 비교이지 최적화 비용을 포함한 비용이 아니고, 대상 벤치마크가 정보 추출 과제로 한정된다. (2) "35x fewer rollouts"는 Qwen3 8B vs GRPO 비교다. (3) 최적화 성과는 평가셋 품질과 일반화 격차(winner's curse)에 크게 좌우되며, gotchas가 이를 스스로 경고한다. (4) AIME 같은 수학 과제에서의 향상은 도메인 지침 암기에 가까운 면이 있다(README의 예시 최적화 프롬프트가 수학 문제 유형별 요령을 길게 담고 있음). 그 프롬프트가 같은 분포의 문제에는 유효하지만 분포가 바뀌면 이득이 줄 수 있다.
+해석 주의:
+
+1. "90x cheaper"는 **추론 단가** 비교이지 최적화 비용을 포함한 비용이 아니고, 대상 벤치마크가 정보 추출 과제로 한정된다.
+2. "35x fewer rollouts"는 Qwen3 8B vs GRPO 비교다.
+3. 최적화 성과는 평가셋 품질과 일반화 격차(winner's curse)에 크게 좌우되며, gotchas가 이를 스스로 경고한다.
+4. AIME 같은 수학 과제에서의 향상은 도메인 지침 암기에 가까운 면이 있다(README의 예시 최적화 프롬프트가 수학 문제 유형별 요령을 길게 담고 있음). 그 프롬프트가 같은 분포의 문제에는 유효하지만 분포가 바뀌면 이득이 줄 수 있다.
 
 ## 5. 설치·사용
 
@@ -140,7 +163,13 @@ result = optimize_anything(seed_candidate="<초기 산출물>", evaluator=evalua
 /plugin install gepa-optimize-anything@gepa
 ```
 
-실전 팁(SKILL/gotchas 기반): 평가자를 먼저 설계하고, 보상 해킹을 막는 gated objective를 쓰고, `max_evals`와 `stop_at_score`를 명시하고, N>1 샘플 평균으로 분산을 줄이고, `test_set`으로 최종 보고 수치를 따로 낸다.
+실전 팁(SKILL/gotchas 기반):
+
+- 평가자를 먼저 설계한다.
+- 보상 해킹을 막는 gated objective를 쓴다.
+- `max_evals`와 `stop_at_score`를 명시한다.
+- N>1 샘플 평균으로 분산을 줄인다.
+- `test_set`으로 최종 보고 수치를 따로 낸다.
 
 ## 6. 디렉터리·코드에서 확인한 것
 
@@ -163,7 +192,9 @@ result = optimize_anything(seed_candidate="<초기 산출물>", evaluator=evalua
 
 ## 8. 장단점·한계·성숙도
 
-사실 지표(GitHub API 2026-10-01): stars 6,827 / forks 557 / open issues 136 / MIT / 주 언어 표기 Jupyter Notebook(실제 코어는 `src/gepa` Python) / 생성 2025-08-05 / 마지막 push 2026-09-29 / 커밋 약 885개 / 기여자 50명 이상(API 응답이 100 한도 내 50) / 릴리스 v0.1.1(2026-03-16), v0.1.2(2026-07-14), v0.1.3(2026-07-14), v0.1.4(2026-07-15). 버전이 0.x이고 7월에 하루 간격으로 연속 패치가 나왔다. 논문 연도(2025-07) 이후 1년 넘게 활발히 유지되고 DSPy, MLflow, Opik, Pydantic, Google ADK 등 다수 프로젝트에 통합되었다고 README가 밝힌다(개별 통합의 실존 여부는 링크를 열어 확인하지 못함).
+사실 지표(GitHub API 2026-10-01): stars 6,827 / forks 557 / open issues 136 / MIT / 주 언어 표기 Jupyter Notebook(실제 코어는 `src/gepa` Python) / 생성 2025-08-05 / 마지막 push 2026-09-29 / 커밋 약 885개 / 기여자 50명 이상(API 응답이 100 한도 내 50) / 릴리스 v0.1.1(2026-03-16), v0.1.2(2026-07-14), v0.1.3(2026-07-14), v0.1.4(2026-07-15). 버전이 0.x이고 7월에 하루 간격으로 연속 패치가 나왔다.
+
+논문 연도(2025-07) 이후 1년 넘게 활발히 유지되고 DSPy, MLflow, Opik, Pydantic, Google ADK 등 다수 프로젝트에 통합되었다고 README가 밝힌다(개별 통합의 실존 여부는 링크를 열어 확인하지 못함).
 
 장점
 - 평가 함수만 있으면 적용 대상이 넓다(프롬프트, 코드, 설정, 도구 설명, 에이전트 구조).

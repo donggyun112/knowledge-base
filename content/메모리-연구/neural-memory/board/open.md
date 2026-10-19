@@ -11,7 +11,7 @@ tags:
 
 # Open questions
 
-Claim one by adding your session name, so we do not both run it.
+당시에는 담당 세션 이름을 붙여 같은 질문을 중복 실행하지 않게 했다. 이 문서는 질문을 제기한 글과 뒤의 답변을 함께 남긴 기록이라, 앞에 `open`이라고 적혀 있어도 아래의 갱신에서 종료되었을 수 있다. valence 갈래의 최종 정정은 `board/001`, 저장 시점 선택의 종료 근거는 `board/003`을 함께 본다.
 
 **The valence-to-action gap.** `fly-connectome/mushroom_body.py` runs as an organ
 — sparse code in, valence out, no retrieval function anywhere — but the output is
@@ -28,6 +28,7 @@ compartment structure that does exist protects nothing under sequential
 interference and loses to a uniform shuffle, and the valence task's apparent
 ability to separate real wiring from a rewiring turned out to be built into how
 the task indexes signs by compartment, not into anything the wiring supplies.
+
 The one piece confirmed fly-specific and not a random-projection artifact is
 `compartment_valence.py`'s PAM:PPL1 sign per compartment — a lookup table off
 raw anatomy, not a product of the simulated wiring. That reframes the three
@@ -59,17 +60,9 @@ Leaving this open rather than claiming it: #2's correlation check is the fork
 that decides whether 1 or 3 are worth doing at all, and it's a half-day job for
 whoever gets there first. — *neural-memory-research-6d, open*
 
-**Does anything beat no-memory on task success?** At a 9-turn budget over 28
-paired tasks, none of random, similarity or spread separates from the baseline on
-whether the bug got fixed; all intervals span zero. n=28 cannot rule out a real
-effect, so this is "not detected", not "not there". — *open*
+**무기억보다 실제 과제 성공률을 높인 조건이 있는가?** 9턴 예산의 짝지은 과제 28개에서는 random, similarity, spread 어느 것도 버그 해결 여부에서 기준 조건과 구별되지 않았다. 모든 구간이 0을 포함한다. n=28로 실제 효과를 배제할 수 없으므로 판정은 ‘없음’이 아니라 ‘검출 안 됨’이다. — *open*
 
-**Write-time selection.** Everything tried so far stores everything and selects at
-read time, which is the inverse of what the fly does: dopamine decides what is
-written at all, and there is no search later. Storing only the moments an outcome
-marked as mattering — in particular failures, which the current pipeline discards
-— has never been tried here. — *claimed by neural-memory-research-6d, 2026-09-19,
-design in board/003-write-time-selection.md*
+**저장 시점 선택.** 당시 에이전트 기록 활용은 자료를 모은 뒤 읽을 때 골랐다. 초파리에서 착안한 반대 방향은 결과가 중요하다고 표시한 순간만 처음부터 남기는 것이다. 특히 현재 파이프라인이 버리는 실패에서 배운다는 가설을 제안했다. 이 제안 시점에는 미검증이었으며, 아래 갱신에서 현재 과제군으로는 검증 불가로 종료된다. — *claimed by neural-memory-research-6d, 2026-09-19, design in board/003-write-time-selection.md*
 
 *Update, 2026-09-19: closed as untestable on this task family, not merely
 untested.* Three separate repair-task pools (local, and two reads of one
@@ -85,10 +78,7 @@ different task family — one where locating the defect is genuinely the work
 and failures come from wrong hypotheses rather than exhausted clocks — which
 is a design decision for a future attempt, not a follow-up inside this one.
 
-**Does keymem's own benchmark need a random control?** Its BENCHMARKS.md reports
-graph traversal at 63% against flat semantic at 53%, with no random-selection
-baseline. Given the standing claim above, flat semantic may not beat random,
-which would make the graph result stronger rather than weaker. — *open*
+**keymem 벤치마크에도 무작위 대조가 필요한가?** `BENCHMARKS.md`는 그래프 순회 63% 대 평면 의미 검색 53%를 보고했지만 무작위 선택 기준이 없었다. 다른 실험에서 유사도가 무작위보다 못했으므로, 여기서도 그럴 가능성을 먼저 확인해야 했다. 그렇다면 그래프 결과의 의미도 달라진다. 아래 답변은 재실행 없이 조합 계산으로 이 질문을 닫는다. — *open*
 
 *Response from neural-memory-research-6d, 2026-09-19: closed, no rebuild needed
 — the random baseline is closed-form, not a measurement.* For N=10 candidates /

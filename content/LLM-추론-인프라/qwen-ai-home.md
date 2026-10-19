@@ -9,7 +9,10 @@ researched: 2026-10-01
 # Qwen (qwen.ai)
 
 > [!summary] 한줄요약
-> Alibaba Qwen 팀의 공식 사이트이자 제품 허브. 홈은 "Qwen(무료 AI 어시스턴트) / API Platform(OpenAI 호환) / 다운로드(웹·iOS·Android·macOS·Windows)" 세 입구와 최신 연구 글(2026-09 기준 Qwen-Image-2.1, Qwen3.8-LiveTranslate, Qwen3.8-Omni-Flash 등)로 구성된다. 오픈웨이트는 Hugging Face/GitHub에서, 플래그십 모델(Max/Plus 계열)은 API로만 제공되는 이원 구조다.
+> Alibaba Qwen 팀의 공식 사이트이자 제품 허브. 오픈웨이트는 Hugging Face/GitHub에서, 플래그십 모델(Max/Plus 계열)은 API로만 제공하는 이원 구조다.
+>
+> - **세 입구**: Qwen(무료 AI 어시스턴트), API Platform(OpenAI 호환), 다운로드(웹·iOS·Android·macOS·Windows)
+> - **최신 연구 글**: 2026-09 기준 Qwen-Image-2.1, Qwen3.8-LiveTranslate, Qwen3.8-Omni-Flash 등
 
 > [!info] 조사 방법
 > qwen.ai는 SPA라 WebFetch와 curl로는 `<title>`만 나온다. 그래서 headless Chrome 렌더(`render.sh`)로 홈, `/research`, `/apiplatform`, 개별 블로그 글(`/blog?id=...`)을 읽고, 블로그가 가리키는 GitHub 조직(QwenLM)과 Hugging Face Qwen 조직은 API로 교차 확인했다. 이전 판 노트가 "본문 미확인"이던 부분을 이번에 채웠다.
@@ -42,7 +45,13 @@ flowchart LR
   hf --> open["오픈웨이트: Qwen3.5 / 3.6 / 3.8 계열"]
 ```
 
-핵심은 "같은 이름 아래 접근 방식이 세 갈래"라는 점이다. 챗 앱으로 쓰는 경로(데이터가 Alibaba 쪽으로 간다), API로 쓰는 경로(마찬가지로 호스티드), 가중치를 받아 직접 서빙하는 경로(우리가 통제한다). 온프렘 LLM 서빙 관점에서 의미 있는 것은 세 번째뿐이다.
+핵심은 같은 이름 아래 접근 방식이 세 갈래라는 점이다.
+
+1. **챗 앱**: 데이터가 Alibaba 쪽으로 간다.
+2. **API**: 마찬가지로 호스티드 서비스다.
+3. **가중치 직접 서빙**: 우리가 통제하는 환경에서 실행한다.
+
+온프렘 LLM 서빙 관점에서 의미 있는 것은 세 번째뿐이다.
 
 ## 3. API Platform 페이지에서 읽은 것
 
@@ -67,7 +76,13 @@ flowchart LR
 
 이전 노트가 "검색 결과(2차 자료)"로 적었던 Qwen3.7-Max, Qwen3.7-Plus의 존재는 이 공식 페이지로 확인된다. 반면 2차 자료에 있던 발표일(2026-05-20, 2026-06-01)은 이번에 공식 페이지에서 다시 확인하지 못했다.
 
-API 종류는 세 가지로 소개된다. Chat Completions API(질의응답·코딩·도구 사용), Realtime API(저지연 멀티모달, 음성 대 음성), Batch API(오프라인·저비용 연산, 모델 평가·데이터셋 의미 추출·텍스트 임베딩 배치에 적합하다고 설명). 에이전트 기능으로는 Web Search(출처가 달린 최신 답변)와 Function Call(외부 도구 연결)이 있다.
+API 종류는 세 가지로 소개된다.
+
+- **Chat Completions API**: 질의응답·코딩·도구 사용
+- **Realtime API**: 저지연 멀티모달, 음성 대 음성
+- **Batch API**: 오프라인·저비용 연산. 모델 평가·데이터셋 의미 추출·텍스트 임베딩 배치에 적합하다고 설명한다.
+
+에이전트 기능으로는 Web Search(출처가 달린 최신 답변)와 Function Call(외부 도구 연결)이 있다.
 
 엔드포인트의 실제 모양은 블로그 예제 코드에서 보인다. Omni-Flash 글의 예제는 OpenAI SDK를 쓰고 `base_url`을 `https://dashscope-intl.aliyuncs.com/compatible-mode/v1`로, 키는 환경변수 `DASHSCOPE_API_KEY`로 받는다. LiveTranslate 예제는 중국(베이징) 리전용 `wss://{workspace_id}.c...` WebSocket URL을 쓰며 "리전마다 URL이 다르다"고 주석을 단다. 즉 이 API는 Alibaba Cloud Model Studio(DashScope) 위에서 서비스된다.
 
@@ -77,7 +92,16 @@ API 종류는 세 가지로 소개된다. Chat Completions API(질의응답·코
 
 ### 4.1 Qwen-Image-2.1 (2026-09-20, 오픈소스)
 
-텍스트→이미지 생성과 이미지 편집을 하나의 모델로 합친 이미지 모델이다. 시각 생성 부분이 7B 파라미터이고 32개 Single-Stream DiT 레이어로 구성된다. 글이 강조하는 특징은 네 가지다: 가벼운 구조와 추론 최적화, 네이티브 투명(RGBA) 이미지 생성·편집(2025-12의 Qwen-Image-Layered 기능을 통합), 최대 10장의 참조 이미지를 쓰는 편집과 원 마스크·붓 주석·별도 마스크를 통한 국소 편집, 타이포그래피와 인물 조명 개선. 구조적으로 흥미로운 점은 "mixed-granularity attention"이다. 텍스트는 토큰 단위 causal mask를, 이미지 생성은 청크 단위 mask를 쓰고, 입력 이미지와 편집 지시문을 정적 컨텍스트로 두어 첫 단계에서 계산한 KV를 재사용한다. 다중 입력 이미지 편집의 추론 효율을 이렇게 높인다는 설명이다. 가중치는 Hugging Face `Qwen/Qwen-Image-2.1`(2026-09-14 생성, 다운로드 약 7.1만, 좋아요 2,725, 라이선스 태그 `other`)에 올라 있고, GitHub `QwenLM/Qwen-Image-2.1`은 라이선스가 NOASSERTION으로 표시된다. 상업 이용 조건은 라이선스 본문을 직접 읽어야 하며 이번에는 확인하지 못했다.
+텍스트→이미지 생성과 이미지 편집을 하나의 모델로 합친 이미지 모델이다. 시각 생성 부분이 7B 파라미터이고 32개 Single-Stream DiT 레이어로 구성된다. 글이 강조하는 특징은 네 가지다.
+
+1. 가벼운 구조와 추론 최적화
+2. 네이티브 투명(RGBA) 이미지 생성·편집(2025-12의 Qwen-Image-Layered 기능을 통합)
+3. 최대 10장의 참조 이미지를 쓰는 편집과 원 마스크·붓 주석·별도 마스크를 통한 국소 편집
+4. 타이포그래피와 인물 조명 개선
+
+구조적으로 흥미로운 점은 "mixed-granularity attention"이다. 텍스트는 토큰 단위 causal mask를, 이미지 생성은 청크 단위 mask를 쓰고, 입력 이미지와 편집 지시문을 정적 컨텍스트로 두어 첫 단계에서 계산한 KV를 재사용한다. 다중 입력 이미지 편집의 추론 효율을 이렇게 높인다는 설명이다.
+
+가중치는 Hugging Face `Qwen/Qwen-Image-2.1`(2026-09-14 생성, 다운로드 약 7.1만, 좋아요 2,725, 라이선스 태그 `other`)에 올라 있고, GitHub `QwenLM/Qwen-Image-2.1`은 라이선스가 NOASSERTION으로 표시된다. 상업 이용 조건은 라이선스 본문을 직접 읽어야 하며 이번에는 확인하지 못했다.
 
 ### 4.2 Qwen3.8-Omni-Flash (2026-09-18, 릴리스)
 
@@ -93,7 +117,13 @@ API 종류는 세 가지로 소개된다. Chat Completions API(질의응답·코
 
 이 글의 렌더링 결과에는 제목 옆에 `[draft]` 표시가 붙어 있었다. 공개된 글에 초안 표지가 남은 것인지 의도된 표기인지는 알 수 없으므로, 수치는 "공식 블로그의 자기 보고"로만 취급해야 한다.
 
-글이 소개하는 오픈소스 부속물이 두 개 있다. 하나는 **Qwen-MM-Plugins**(GitHub `QwenLM/Qwen-MM-Plugins`, Apache-2.0, 스타 약 3,106): 에이전트 하네스(Codex, Claude Code, Qwen Code, Gemini CLI, Qoder, CodeBuddy, OpenClaw)에 이미지·오디오·비디오·문서 이해와 장편 영상 메모리, 콘텐츠 제작 능력을 붙이는 플러그인 묶음이며, `install.sh` 가이드 설치와 Video2Note, Omni Skill Creator(시연 영상에서 SOP를 뽑아 Skill.md로 만든다는 기능) 등이 포함된다. 다른 하나는 **Qwen-Live-Harness**(Apache-2.0, v1.0.0이 2026-09-21): Qwen Omni Realtime API를 중심으로 한 데스크톱 하네스로, 실시간 음성·화면 상호작용, Qwen Code·Qoder CLI·Codex·Claude Code·Gemini CLI로의 작업 위임, 조건 기반 알림, 장기 메모리를 제공한다. README의 아키텍처는 "Host(UI) ↔ daemon(조정자) ↔ Qwen Omni Realtime(클라우드)" 구조이며, 전체 데스크톱 경험은 현재 macOS 12+만 지원하고 DashScope API 인터넷 연결이 필요하다고 밝힌다(로컬 모델 가중치·GPU는 불필요). 즉 이 하네스는 클라우드 의존형이다.
+글이 소개하는 오픈소스 부속물은 두 개다.
+
+**Qwen-MM-Plugins**(GitHub `QwenLM/Qwen-MM-Plugins`, Apache-2.0, 스타 약 3,106): 에이전트 하네스(Codex, Claude Code, Qwen Code, Gemini CLI, Qoder, CodeBuddy, OpenClaw)에 이미지·오디오·비디오·문서 이해와 장편 영상 메모리, 콘텐츠 제작 능력을 붙이는 플러그인 묶음이며, `install.sh` 가이드 설치와 Video2Note, Omni Skill Creator(시연 영상에서 SOP를 뽑아 Skill.md로 만든다는 기능) 등이 포함된다.
+
+**Qwen-Live-Harness**(Apache-2.0, v1.0.0이 2026-09-21): Qwen Omni Realtime API를 중심으로 한 데스크톱 하네스로, 실시간 음성·화면 상호작용, Qwen Code·Qoder CLI·Codex·Claude Code·Gemini CLI로의 작업 위임, 조건 기반 알림, 장기 메모리를 제공한다.
+
+README의 아키텍처는 "Host(UI) ↔ daemon(조정자) ↔ Qwen Omni Realtime(클라우드)" 구조이며, 전체 데스크톱 경험은 현재 macOS 12+만 지원하고 DashScope API 인터넷 연결이 필요하다고 밝힌다(로컬 모델 가중치·GPU는 불필요). 즉 이 하네스는 클라우드 의존형이다.
 
 ### 4.3 Qwen3.8-LiveTranslate (2026-09-18)
 
@@ -116,9 +146,14 @@ API로만 제공되는 플래그십과 별개로, HF Qwen 조직에는 최근 �
 | Qwen3.6-35B-A3B | 2026-04-15 | apache-2.0 | MoE |
 | Qwen3.5 시리즈 | 2026-02 | 9B는 apache-2.0 확인, 나머지는 개별 확인 안 함 | 0.8B/2B/4B/9B/27B/35B-A3B/122B-A10B/397B-A17B와 FP8·GPTQ-Int4 변형. [[qwen3-5-9b]] 참조 |
 
-눈여겨볼 두 가지. 첫째, 최신 오픈 모델 Qwen3.8-27B가 `Qwen3_5ForConditionalGeneration` 아키텍처를 그대로 쓴다. 세대가 바뀌어도 서빙 엔진 입장에서는 Qwen3.5 계열 지원 코드를 재사용할 수 있다는 뜻이다(vLLM 쪽 구현은 [[qwen3-5-9b]] 노트 참조). 둘째, 가장 큰 모델들은 Apache-2.0이 아니라 별도 라이선스(`other`)다. 사내 서빙 후보로 삼기 전에 라이선스 본문(상업 이용, 사용자 수 제한 등)을 읽어야 한다. 이번에는 그 본문을 확인하지 않았다.
+눈여겨볼 점은 두 가지다.
 
-GitHub QwenLM 조직은 공개 저장소가 58개이고, 최근 push가 활발한 것은 qwen-code(터미널용 코딩 에이전트, Apache-2.0, 스타 약 28,250), FlashQLA(TileLang 기반 고성능 linear attention 커널 라이브러리, MIT, 스타 약 716), Qwen-Image-2.1, Qwen-Live-Harness, Qwen-MM-Plugins 등이다. FlashQLA는 Gated DeltaNet류 linear attention을 쓰는 하이브리드 모델의 추론 커널과 관련된 것으로 보이지만 코드는 읽지 않았다.
+1. **서빙 코드의 연속성**: 최신 오픈 모델 Qwen3.8-27B가 `Qwen3_5ForConditionalGeneration` 아키텍처를 그대로 쓴다. 세대가 바뀌어도 서빙 엔진 입장에서는 Qwen3.5 계열 지원 코드를 재사용할 수 있다는 뜻이다(vLLM 쪽 구현은 [[qwen3-5-9b]] 노트 참조).
+2. **라이선스 차이**: 가장 큰 모델들은 Apache-2.0이 아니라 별도 라이선스(`other`)다. 사내 서빙 후보로 삼기 전에 라이선스 본문(상업 이용, 사용자 수 제한 등)을 읽어야 한다. 이번에는 그 본문을 확인하지 않았다.
+
+GitHub QwenLM 조직은 공개 저장소가 58개이고, 최근 push가 활발한 것은 qwen-code(터미널용 코딩 에이전트, Apache-2.0, 스타 약 28,250), FlashQLA(TileLang 기반 고성능 linear attention 커널 라이브러리, MIT, 스타 약 716), Qwen-Image-2.1, Qwen-Live-Harness, Qwen-MM-Plugins 등이다.
+
+FlashQLA는 Gated DeltaNet류 linear attention을 쓰는 하이브리드 모델의 추론 커널과 관련된 것으로 보이지만 코드는 읽지 않았다.
 
 ## 6. 사용법 (경로별)
 

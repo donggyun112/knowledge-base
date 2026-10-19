@@ -9,11 +9,18 @@ researched: 2026-10-01
 # OpenViking
 
 > [!summary] 한줄요약
-> 에이전트가 아는 모든 것(문서·메모리·skills)을 `viking://` 가상 파일시스템 하나에 담고, 디렉터리마다 L0(abstract)/L1(overview) 요약을 붙여 "요약 먼저, 원문은 필요할 때만" 읽게 하는 오픈소스 Context Database. ByteDance/Volcengine 제작, AGPL-3.0, Python + Rust + C++.
+> 문서·메모리·skills를 `viking://` 가상 파일시스템에 모아, 에이전트가 요약부터 읽고 필요한 원문만 불러오게 하는 Context Database다.
+
+- **읽기 방식**: 디렉터리마다 L0(abstract)/L1(overview) 요약을 붙여 "요약 먼저, 원문은 필요할 때만" 읽게 한다.
+- **프로젝트 구성**: ByteDance/Volcengine이 제작한 오픈소스이며, AGPL-3.0 라이선스와 Python + Rust + C++ 구현을 사용한다.
 
 ## 1. 배경: 어떤 문제를 푸는가
 
-LLM 에이전트의 장기 메모리 구현은 대개 "대화에서 텍스트를 뽑아 임베딩하고 벡터 DB에 넣는" 구조다. 이 방식에는 사용자 관점에서 세 가지 불편이 있다. 첫째, 무엇이 저장됐는지 사람이 들여다보기 어렵다(블랙박스). 둘째, 평평한(flat) 벡터 풀 전체를 검색하므로 프로젝트·사용자 단위로 범위를 좁히기 어렵고, 검색 결과가 많아지면 토큰만 늘어난다. 셋째, 지식(문서), 기억(선호·경험), 능력(skills)이 서로 다른 저장소·다른 API로 흩어진다.
+LLM 에이전트의 장기 메모리는 대개 대화에서 텍스트를 뽑아 임베딩하고 벡터 DB에 넣는 방식으로 구현한다. 사용자 입장에서는 세 가지 불편이 생긴다.
+
+1. **저장 내용이 보이지 않는다**: 무엇이 저장됐는지 사람이 들여다보기 어려운 블랙박스가 된다.
+2. **검색 범위를 좁히기 어렵다**: 평평한(flat) 벡터 풀 전체를 검색하므로 프로젝트·사용자별 범위를 정하기 어렵다. 결과가 많아지면 토큰도 늘어난다.
+3. **컨텍스트가 흩어진다**: 지식(문서), 기억(선호·경험), 능력(skills)이 서로 다른 저장소와 API에 놓인다.
 
 OpenViking의 README는 이 문제를 "agent용 context database"라는 정의로 풀어낸다. 핵심 발상은 세 가지다.
 
@@ -76,7 +83,14 @@ flowchart LR
 - `find()`: 세션 불필요, 단일 쿼리, 낮은 지연. QUICK 모드(벡터 점수만, rerank 없음).
 - `search()`: 세션 컨텍스트 필요. IntentAnalyzer가 LLM으로 (세션 압축 요약 + 최근 5개 메시지 + 현재 쿼리)를 분석해 0~5개의 `TypedQuery`(query, context_type=MEMORY/RESOURCE/SKILL, intent, priority 1~5)를 만든다. 인사말이면 0개(검색 생략). rerank가 설정돼 있으면 THINKING 모드: 후보를 `2 × limit`개 가져온 뒤 rerank 한 번으로 `limit`개를 반환한다. 이미지 쿼리는 텍스트 rerank를 건너뛴다.
 
-**세션 commit 경로.** `session.commit()`은 Phase 1(동기)에서 compression_index 증가, `messages.jsonl`을 `history/archive_NNN/`에 기록, 현재 메시지 비우기, `task_id` 반환까지 즉시 수행한다. Phase 2(비동기 백그라운드)에서 구조화 요약(`.abstract.md`/`.overview.md`) 생성, 장기 메모리 추출, `memory_diff.json`(adds/updates/deletes/skipped의 감사 로그) 기록, `.done` 마커를 쓴다. 메모리 추출은 "LLM 후보 추출 → 벡터로 유사 메모리 사전 필터 → LLM dedup 결정(candidate: skip/create/none, 기존 항목: merge/delete)" 순이다. `SessionCompressorV3 → ExtractLoop → MemoryUpdater` 경로이며, 먼저 활성화된 user-memory 스키마(`cases` 포함)를 추출하고 case가 하나라도 나올 때만 trajectory/experience/실행형 session-skill 학습이 돈다고 문서가 설명한다.
+**세션 commit 경로.** `session.commit()`은 동기 처리와 백그라운드 처리를 구분한다.
+
+- **Phase 1(동기)**: compression_index 증가 → `messages.jsonl`을 `history/archive_NNN/`에 기록 → 현재 메시지 비우기 → `task_id` 반환까지 즉시 수행한다.
+- **Phase 2(비동기)**: 구조화 요약(`.abstract.md`/`.overview.md`) 생성 → 장기 메모리 추출 → `memory_diff.json` 기록 → `.done` 마커 쓰기를 수행한다. `memory_diff.json`은 adds/updates/deletes/skipped의 감사 로그다.
+
+메모리 추출 순서는 **LLM 후보 추출 → 벡터로 유사 메모리 사전 필터 → LLM dedup 결정**이다. 후보에는 skip/create/none, 기존 항목에는 merge/delete 결정을 내린다.
+
+구현 경로는 `SessionCompressorV3 → ExtractLoop → MemoryUpdater`다. 문서에 따르면 먼저 활성화된 user-memory 스키마(`cases` 포함)를 추출한다. case가 하나라도 나와야 trajectory/experience/실행형 session-skill 학습을 실행한다.
 
 ### 2.3 Viking URI와 컨텍스트 유형
 
@@ -230,7 +244,19 @@ README가 인용한 세 논문의 arXiv 초록 페이지를 열어 확인했다(
 
 ## 8. 성능 수치(개발사 보고)
 
-README(v0.3.22 기준 평가)의 주장: LoCoMo 정확도는 OpenClaw 24.20% → 82.08%, Hermes 33.38% → 82.86%, Claude Code 57.21% → 80.32%이고 입력 토큰은 34.3~91.0% 감소, 쿼리 지연은 58.45~66.10% 감소. tau2-bench 작업 성공률은 Retail 70.94% → 77.81%(+6.87pp), Airline 54.38% → 66.25%(+11.87pp). 메모리 평가는 Doubao 2.0 Pro(VLM)와 Doubao-embedding-vision-251215를 썼다. 재현 스크립트가 `benchmark/`에 있으나 직접 돌려 보지 않았다. 개발사 자체 보고이고 모델이 Volcengine 계열이므로, 다른 모델·한국어 데이터에서의 성능은 확인하지 못했다.
+다음 수치는 README의 **v0.3.22 기준 개발사 자체 평가**다.
+
+| 평가 | 비교 항목 | 적용 전 → 적용 후 |
+|---|---|---|
+| LoCoMo 정확도 | OpenClaw | 24.20% → 82.08% |
+| LoCoMo 정확도 | Hermes | 33.38% → 82.86% |
+| LoCoMo 정확도 | Claude Code | 57.21% → 80.32% |
+| tau2-bench 작업 성공률 | Retail | 70.94% → 77.81%(+6.87pp) |
+| tau2-bench 작업 성공률 | Airline | 54.38% → 66.25%(+11.87pp) |
+
+LoCoMo 평가에서 입력 토큰은 34.3~91.0%, 쿼리 지연은 58.45~66.10% 감소했다고 보고한다. 메모리 평가 모델은 Doubao 2.0 Pro(VLM)와 Doubao-embedding-vision-251215다.
+
+재현 스크립트는 `benchmark/`에 있지만 직접 실행하지 않았다. 개발사 자체 보고이며 Volcengine 계열 모델을 사용했으므로, 다른 모델·한국어 데이터에서의 성능은 확인하지 못했다.
 
 ## 9. 장단점·한계·성숙도
 

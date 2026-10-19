@@ -8,15 +8,25 @@ researched: 2026-10-01
 ---
 # Hyperagents
 
-> [!summary] 한줄요약
-> 과제를 푸는 task agent와 에이전트를 수정·생성하는 meta agent를 **하나의 수정 가능한 Python 프로그램(hyperagent)**으로 합치고, 이를 Darwin Gödel Machine(DGM)의 archive 기반 열린 탐색에 얹은 것이 DGM-Hyperagents(DGM-H)다. 개선 "절차" 자체가 수정 대상이라서(metacognitive self-modification), 코딩이 아닌 도메인(논문 리뷰, 로봇 reward 설계, 올림피아드 수학 채점)에서도 성능이 오르고, 학습된 meta-level 개선(성능 추적, persistent memory 등)이 다른 도메인으로 전이·누적된다고 보고한다.
+> [!summary] 핵심 요약
+> 과제를 푸는 task agent와 에이전트를 수정·생성하는 meta agent를 **하나의 수정 가능한 Python 프로그램(hyperagent)**으로 합친다. 이를 Darwin Gödel Machine(DGM)의 archive 기반 열린 탐색에 얹은 것이 DGM-Hyperagents(DGM-H)다.
+>
+> 개선 절차 자체도 수정 대상인 metacognitive self-modification이 핵심이다. 논문 리뷰, 로봇 reward 설계, 올림피아드 수학 채점처럼 코딩이 아닌 도메인에서도 성능 향상을 보고한다. 학습된 meta-level 기능(성능 추적, persistent memory 등)의 다른 도메인 전이와 누적도 보고한다.
 
 > [!info] 열람 범위
-> arXiv HTML 전문(https://arxiv.org/html/2603.19461, v1, 2026-03-19)을 초록부터 부록 A-F(알고리즘, 베이스라인, 도메인, 하이퍼파라미터, 비용, imp@k, 전이 선택, 정성 사례, parent selection 수정, 안전 논의)까지 읽었다. 도메인별 최고 에이전트 코드 전문(부록 E.1)과 그림(Fig. 2-4, 7-12)의 곡선 자체는 캡션과 본문 서술로만 확인했다. 공식 저장소 https://github.com/facebookresearch/Hyperagents 를 clone해 구조를 확인했다(최신 커밋 2026-04-14, 라이선스 CC BY-NC-SA 4.0). 논문 본문 첫 페이지 표기에 "date: August 24, 2026"이 보이는데 arXiv 제출은 v1 2026-03-19로 표기되어 있어, 이 날짜는 개정 시점일 가능성이 있으나 확인하지 못했다.
+> arXiv HTML 전문(https://arxiv.org/html/2603.19461, v1, 2026-03-19)을 초록부터 부록 A-F(알고리즘, 베이스라인, 도메인, 하이퍼파라미터, 비용, imp@k, 전이 선택, 정성 사례, parent selection 수정, 안전 논의)까지 읽었다. 도메인별 최고 에이전트 코드 전문(부록 E.1)과 그림(Fig. 2-4, 7-12)의 곡선 자체는 캡션과 본문 서술로만 확인했다.
+>
+> 공식 저장소 https://github.com/facebookresearch/Hyperagents 를 clone해 구조를 확인했다(최신 커밋 2026-04-14, 라이선스 CC BY-NC-SA 4.0).
+>
+> 논문 본문 첫 페이지 표기에 "date: August 24, 2026"이 보이는데 arXiv 제출은 v1 2026-03-19로 표기되어 있어, 이 날짜는 개정 시점일 가능성이 있으나 확인하지 못했다.
 
 ## 1. 문제의식·배경
 
-자기개선 AI의 병목은 대개 **고정된 meta-level**이다. 기반 시스템(base)을 고치는 상위 시스템(meta agent)이 손으로 설계되어 있으면 base는 meta가 허용하는 범위까지만 개선된다. meta-meta를 추가해도 무한 후퇴만 일어난다는 것이 저자들의 진단이다. 해결책은 시스템이 **자기참조적(self-referential)**이어서 스스로를 분석·수정·평가할 수 있게 하는 것이다.
+자기개선 AI의 병목은 대개 **고정된 meta-level**이다. 기반 시스템(base)을 고치는 상위 시스템(meta agent)이 손으로 설계되어 있으면 base는 meta가 허용하는 범위까지만 개선된다.
+
+meta-meta를 추가해도 무한 후퇴만 일어난다는 것이 저자들의 진단이다.
+
+해결책은 시스템이 **자기참조적(self-referential)**이어서 스스로를 분석·수정·평가할 수 있게 하는 것이다.
 
 ### DGM과 그 가정의 한계
 
@@ -64,9 +74,17 @@ return A
 
 DGM-H w/o self-improve(ADAS 유사)에서는 `a.Modify`가 항상 **초기 meta agent a0**의 Modify로 고정된다(부록 B Algorithm 2). 이 대비가 핵심 ablation이다.
 
-**부모 선택 (A.2)**: 성능에 비례하고 "컴파일에 성공한 자식 수"에 반비례하는 확률적 선택이다. 현재 상위 m=3개 에이전트 평균으로 동적 중간값 α_mid를 잡고, 각 에이전트 점수에 시그모이드 s_i = 1/(1+exp(−λ(α_i − α_mid))) (λ=10)를 적용하고, 자식 수 n_i에 대해 novelty 보너스 h_i = 1/(1+n_i)를 곱해 w_i = s_i·h_i를 만들고 정규화해 categorical 분포에서 복원추출한다. 본문 실험에서는 이 선택기를 **수정 불가**로 고정했다(효과를 hyperagent 자기수정에 격리하기 위해).
+**부모 선택 (A.2)**: 성능에 비례하고 "컴파일에 성공한 자식 수"에 반비례하는 확률적 선택이다.
 
-**멀티 도메인 최적화 (A.4)**: 한 run에서 여러 도메인을 동시에 평가하며 meta agent가 모든 도메인의 평가를 본다. 부모 선택은 도메인 평균 성능 기준이고, 어느 도메인을 우선할지 지정하지 않는다. 어느 도메인의 staged evaluation이 실패하면 다른 도메인의 전체 평가도 건너뛰고 나머지를 0점 처리한다(5.1절).
+현재 상위 m=3개 에이전트 평균으로 동적 중간값 α_mid를 잡고, 각 에이전트 점수에 시그모이드 s_i = 1/(1+exp(−λ(α_i − α_mid))) (λ=10)를 적용하고, 자식 수 n_i에 대해 novelty 보너스 h_i = 1/(1+n_i)를 곱해 w_i = s_i·h_i를 만들고 정규화해 categorical 분포에서 복원추출한다.
+
+본문 실험에서는 이 선택기를 **수정 불가**로 고정했다(효과를 hyperagent 자기수정에 격리하기 위해).
+
+**멀티 도메인 최적화 (A.4)**: 한 run에서 여러 도메인을 동시에 평가하며 meta agent가 모든 도메인의 평가를 본다.
+
+부모 선택은 도메인 평균 성능 기준이고, 어느 도메인을 우선할지 지정하지 않는다.
+
+어느 도메인의 staged evaluation이 실패하면 다른 도메인의 전체 평가도 건너뛰고 나머지를 0점 처리한다(5.1절).
 
 ### 2.3 초기 hyperagent (4절, A.1)
 
@@ -75,7 +93,11 @@ DGM-H w/o self-improve(ADAS 유사)에서는 `a.Modify`가 항상 **초기 meta 
 - **초기 task agent**: 과제 입력을 받아 FM 호출 한 번의 응답을 JSON(`{"response": ...}`)으로 출력할 뿐이다. 그래서 형식 후처리가 없는 paper review에서는 점수 0.0이다.
 - **초기 meta agent**: 지시문이 사실상 한 줄이다. "Modify any part of the codebase at `{repo_path}`." 입력으로 저장소 경로, 이전 평가 결과 경로, 남은 반복 횟수를 받는다.
 
-공식 코드의 `meta_agent.py`(18줄)와 `task_agent.py`(44줄)가 이 초기 상태 그대로다. 저장소에서 확인한 meta agent는 `chat_with_agent(instruction, tools_available='all')`을 호출하는 것이 전부다. 모든 구조 개선은 이 단순한 시작점에서 진화로 나온다.
+공식 코드의 `meta_agent.py`(18줄)와 `task_agent.py`(44줄)가 이 초기 상태 그대로다.
+
+저장소에서 확인한 meta agent는 `chat_with_agent(instruction, tools_available='all')`을 호출하는 것이 전부다.
+
+모든 구조 개선은 이 단순한 시작점에서 진화로 나온다.
 
 ```mermaid
 flowchart LR
@@ -122,7 +144,9 @@ flowchart LR
 
 ### 3.3 새 지표 imp@k (5.2, D.3)
 
-meta agent의 "개선된 task agent를 만드는 능력"을 직접 재기 위해 improvement@k를 정의한다. meta agent M을 **고정**하고 초기 task agent A에서 시작해 최대 k개의 새 task agent를 생성하게 한 뒤, 검증 점수로 고른 최고 에이전트의 테스트 성능에서 A의 성능을 뺀 값이다. 이 논문에서는 k=50, 즉 imp@50. 한계로, 성능 구간별 난이도(0.7->0.8 vs 0.0->0.1)를 반영하지 못해 선형으로 취급한다는 점을 저자가 부록에서 인정한다.
+meta agent의 "개선된 task agent를 만드는 능력"을 직접 재기 위해 improvement@k를 정의한다. meta agent M을 **고정**하고 초기 task agent A에서 시작해 최대 k개의 새 task agent를 생성하게 한 뒤, 검증 점수로 고른 최고 에이전트의 테스트 성능에서 A의 성능을 뺀 값이다. 이 논문에서는 k=50, 즉 imp@50.
+
+한계로, 성능 구간별 난이도(0.7->0.8 vs 0.0->0.1)를 반영하지 못해 선형으로 취급한다는 점을 저자가 부록에서 인정한다.
 
 ### 3.4 전이 에이전트 선택 (D.4)
 
@@ -132,7 +156,11 @@ meta agent의 "개선된 task agent를 만드는 능력"을 직접 재기 위해
 
 ### 4.1 과제 성능 개선 (5.1, Fig. 2)
 
-**Polyglot(코딩)**: 초기 에이전트 -> DGM-H, 50개 train 부분집합 0.140 -> 0.340(CI 0.300-0.380), 전체 벤치마크 0.084 -> 0.267(CI 0.231-0.280). 비교로 원본 DGM은 train 0.140 -> 0.380, 전체 0.142 -> 0.307로 보고되어 있다(Zhang et al., 2025b 수치). DGM-H는 코딩 전용으로 설계되지 않았음에도 유사한 개선폭을 낸다는 주장이다. 단, 전체 벤치마크 초기값이 0.084 vs 0.142로 다르고 DGM의 최종 수치가 더 높다는 점은 "comparable"이라는 표현이 넉넉한 표현임을 보여준다.
+**Polyglot(코딩)**: 초기 에이전트 -> DGM-H, 50개 train 부분집합 0.140 -> 0.340(CI 0.300-0.380), 전체 벤치마크 0.084 -> 0.267(CI 0.231-0.280).
+
+비교로 원본 DGM은 train 0.140 -> 0.380, 전체 0.142 -> 0.307로 보고되어 있다(Zhang et al., 2025b 수치). DGM-H는 코딩 전용으로 설계되지 않았음에도 유사한 개선폭을 낸다는 주장이다.
+
+단, 전체 벤치마크 초기값이 0.084 vs 0.142로 다르고 DGM의 최종 수치가 더 높다는 점은 "comparable"이라는 표현이 넉넉한 표현임을 보여준다.
 
 **Paper review / Robotics (테스트 중앙값)**:
 
@@ -146,7 +174,13 @@ meta agent의 "개선된 task agent를 만드는 능력"을 직접 재기 위해
 | **DGM-H** | **0.710 (0.590-0.750)** | **0.372 (0.355-0.436)** |
 | 정적 baseline | 0.630 (AI-Scientist-v2 reviewer) | 0.348 (기본 reward) |
 
-DGM-H는 원본 DGM, w/o self-improve, w/o open-ended exploration 대비 두 도메인에서 모두 p<0.05로 유의하게 높았다. DGM-custom과는 중앙값이 높지만 **유의하지 않다**(p>0.05). 해석은 이렇다. 사람이 도메인마다 instruction 생성 단계를 손으로 맞추면(DGM-custom) 꽤 따라잡는다. DGM-H는 사람 없이 그 수준에 도달한다. 정성적으로 로봇 test(torso 높이)에서 DGM-H는 거의 항상 점프 보상을 설계한 반면 DGM-custom은 "서 있기" 지역 최적에 자주 갇혔다.
+DGM-H는 원본 DGM, w/o self-improve, w/o open-ended exploration 대비 두 도메인에서 모두 p<0.05로 유의하게 높았다.
+
+DGM-custom과는 중앙값이 높지만 **유의하지 않다**(p>0.05).
+
+해석은 이렇다. 사람이 도메인마다 instruction 생성 단계를 손으로 맞추면(DGM-custom) 꽤 따라잡는다. DGM-H는 사람 없이 그 수준에 도달한다.
+
+정성적으로 로봇 test(torso 높이)에서 DGM-H는 거의 항상 점프 보상을 설계한 반면 DGM-custom은 "서 있기" 지역 최적에 자주 갇혔다.
 
 정성적 진화 양상(E.2): paper review에서 "엄격한 심사자" 같은 태도 지시(generation 39)에서 "LLM에는 태도 지시 대신 구조적 절차를 쓰라"는 통찰(generation 54)과 함께 체크리스트로 약점을 먼저 식별한 뒤 규칙에 따라 accept/reject를 결정하는 2단계 평가로 진화했다. robotics에서는 generation 8에 유효한 상태 변수와 제약, reward 설계 가이드를 담은 환경 문서화를 추가해 환각 속성에 의한 컴파일 실패를 제거하고, 12-13에서 예제 코드와 스케일 범위를 정교화했다. IMO grading에서는 generation 3의 채점 카테고리 정의(풀이하려는 경향 교정), 18/37의 결정 절차와 경계 사례, 168의 명시적 rubric·항목별 체크리스트·결정 트리로 진행했다.
 
@@ -158,15 +192,27 @@ DGM-H는 원본 DGM, w/o self-improve, w/o open-ended exploration 대비 두 도
 - **DGM-custom 계열 전이 에이전트**(paper review/robotics에서 최적화된 것)를 쓰면 imp@50은 0.0 (CI 0.0-0.010) 수준. 해석: DGM-custom의 개선은 도메인 특화 수작업에 의존했고 일반적 meta 능력이 늘지 않았다.
 - **DGM-H 전이 hyperagent**를 쓰면 시작 테스트 점수는 0.0인데, 50 iteration 후 최고 에이전트가 0.630(CI 0.540-0.630), 즉 imp@50 = 0.630. 초기 에이전트의 imp@50과 비교해 p<0.05.
 
-저자들은 전이 hyperagent가 가진 일반 meta 기능으로 **performance tracking**(세대별 점수를 기록·집계·추세 비교, 논문에 `PerformanceTracker` 코드 제시: `record_generation`, 이동평균 기반 `get_improvement_trend`, `get_statistics`)과 **persistent memory**(단순 점수 로그가 아닌 종합된 통찰, 인과 가설, 향후 계획을 저장하고 이후 수정 단계에서 참조. 예: "Gen55는 정확도 63%이나 너무 가혹함, Gen64는 균형이 좋음, Gen66은 과교정" 같은 항목)를 든다. 부록 E.3에는 이 외에도 평가 결과를 분석한 뒤 수정하는 `_analyze_evaluations()`(E.3.1), 남은 반복 횟수에 따라 보수성을 바꾸는 compute-aware 계획(E.3.2: iterations_left가 많으면 근본 개선, 적으면 보수적), 한 클래스로 예측이 쏠리는 classification collapse를 label 분포 추적으로 탐지·교정하는 장치(E.3.3), 프롬프트 템플릿 시스템(E.3.5), 다세대 성능 기반 정제(E.3.6)가 나온다. 어느 것도 지시된 적 없는 emergent 기능이라고 저자들은 강조한다.
+저자들은 전이 hyperagent가 가진 일반 meta 기능으로 **performance tracking**(세대별 점수를 기록·집계·추세 비교, 논문에 `PerformanceTracker` 코드 제시: `record_generation`, 이동평균 기반 `get_improvement_trend`, `get_statistics`)과 **persistent memory**(단순 점수 로그가 아닌 종합된 통찰, 인과 가설, 향후 계획을 저장하고 이후 수정 단계에서 참조. 예: "Gen55는 정확도 63%이나 너무 가혹함, Gen64는 균형이 좋음, Gen66은 과교정" 같은 항목)를 든다.
+
+부록 E.3에는 이 외에도 평가 결과를 분석한 뒤 수정하는 `_analyze_evaluations()`(E.3.1), 남은 반복 횟수에 따라 보수성을 바꾸는 compute-aware 계획(E.3.2: iterations_left가 많으면 근본 개선, 적으면 보수적), 한 클래스로 예측이 쏠리는 classification collapse를 label 분포 추적으로 탐지·교정하는 장치(E.3.3), 프롬프트 템플릿 시스템(E.3.5), 다세대 성능 기반 정제(E.3.6)가 나온다.
+
+어느 것도 지시된 적 없는 emergent 기능이라고 저자들은 강조한다.
 
 ### 4.3 누적(compounding) (5.3, Fig. 4)
 
-IMO 채점에서 전이 hyperagent로 200 iteration 계속하면 최고 테스트 0.640 (CI 0.550-0.720). 초기 에이전트에서 시작하면 0.610 (CI 0.510-0.680). 중앙값과 CI 하한은 높으나 **통계적으로 유의하지 않다**(p>0.05). 저자들은 포화 효과로 같은 개선이 어렵다고 해석한다. 또한 ProofAutoGrader를 task agent로 초기화하고 전이 meta agent를 붙여 200 iteration 최적화하면 테스트 0.700으로 ProofAutoGrader의 0.670을 넘고, 전체 IMO-GradingBench에서는 정확도 0.561 -> 0.601, MAE 0.178 -> 0.175였다(E.4, 아티팩트 공개).
+IMO 채점에서 전이 hyperagent로 200 iteration 계속하면 최고 테스트 0.640 (CI 0.550-0.720). 초기 에이전트에서 시작하면 0.610 (CI 0.510-0.680).
+
+중앙값과 CI 하한은 높으나 **통계적으로 유의하지 않다**(p>0.05). 저자들은 포화 효과로 같은 개선이 어렵다고 해석한다.
+
+또한 ProofAutoGrader를 task agent로 초기화하고 전이 meta agent를 붙여 200 iteration 최적화하면 테스트 0.700으로 ProofAutoGrader의 0.670을 넘고, 전체 IMO-GradingBench에서는 정확도 0.561 -> 0.601, MAE 0.178 -> 0.175였다(E.4, 아티팩트 공개).
 
 ### 4.4 parent selection도 수정시켜 보기 (E.5, Fig. 11-12)
 
-무작위 선택에서 시작해 hyperagent가 선택 메커니즘을 수정하게 한 예비 실험이다(`modifiable`). paper review + robotics 평균 테스트 점수: 무작위 선택 0.030 -> 0.428 (CI 0.407-0.432), 수정 가능 0.491 (CI 0.387-0.512), 손설계 score-child-prop 0.532 (CI 0.384-0.586). 차이는 유의하지 않다. 모든 run이 초기 몇 iteration 안에 UCB형 선택(탐색 보너스 sqrt(log(total_children+1)/(children+1)))을 독립적으로 만들었고, 이어서 온도 softmax, 온도의 적응, 다성분 점수(다양성, 최근성, 엘리트 보너스), 점수 분산이 작으면 탐색 가중치를 1.4배 올리는 정체 탐지까지 진화했다. 그러나 정교해질수록 복잡·민감해져서 손설계 선택기를 넘지 못했다.
+무작위 선택에서 시작해 hyperagent가 선택 메커니즘을 수정하게 한 예비 실험이다(`modifiable`). paper review + robotics 평균 테스트 점수: 무작위 선택 0.030 -> 0.428 (CI 0.407-0.432), 수정 가능 0.491 (CI 0.387-0.512), 손설계 score-child-prop 0.532 (CI 0.384-0.586). 차이는 유의하지 않다.
+
+모든 run이 초기 몇 iteration 안에 UCB형 선택(탐색 보너스 sqrt(log(total_children+1)/(children+1)))을 독립적으로 만들었고, 이어서 온도 softmax, 온도의 적응, 다성분 점수(다양성, 최근성, 엘리트 보너스), 점수 분산이 작으면 탐색 가중치를 1.4배 올리는 정체 탐지까지 진화했다.
+
+그러나 정교해질수록 복잡·민감해져서 손설계 선택기를 넘지 못했다.
 
 ## 5. 저자가 밝힌 한계 + 내 비판적 평가
 
@@ -206,7 +252,14 @@ IMO 채점에서 전이 hyperagent로 200 iteration 계속하면 최고 테스�
 
 ## 8. 관련 노트
 
-[[wikiskill]] [[procedural-graphs-self-evolving]] [[skillzip-pro]] [[llm-agent-skill-memory-without-finetuning]] [[aces-agentic-continuous-evaluation-of-skills]] [[context-fails-first-agent-reliability]] [[algorithmically-establishing-trust-in-evaluators]] [[jev-as-a-judge-agent-evals]]
+- [[wikiskill]]
+- [[procedural-graphs-self-evolving]]
+- [[skillzip-pro]]
+- [[llm-agent-skill-memory-without-finetuning]]
+- [[aces-agentic-continuous-evaluation-of-skills]]
+- [[context-fails-first-agent-reliability]]
+- [[algorithmically-establishing-trust-in-evaluators]]
+- [[jev-as-a-judge-agent-evals]]
 
 ## 9. 출처
 

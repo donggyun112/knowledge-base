@@ -8,8 +8,10 @@ researched: 2026-10-01
 ---
 # Algorithmically Establishing Trust in Evaluators
 
-> [!summary] 한줄요약
-> 정답 라벨이 하나도 없어도, evaluator(예: LLM-as-a-judge)에게 "유사한 데이터포인트 x'와 부분 라벨을 직접 만들어 보이라"는 무작위 챌린지(순열 동치 / 동형 동치) 중 하나를 라운드마다 내서, 거짓/무지한 evaluator는 라운드당 최대 1/4 확률로만 통과하게 만드는 Arthur-Merlin형 프로토콜(No-Data Algorithm). 신뢰의 지표는 정확도가 아니라 **success rate**다.
+> [!summary] 핵심 요약
+> 정답 라벨 없이 evaluator(예: LLM-as-a-judge)의 신뢰를 평가하려는 **Arthur-Merlin형 No-Data Algorithm**이다. 신뢰 지표는 정확도가 아니라 **success rate**다.
+>
+> Evaluator가 유사한 데이터포인트 x'와 부분 라벨을 만들면, 라운드마다 순열 동치 또는 동형 동치 중 하나를 무작위로 검증한다. 프로토콜의 이론적 주장은 거짓/무지한 evaluator의 통과 확률이 라운드당 최대 1/4이라는 것이다.
 
 > [!info] 조사 범위와 출처 관계
 > frontmatter의 `source`는 요약 사이트(baba9811 논문 리뷰, 2026-05-14 작성)이다. 이 페이지가 가리키는 원 논문은 **arXiv:2506.03083**(Adrian de Wynter, 최초 제출 2025-06-03, 내가 연 HTML은 v4 / 2026-02-11, cs.DS, CC BY-NC-SA 4.0)이며, 본 노트는 원 논문 HTML 전문(1~9절 + 부록 A~E)을 직접 읽고 요약 사이트와 대조해 원문 기준으로 작성했다. 공식 코드(`github.com/adewynter/no_data_algorithm`)를 clone해 구조를 확인했다. 논문 v1 제목은 repo README 기준 "Labelling Data with Unknown References"였다고 되어 있다(README 인용; v1 본문은 직접 열람하지 않음).
@@ -17,7 +19,13 @@ researched: 2026-10-01
 ## 1. 문제의식·배경
 
 ### 1.1 풀려는 문제
-"evaluator가 신뢰할 만한가"는 보통 정답 라벨이 있는 데이터셋으로 통계적으로 검증하거나(참조 기반), evaluator가 정답을 "안다"고 가정한다. 저자는 두 방법 모두 참조가 없을 때 무너진다고 말한다. 전자는 데이터가 필요하고, 후자는 증거가 아니라 가정이기 때문이다(초록). 벤치마크 오염 문제(Sainz et al. 2023)까지 겹치면 참조가 있어도 믿기 어렵다(1절). 그래서 "참조가 없을 때 evaluator의 신뢰를 과학적으로 세우려면 형식적 증명밖에 없다"는 논지로 알고리즘 + 증명 + 실험을 제시한다.
+"evaluator가 신뢰할 만한가"는 보통 정답 라벨이 있는 데이터셋으로 통계적으로 검증하거나(참조 기반), evaluator가 정답을 "안다"고 가정한다.
+
+저자는 두 방법 모두 참조가 없을 때 무너진다고 말한다. 전자는 데이터가 필요하고, 후자는 증거가 아니라 가정이기 때문이다(초록).
+
+벤치마크 오염 문제(Sainz et al. 2023)까지 겹치면 참조가 있어도 믿기 어렵다(1절).
+
+그래서 "참조가 없을 때 evaluator의 신뢰를 과학적으로 세우려면 형식적 증명밖에 없다"는 논지로 알고리즘 + 증명 + 실험을 제시한다.
 
 ### 1.2 선행연구와의 위치 (2절)
 - LLM-as-a-judge 계열의 신뢰성 비판(인간 판단과의 상관 부족, 프롬프트 민감성, 암기 가능성, 추론의 허위성 등)을 길게 정리하지만, 신뢰를 높이려는 기존 시도는 대부분 prompting 전략이나 다른 LLM을 쌓는 call stack이라고 평가한다.
@@ -73,7 +81,9 @@ flowchart TD
 - **Lemma 5.1**: r라운드 후 verifier가 거짓을 놓칠 확률은 $(1/4)^r$. 논거(부록 A.1~A.3): 거짓말에는 두 유형이 있다 — (Lie 1) 구조는 맞는 x'($S_{x'}=S_x$)를 만들어 Challenge 1은 통과하지만 $C(x')=C(x)$인지는 운에 달림, (Lie 2) $C(x')=C(x)$인 x'를 만들어 Challenge 2는 통과하지만 구조는 운. 챌린지가 선택될 확률 1/2 × 나머지 쪽에서 "운이 좋을" 확률 1/2 = 1/4 per round. Lemma A.1은 두 챌린지가 서로 독립적 정보를 주므로 "필요충분"이라고 주장한다.
 - **Theorem 5.2**: 균형 데이터에서 accuracy α인 evaluator가 "틀릴 때는 항상 거짓말을 한다"고 가정하면, No-Data Algorithm의 기대 정확도는
   $$\mathbb{E}[\text{correct}] \le 1-(1-\alpha)\bigl(1-\phi+\phi(1/4)^r\bigr)$$
-  증명은 union bound(부록 A.4): 틀렸는데 못 잡을 항 $\epsilon(1/4)^r$과 잡았지만 flip 안 한 항 $\epsilon(1-\phi)(1-(1/4)^r)$의 합, $\epsilon=1-\alpha$. 해석: evaluator의 실제 정확도가 0이면 φ와 무관하게 복원 불가("허공에서 정보를 만들 수 없다"). 따라서 알고리즘의 1차 목적은 라벨링이 아니라 **신뢰 확립**이다.
+  증명은 union bound(부록 A.4): 틀렸는데 못 잡을 항 $\epsilon(1/4)^r$과 잡았지만 flip 안 한 항 $\epsilon(1-\phi)(1-(1/4)^r)$의 합, $\epsilon=1-\alpha$.
+
+  해석: evaluator의 실제 정확도가 0이면 φ와 무관하게 복원 불가("허공에서 정보를 만들 수 없다"). 따라서 알고리즘의 1차 목적은 라벨링이 아니라 **신뢰 확립**이다.
 - 이 정리의 전제 중 "evaluator가 틀릴 때는 항상 거짓말(= 챌린지에서 걸림)"이 모든 evaluator에 해당하는 것은 아니며, 추측으로 정답을 맞히지만 챌린지는 통과하지 못하는 evaluator는 범위 밖이라고 저자가 직접 적었다(5절).
 - 확장(부록 C): k-ary 라벨은 one-vs-all로 k−1회 반복(보장 유지, 런타임 ×(k−1)); 더 효율적인 변형은 Conjecture 1로만 제시. C.2에서는 $C(x)=C(x')$ 등식 제약을 거리 $\delta(C(x),C(x'))<\epsilon$로 완화하는 변형을 스케치하지만 경계가 약해진다고만 서술한다.
 
@@ -102,7 +112,11 @@ flowchart TD
 | OOP | success / flip | — | 4.8 / 46.4 | — | 28.0 / 6.0 |
 | OOP | acc / F1 | 54.2 / 54.2 | 52.8 / 52.1 | 60.6 / 66.2 | 59.0 / 64.0 |
 
-정확도는 known 대비 −2~0%p 이내로 복원된다. 그러나 정확도만 보면 DT의 IP(62.2)와 OOP(52.8)가 크게 다르지 않아 "누가 아는지" 구별이 약하다. success rate는 DT 100% vs 4.8%, LLM 81.3% vs 28.0%로 갈려 신뢰 판별 신호가 된다. 저자 문장으로는 "정확도는 알 수 없는 상황에서 신호가 아니며 success rate가 신호"라는 것이다.
+정확도는 known 대비 −2~0%p 이내로 복원된다.
+
+그러나 정확도만 보면 DT의 IP(62.2)와 OOP(52.8)가 크게 다르지 않아 "누가 아는지" 구별이 약하다.
+
+success rate는 DT 100% vs 4.8%, LLM 81.3% vs 28.0%로 갈려 신뢰 판별 신호가 된다. 저자 문장으로는 "정확도는 알 수 없는 상황에서 신호가 아니며 success rate가 신호"라는 것이다.
 
 ### 4.2 West Frisian (Table 3, 부록 D.4 Table 8)
 | 설정 | IP Acc/F1 | OOP Acc/F1 | IP Succ/Flip | OOP Succ/Flip |
@@ -113,7 +127,11 @@ flowchart TD
 | φ=0.3 | 74.4 / 78.1 | 49.1 / 39.1 | 86.8 / 4.9 | 1.2 / 33.6 |
 | φ=0.1 | 76.9 / 79.8 | 50.7 / 16.4 | 86.2 / 1.8 | 1.2 / 9.1 |
 
-success rate는 φ와 무관하게 안정적(IP 86~88%, OOP 1.2~1.4%)이며, 정확도는 φ가 낮을수록 known에 가까워진다(IP는 최대 −3.9%p, OOP는 −2.2%p 수준으로 서술됨). 3-클래스 변형(부록 C.1 Table 4): IP 정확도 known 71.8 대비 φ=0.1에서 66.0(flip)/67.0(no flip), 성공률 39.4%이고 OOP 성공률 0.4%. 즉 거짓 evaluator 검출은 되지만 IP 성공률 자체가 39%로 낮아 binary만큼 선명하지 않다. 또 flip을 끄면 정확도 복원이 약간 더 좋은 경우가 있어 "flip 필수"라는 이론과 3-ary 실험이 완전히 일치하지는 않는다(저자: 추가 알고리즘 개발 필요).
+success rate는 φ와 무관하게 안정적(IP 86~88%, OOP 1.2~1.4%)이며, 정확도는 φ가 낮을수록 known에 가까워진다(IP는 최대 −3.9%p, OOP는 −2.2%p 수준으로 서술됨).
+
+3-클래스 변형(부록 C.1 Table 4): IP 정확도 known 71.8 대비 φ=0.1에서 66.0(flip)/67.0(no flip), 성공률 39.4%이고 OOP 성공률 0.4%. 즉 거짓 evaluator 검출은 되지만 IP 성공률 자체가 39%로 낮아 binary만큼 선명하지 않다.
+
+또 flip을 끄면 정확도 복원이 약간 더 좋은 경우가 있어 "flip 필수"라는 이론과 3-ary 실험이 완전히 일치하지는 않는다(저자: 추가 알고리즘 개발 필요).
 
 언어 능력이 없는 evaluator(Qwen 2.5 VL 7B)는 IP에서도 성공률 약 34~35%, OOP에서 약 2%로 낮다. 해석은 "거짓말하는 게 아니라 못하는 것"이며 OOP에서 가장 낮은 이유는 rubric을 틀리게 준 상태(lying)에서 틀리기까지 하기 때문이라고 설명한다.
 
@@ -132,7 +150,11 @@ success rate는 φ와 무관하게 안정적(IP 86~88%, OOP 1.2~1.4%)이며, 정
 - 모델 자체의 신뢰성(프롬프트가 아닌 모델의 신뢰성)과 다른 데이터 타입은 열린 질문(8절).
 
 **내 평가**
-1. **(1/4)^r 보장의 엄밀성.** 증명 스케치는 "한 챌린지만 통과 가능하고 나머지는 1/2 확률로 운이 좋다"는 가정에 의존한다. 이 "운이 좋을 확률 1/2"은 일반적인 evaluator에 대해 유도된 값이 아니라 가정에 가깝다. 실제 실험에서도 o3-mini의 OOP 성공률이 28.0%(r=3)로 이론적 상한 $(1/4)^3\approx1.6\%$ 근처에 한참 못 미친다. 저자는 이를 "모르는 데이터에서 ‘고르기’로 우연히 맞는 후보가 있다" 등으로 직접 해명하지 않는다. 즉 이론 경계는 거짓 evaluator의 통과 확률이 작다는 방향성만 주고, 정량적 신뢰구간으로 쓰기는 어렵다. (데이터 5개 중 고르는 구조에서는 무작위 통과도 20%라는 점을 감안하면, 28%는 우연 수준에 가까워 보이지만 이는 내 추정이다.)
+1. **(1/4)^r 보장의 엄밀성.** 증명 스케치는 "한 챌린지만 통과 가능하고 나머지는 1/2 확률로 운이 좋다"는 가정에 의존한다. 이 "운이 좋을 확률 1/2"은 일반적인 evaluator에 대해 유도된 값이 아니라 가정에 가깝다.
+
+   실제 실험에서도 o3-mini의 OOP 성공률이 28.0%(r=3)로 이론적 상한 $(1/4)^3\approx1.6\%$ 근처에 한참 못 미친다. 저자는 이를 "모르는 데이터에서 ‘고르기’로 우연히 맞는 후보가 있다" 등으로 직접 해명하지 않는다.
+
+   즉 이론 경계는 거짓 evaluator의 통과 확률이 작다는 방향성만 주고, 정량적 신뢰구간으로 쓰기는 어렵다. (데이터 5개 중 고르는 구조에서는 무작위 통과도 20%라는 점을 감안하면, 28%는 우연 수준에 가까워 보이지만 이는 내 추정이다.)
 2. **completeness 문제.** 이론상 f를 아는 evaluator는 확률 1로 통과해야 하지만 o3-mini IP 성공률은 81.3%(합성), GPT-4.1은 86~88%(West Frisian)이다. 12~19%의 정직한 evaluator가 탈락하는 것이며, "신뢰 임계값을 몇 %로 둘 것인가"는 논문에서 제시하지 않는다. IP/OOP가 비교 가능할 때만 상대적 판정이 가능하고, 하나의 evaluator·하나의 코퍼스만 있으면 success rate 86%가 "충분한가"를 판정할 기준이 없다.
 3. **verifier 자체의 신뢰.** West Frisian 실험에서 verifier도 LLM(GPT-4.1)이며, IP known 케이스에서 사전에 튜닝했다. "evaluator의 신뢰를 세우려고 또 다른 LLM verifier를 신뢰한다"는 순환 의혹에 대해 저자는 "evaluator와 verifier는 서로 다른 과제를 풀기 때문에 순환이 아니다"라고 답하지만, verifier의 오류율이 보장 $(1/4)^r$에 어떻게 반영되는지는 이론에 포함되지 않았다. 합성 실험의 verifier는 규칙 기반이라 이 문제가 없다.
 4. **라벨 없는 상황의 실제 "신뢰"는 rubric에 대한 신뢰.** 결과는 "rubric이 요구하는 대로 라벨링할 수 있음"에 대한 증거이지 인간 판단과의 일치가 아니다. 저자도 이를 인정한다(7.3). 그러므로 West Frisian 실험의 의미는 "GPT-4.1이 이 rubric 하에서 원어민 주석과 비슷하게 행동한다"에 가깝다.
@@ -142,12 +164,16 @@ success rate는 φ와 무관하게 안정적(IP 86~88%, OOP 1.2~1.4%)이며, 정
 
 ## 6. 재현·구현 고려사항
 
-- **공식 코드**: `https://github.com/adewynter/no_data_algorithm` clone 확인. 구성: `No-Data-Algorithm.ipynb`(합성 실험), `NLEvaluatorAM.ipynb`(West Frisian 실험), `NLEvaluatorAMkAry.ipynb`(3-ary), `no_data_prompts.py`/`no_data_prompts_k_ary.py`(프롬프트), `no_data_utils.py`(52줄: 정확도/F1/성공률 출력, 다수결, 라벨 비율 집계), `llmclient.py`(50줄: API 키를 사용자가 넣는 래퍼), 합성 train/test json과 West Frisian 데이터 json. EV 프로토콜 로직 자체는 `.py`가 아니라 노트북에 있으며 라이선스는 MIT(단 West Frisian 데이터는 원 출처 OpenOrca/MMLU/OpenCodeReasoning/WildChat 라이선스를 따름). API 호출은 Azure OpenAI로 수행했고(논문 부록 E), 파싱 실패 시 최대 5번 재질의하며 5번째도 실패하면 합성은 무작위 문자열, 자연어는 0 라벨을 반환한다.
+- **공식 코드**: `https://github.com/adewynter/no_data_algorithm` clone 확인. 구성: `No-Data-Algorithm.ipynb`(합성 실험), `NLEvaluatorAM.ipynb`(West Frisian 실험), `NLEvaluatorAMkAry.ipynb`(3-ary), `no_data_prompts.py`/`no_data_prompts_k_ary.py`(프롬프트), `no_data_utils.py`(52줄: 정확도/F1/성공률 출력, 다수결, 라벨 비율 집계), `llmclient.py`(50줄: API 키를 사용자가 넣는 래퍼), 합성 train/test json과 West Frisian 데이터 json. EV 프로토콜 로직 자체는 `.py`가 아니라 노트북에 있으며 라이선스는 MIT(단 West Frisian 데이터는 원 출처 OpenOrca/MMLU/OpenCodeReasoning/WildChat 라이선스를 따름).
+
+  API 호출은 Azure OpenAI로 수행했고(논문 부록 E), 파싱 실패 시 최대 5번 재질의하며 5번째도 실패하면 합성은 무작위 문자열, 자연어는 0 라벨을 반환한다.
 - 모델 설정: o3-mini(2025-01-31) max tokens 50,000, GPT-4o/Qwen은 temperature 0 / 1,024 tokens, GPT-4.1 evaluator·verifier 256 tokens, generator 5,000 tokens, temperature 0.
 - 설계 시 결정 항목: (a) rubric을 criterion 단위로 명시하고 가능하면 total로 분해, (b) 각 챌린지를 코드 가능한 검사로 구현(Challenge 2는 criterion 벡터 일치 검사, Challenge 1은 부분 구조 대응 검사), (c) r(논문은 3)과 φ 선택, (d) "x'를 새로 생성할지 후보에서 고를지"(성공률에 크게 영향), (e) IP/OOP 대조군 코퍼스를 같이 준비해야 임계값을 해석할 수 있다.
 
 ## 관련 노트
-[[jev-as-a-judge-agent-evals]] [[probe-process-based-hallucination-benchmark]] [[aces-agentic-continuous-evaluation-of-skills]]
+- [[jev-as-a-judge-agent-evals]]
+- [[probe-process-based-hallucination-benchmark]]
+- [[aces-agentic-continuous-evaluation-of-skills]]
 
 ## 출처
 - Adrian de Wynter (Microsoft, University of York). "Algorithmically Establishing Trust in Evaluators." arXiv:2506.03083 (cs.DS), 최초 제출 2025-06-03, 열람본 v4 2026-02-11. 초록 https://arxiv.org/abs/2506.03083 , 전문 https://arxiv.org/html/2506.03083 (실제 열람, 본문 및 부록 A~E 전체).

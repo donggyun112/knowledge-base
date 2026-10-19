@@ -9,7 +9,9 @@ researched: 2026-10-01
 # diagram-design
 
 > [!summary] 한줄요약
-> Claude Code·Codex·GitHub Copilot·Factory Droid·Pi·Kiro·OpenCode 등 Agent Skills 호환 호스트에서 "editorial 품질" 다이어그램 41종을 **스크립트·외부 의존성 없는 단일 HTML + inline SVG**로 생성하는 MIT skill. 브랜드 색/폰트를 웹사이트에서 추출해 토큰화(onboarding)하고, draw.io·Mermaid·Excalidraw 원본을 이 디자인 시스템으로 "다시 그려"(redraw) 주며, 린터·기하 검증·CI 게이트로 산출물 품질을 기계적으로 보증하는 것이 특징이다.
+> 디자인 토큰과 검증 규칙에 따라 기술 다이어그램을 HTML·SVG로 만드는 skill이다. 기존 그림도 구조를 추출한 뒤 다시 그린다.
+
+Claude Code·Codex·GitHub Copilot·Factory Droid·Pi·Kiro·OpenCode 등 Agent Skills 호환 호스트에서 "editorial 품질" 다이어그램 41종을 **스크립트·외부 의존성 없는 단일 HTML + inline SVG**로 생성하는 MIT skill. 브랜드 색/폰트를 웹사이트에서 추출해 토큰화(onboarding)하고, draw.io·Mermaid·Excalidraw 원본을 이 디자인 시스템으로 "다시 그려"(redraw) 주며, 린터·기하 검증·CI 게이트로 산출물 품질을 기계적으로 보증하는 것이 특징이다.
 
 ## 1. 배경 — 어떤 문제를 푸는가
 
@@ -26,7 +28,9 @@ LLM에게 "아키텍처 다이어그램을 그려 줘"라고 하면 대개 둥�
 
 ### 2.1 Progressive disclosure 구조
 
-SKILL.md는 frontmatter(이름, MIT, `metadata.version: "2.6"`)와 "철학 → 사용 시점 → 선택표 → 체크리스트"만 담고, 유형별 상세는 `references/type-*.md`에 분리돼 있다. 에이전트는 선택한 유형의 reference만 읽는다. 따라서 일반 다이어그램 하나는 SKILL.md + 해당 `type-*.md` + `style-guide.md` 정도만 컨텍스트에 올린다. 이 구조를 지키기 위한 장치가 ADR 0004다: SKILL.md는 40,000 bytes 상한(`verify-semantic-motion.py`가 검사)이고, frontmatter `description`은 모든 유형 이름을 포함해야 한다(`verify-docs-sync.py`가 검사). 이유는 description이 "skill을 열기 전에 에이전트가 보는 유일한 텍스트"이기 때문에 라우팅 표면을 본문 절약과 맞바꾸지 않는다는 결정이다.
+SKILL.md는 frontmatter(이름, MIT, `metadata.version: "2.6"`)와 "철학 → 사용 시점 → 선택표 → 체크리스트"만 담고, 유형별 상세는 `references/type-*.md`에 분리돼 있다. 에이전트는 선택한 유형의 reference만 읽는다. 따라서 일반 다이어그램 하나는 SKILL.md + 해당 `type-*.md` + `style-guide.md` 정도만 컨텍스트에 올린다. 이 구조를 지키기 위한 장치가 ADR 0004다: SKILL.md는 40,000 bytes 상한(`verify-semantic-motion.py`가 검사)이고, frontmatter `description`은 모든 유형 이름을 포함해야 한다(`verify-docs-sync.py`가 검사).
+
+이유는 description이 "skill을 열기 전에 에이전트가 보는 유일한 텍스트"이기 때문에 라우팅 표면을 본문 절약과 맞바꾸지 않는다는 결정이다.
 
 ```mermaid
 flowchart TD
@@ -42,7 +46,19 @@ flowchart TD
 
 ### 2.2 의미 패턴(semantic pattern) → 시각 유형
 
-"행동·상태·강제·위험이 의미의 핵심일 때"는 먼저 의미 패턴을 고르고 그다음 가장 가까운 시각 유형으로 레이아웃을 정한다. 현재 9개 패턴이 있다(`semantic-patterns.md`): fan-in queue/병목 → Data flow, stage framework(반복 슬롯) → Process, 비정형 입력 → 구조화 산출물 → Data flow, 두 정책 평가 trace 비교(pass/fail/skipped/not-reached, 첫 분기점) → Flowchart, secure paved road(신뢰 경계와 허용/금지 경로) → Architecture, governance/control 카탈로그 → Layer stack, compensating security layers(앞 방어선의 공백을 뒤가 보완, 잔여 위험 전파) → Layer stack, traceable block decomposition(ID로 주소 지정되는 계층 분해 + 블록별 I/O·제약·코드 링크) → Tree, lifecycle phase map → State machine. ADR 0002는 "의미 패턴은 유형 분류를 늘리지 않는다"는 결정이다.
+"행동·상태·강제·위험이 의미의 핵심일 때"는 먼저 의미 패턴을 고르고 그다음 가장 가까운 시각 유형으로 레이아웃을 정한다. 현재 9개 패턴이 있다(`semantic-patterns.md`).
+
+- fan-in queue/병목 → Data flow
+- stage framework(반복 슬롯) → Process
+- 비정형 입력 → 구조화 산출물 → Data flow
+- 두 정책 평가 trace 비교(pass/fail/skipped/not-reached, 첫 분기점) → Flowchart
+- secure paved road(신뢰 경계와 허용/금지 경로) → Architecture
+- governance/control 카탈로그 → Layer stack
+- compensating security layers(앞 방어선의 공백을 뒤가 보완, 잔여 위험 전파) → Layer stack
+- traceable block decomposition(ID로 주소 지정되는 계층 분해 + 블록별 I/O·제약·코드 링크) → Tree
+- lifecycle phase map → State machine
+
+ADR 0002는 "의미 패턴은 유형 분류를 늘리지 않는다"는 결정이다.
 
 ### 2.3 41개 시각 유형
 
@@ -52,22 +68,32 @@ SKILL.md 선택표 기준으로, architecture, IT current-state, flowchart, sequ
 
 ### 2.4 토큰과 접근성
 
-`references/style-guide.md`가 색·폰트의 단일 진실 원천이다. 의미 역할(semantic role)로만 참조하며 hex를 다른 reference에 쓰지 않는다. 기본 skin의 라이트 값: paper `#f5f5f5`, paper-2 `#ececec`, ink `#2d3142`, muted `#4f5d75`, soft `#7a8399`, rule-solid `#bfc0c0`, accent `#eb6c36`, link `#2e5aa8`. 다크는 paper와 ink를 뒤집고 accent를 약간 밝게(`#f08a59`) 한다. 다중 시리즈가 꼭 필요한 유형(radar 등)에만 desaturated 시리즈 팔레트(sage, dusty-blue, mustard, rust-brown, slate)를 허용한다. 템플릿은 SVG마다 `role="img"`, 해소되는 `aria-labelledby`, 첫 자식 `<title>`/`<desc>`를 요구하고 ID를 다이어그램·변형별 prefix로 구분해 한 페이지에 여러 SVG를 안전하게 인라인할 수 있게 한다.
+`references/style-guide.md`가 색·폰트의 단일 진실 원천이다. 의미 역할(semantic role)로만 참조하며 hex를 다른 reference에 쓰지 않는다. 기본 skin의 라이트 값: paper `#f5f5f5`, paper-2 `#ececec`, ink `#2d3142`, muted `#4f5d75`, soft `#7a8399`, rule-solid `#bfc0c0`, accent `#eb6c36`, link `#2e5aa8`.
+
+다크는 paper와 ink를 뒤집고 accent를 약간 밝게(`#f08a59`) 한다. 다중 시리즈가 꼭 필요한 유형(radar 등)에만 desaturated 시리즈 팔레트(sage, dusty-blue, mustard, rust-brown, slate)를 허용한다. 템플릿은 SVG마다 `role="img"`, 해소되는 `aria-labelledby`, 첫 자식 `<title>`/`<desc>`를 요구하고 ID를 다이어그램·변형별 prefix로 구분해 한 페이지에 여러 SVG를 안전하게 인라인할 수 있게 한다.
 
 ### 2.5 정적 기본, 고정된 모션 컨트롤러
 
-ADR 0001: 공유 가능한 단일 HTML에 임의 inline JavaScript를 넣으면 검토 부담이자 보안 표면이므로 기본 출력은 스크립트 없는 정적(`data-motion-mode="none"`)이다. 모션이 요청되면 `<script data-diagram-controls>` 블록 **정확히 하나**를 허용하되 본문이 `assets/template-motion.html`의 검토된 컨트롤러와 바이트 단위로 일치해야 한다(SHA-256으로 lint와 별도 검증이 이중 확인). 모드는 `none`/`reveal`/`step`/`loop`이고, reduced-motion에서는 완전한 정적 프레임을 보여 주고 재생 컨트롤을 숨긴다. ADR 0003은 `reveal`만 자동재생이 허용된다고 정한다. 부작용으로 다이어그램별 맞춤 인터랙션은 이 skill의 범위 밖이라고 ADR이 인정한다.
+ADR 0001: 공유 가능한 단일 HTML에 임의 inline JavaScript를 넣으면 검토 부담이자 보안 표면이므로 기본 출력은 스크립트 없는 정적(`data-motion-mode="none"`)이다. 모션이 요청되면 `<script data-diagram-controls>` 블록 **정확히 하나**를 허용하되 본문이 `assets/template-motion.html`의 검토된 컨트롤러와 바이트 단위로 일치해야 한다(SHA-256으로 lint와 별도 검증이 이중 확인).
+
+모드는 `none`/`reveal`/`step`/`loop`이고, reduced-motion에서는 완전한 정적 프레임을 보여 주고 재생 컨트롤을 숨긴다. ADR 0003은 `reveal`만 자동재생이 허용된다고 정한다. 부작용으로 다이어그램별 맞춤 인터랙션은 이 skill의 범위 밖이라고 ADR이 인정한다.
 
 ## 3. 핵심 기능 상세
 
 ### 3.1 브랜드 onboarding (약 60초)
-"onboard diagram-design to https://yoursite.com"처럼 말하면 에이전트가 홈페이지를 가져와 지배 색과 폰트 스택을 뽑고 의미 역할로 매핑한다: `<body>` 배경 → paper, 본문색 → ink, 보조/캡션 → muted, 카드/컨테이너 → paper-2, CTA·링크·제목에서 가장 많이 쓰인 브랜드 색 → accent, `<h1>` 폰트 → title, `<body>` 폰트 → node-name, `<code>/<pre>` 폰트 → sublabel. 변경 diff를 보여 주고 승인받은 뒤 `style-guide.md`에 쓴다. 토큰을 쓰기 전에 ink/paper의 WCAG AA 대비를 검증하고 9~12px 크기에서 실패하면 조정안을 제시한다. 샘플링한 URL, 색 역할, 폰트 패밀리·두께·출처 URL, 대체 폰트를 담은 fidelity receipt를 남기며, 공개 사이트 폰트는 렌더 후 실제 적용을 검증한다.
+"onboard diagram-design to https://yoursite.com"처럼 말하면 에이전트가 홈페이지를 가져와 지배 색과 폰트 스택을 뽑고 의미 역할로 매핑한다: `<body>` 배경 → paper, 본문색 → ink, 보조/캡션 → muted, 카드/컨테이너 → paper-2, CTA·링크·제목에서 가장 많이 쓰인 브랜드 색 → accent, `<h1>` 폰트 → title, `<body>` 폰트 → node-name, `<code>/<pre>` 폰트 → sublabel. 변경 diff를 보여 주고 승인받은 뒤 `style-guide.md`에 쓴다. 토큰을 쓰기 전에 ink/paper의 WCAG AA 대비를 검증하고 9~12px 크기에서 실패하면 조정안을 제시한다.
+
+샘플링한 URL, 색 역할, 폰트 패밀리·두께·출처 URL, 대체 폰트를 담은 fidelity receipt를 남기며, 공개 사이트 폰트는 렌더 후 실제 적용을 검증한다.
 
 ### 3.2 First-run gate와 프로젝트별 프로필
-기본 토큰 그대로면(= 브랜드 프로젝트에 기본 skin을 조용히 내보내지 않도록) 첫 다이어그램 전에 멈춰서 6가지 선택지(URL, 설치된 skill, 로컬 폴더/디자인 시스템, 토큰 붙여넣기, 기본 유지, 저장된 프로필)를 묻는다. 여러 고객/브랜드를 오가는 경우 `~/.diagram-design/profiles/<slug>.md`에 프로필을 저장하고 프로젝트 루트에 `profile: <slug>`를 적은 `.diagram-design` marker를 두면 해당 프로젝트가 프로필을 직접 읽는다(공유 `style-guide.md`를 덮어쓰지 않음). 프로필은 skill 업데이트로 사라지지 않는다. 슬래시 명령: Claude Code `/diagram-design:profile`, Pi·Droid `/profile`.
+기본 토큰 그대로면(= 브랜드 프로젝트에 기본 skin을 조용히 내보내지 않도록) 첫 다이어그램 전에 멈춰서 6가지 선택지(URL, 설치된 skill, 로컬 폴더/디자인 시스템, 토큰 붙여넣기, 기본 유지, 저장된 프로필)를 묻는다. 여러 고객/브랜드를 오가는 경우 `~/.diagram-design/profiles/<slug>.md`에 프로필을 저장하고 프로젝트 루트에 `profile: <slug>`를 적은 `.diagram-design` marker를 두면 해당 프로젝트가 프로필을 직접 읽는다(공유 `style-guide.md`를 덮어쓰지 않음).
+
+프로필은 skill 업데이트로 사라지지 않는다. 슬래시 명령: Claude Code `/diagram-design:profile`, Pi·Droid `/profile`.
 
 ### 3.3 Import redraw (draw.io / Mermaid / Excalidraw)
-변환이 아니라 **다시 그리기**다. 원본에서 구성요소·관계·그룹·방향만 가져오고 좌표, 팔레트, 폰트, draw.io의 대각선 커넥터, Mermaid 자동 레이아웃, Excalidraw의 손그림 기하는 버린다. 파서 스크립트 `drawio_extract.py`, `mermaid_extract.py`, `excalidraw_extract.py`는 텍스트만 제한적으로 파싱하며 원본을 평가·렌더·fetch·실행하지 않고, 라벨과 디렉티브를 모두 "신뢰할 수 없는 데이터"로 취급한다(`import-mermaid.md`). 실패 시 exit 2로 메시지를 그대로 보고하고 온라인 편집기로 우회하지 않는다. 입력 형식은 `.drawio`, `.drawio.xml`, `.drawio.png`(임베디드), `.drawio.svg`(압축 payload 포함), `.mmd`/`.mermaid`/Markdown 속 mermaid 블록(지원 문법: flowchart/graph, sequenceDiagram, stateDiagram-v2, erDiagram), `.excalidraw`.
+변환이 아니라 **다시 그리기**다. 원본에서 구성요소·관계·그룹·방향만 가져오고 좌표, 팔레트, 폰트, draw.io의 대각선 커넥터, Mermaid 자동 레이아웃, Excalidraw의 손그림 기하는 버린다. 파서 스크립트 `drawio_extract.py`, `mermaid_extract.py`, `excalidraw_extract.py`는 텍스트만 제한적으로 파싱하며 원본을 평가·렌더·fetch·실행하지 않고, 라벨과 디렉티브를 모두 "신뢰할 수 없는 데이터"로 취급한다(`import-mermaid.md`).
+
+실패 시 exit 2로 메시지를 그대로 보고하고 온라인 편집기로 우회하지 않는다. 입력 형식은 `.drawio`, `.drawio.xml`, `.drawio.png`(임베디드), `.drawio.svg`(압축 payload 포함), `.mmd`/`.mermaid`/Markdown 속 mermaid 블록(지원 문법: flowchart/graph, sequenceDiagram, stateDiagram-v2, erDiagram), `.excalidraw`.
 
 네 개의 다이얼이 결과를 정한다.
 
@@ -81,7 +107,9 @@ ADR 0001: 공유 가능한 단일 HTML에 임의 inline JavaScript를 넣으면 
 모든 import는 fidelity ledger(무엇을 합치고 접고 버렸는지)로 끝난다. 예: `Detail: balanced · 12 source nodes → 8 drawn`, `Dropped: 1 sticky note`. 명령 예: `/diagram-design:import-drawio platform.drawio --size=slide-16x9 --detail=simplified --audience=executive`.
 
 ### 3.4 Export
-`/diagram-design:export-diagram path/to/diagram.html [--svg-only|--png-only --scale=3|--registry]`. SVG는 `<svg>`를 추출하고 Google Fonts를 주입해 단독 렌더되게 하고, PNG는 Playwright로 기본 2배 래스터화한다(`pip install playwright && playwright install chromium`). 다이어그램만 대상이며 `-full` 변형의 편집용 카드/헤더는 포함하지 않는다. `--registry`는 "traceable block decomposition" 패턴의 `data-block-*` 메타데이터를 JSON 사이드카로 내보낸다.
+`/diagram-design:export-diagram path/to/diagram.html [--svg-only|--png-only --scale=3|--registry]`. SVG는 `<svg>`를 추출하고 Google Fonts를 주입해 단독 렌더되게 하고, PNG는 Playwright로 기본 2배 래스터화한다(`pip install playwright && playwright install chromium`). 다이어그램만 대상이며 `-full` 변형의 편집용 카드/헤더는 포함하지 않는다.
+
+`--registry`는 "traceable block decomposition" 패턴의 `data-block-*` 메타데이터를 JSON 사이드카로 내보낸다.
 
 ### 3.5 doctor
 `/doctor`는 설치와 런타임 준비 상태(import/export, 명령 라우팅)를 파일 수정이나 의존성 설치 없이 점검해 pass/warn/fail로 보고한다. `--strict`, `--json` 옵션. 설치된 skill 모드와 maintainer 체크아웃 모드(CONTRIBUTING.md, ci.yml, verify-plugin-package.py가 있을 때)를 구분한다.
@@ -146,7 +174,9 @@ pi install https://github.com/cathrynlavery/diagram-design
 
 ## 7. 장단점·한계·성숙도
 
-사실 지표(GitHub API 2026-10-01): stars 42,909 / forks 2,760 / open issues 30 / MIT / 주 언어 표기 HTML / 생성 2026-04-16 / 마지막 push 2026-09-29 / 커밋 약 207개 / 기여자 30명 / GitHub Release 없음(latest 404, 대신 플러그인 매니페스트 버전 2.6.46 사용). 생성 5개월 동안 207 커밋, 스타 4만 이상으로 관심도가 높고 최근 이틀 전에도 push가 있다. 스타 수가 높은 이유(바이럴 등)는 확인하지 못했다. 이 저장소의 `.github/pr-previews`와 Trendshift 배지 언급은 있으나 외부 검증은 하지 않았다.
+사실 지표(GitHub API 2026-10-01): stars 42,909 / forks 2,760 / open issues 30 / MIT / 주 언어 표기 HTML / 생성 2026-04-16 / 마지막 push 2026-09-29 / 커밋 약 207개 / 기여자 30명 / GitHub Release 없음(latest 404, 대신 플러그인 매니페스트 버전 2.6.46 사용). 생성 5개월 동안 207 커밋, 스타 4만 이상으로 관심도가 높고 최근 이틀 전에도 push가 있다.
+
+스타 수가 높은 이유(바이럴 등)는 확인하지 못했다. 이 저장소의 `.github/pr-previews`와 Trendshift 배지 언급은 있으나 외부 검증은 하지 않았다.
 
 장점
 - 산출물이 단일 HTML이고 JS·외부 이미지·CDN 의존이 없어 이메일 첨부, 사내 위키, 정적 호스팅에 안전하게 쓰기 쉽다(폰트는 SVG export 시 Google Fonts 주입 — 사내 폐쇄망이면 별도 대응 필요).

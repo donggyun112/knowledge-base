@@ -9,11 +9,19 @@ researched: 2026-10-01
 # Multica
 
 > [!summary] 한줄요약
-> "에이전트를 팀원처럼 이슈에 배정한다"는 컨셉의 협업 워크스페이스. Go 백엔드 + PostgreSQL이 이슈·실행(run) 기록을 관리하고, 각자의 PC/서버에서 도는 **daemon**이 Claude Code·Codex 등 26종 에이전트 CLI를 자식 프로세스로 띄워 실제 작업을 수행한다. 자체 호스팅 가능(Docker Compose/Helm). 라이선스는 Apache 2.0 위에 호스팅·임베딩·브랜딩 조건을 얹은 "Multica License"(OSI 오픈소스 아님, NOASSERTION).
+> 기존 코딩 에이전트 CLI를 이슈 담당자로 배정하고, 실행 이력과 리뷰를 한곳에서 관리하는 협업 워크스페이스다.
+
+- **실행 구조**: Go 백엔드 + PostgreSQL이 이슈·실행(run) 기록을 관리한다. 각자의 PC/서버에서 도는 **daemon**이 Claude Code·Codex 등 26종 에이전트 CLI를 자식 프로세스로 띄워 실제 작업을 수행한다.
+- **배포**: Docker Compose/Helm으로 자체 호스팅할 수 있다.
+- **라이선스**: Apache 2.0 위에 호스팅·임베딩·브랜딩 조건을 얹은 "Multica License"다. OSI 오픈소스가 아니며 GitHub 판정은 NOASSERTION이다.
 
 ## 배경 — 해결하려는 문제
 
-README의 문제 제기는 이렇다. Claude Code, Codex 등 여러 에이전트를 쓰는 개발자는 에이전트마다 터미널 탭이 따로 있고, 세션이 끝나면 맥락이 사라지며, 같은 설명을 반복하게 된다. 에이전트를 늘릴수록 "에이전트 돌보기"에 시간이 든다. VISION.md는 이를 "AI 에이전트를 추가하면 관리할 인박스가 하나 늘어나는 상황"이라 표현하고, 목표를 "intent, run, decision, diff가 하나의 이슈에 연결되어 아무도 맥락을 재구성하지 않고, 사람이 승인하기 전에는 아무것도 배포되지 않는" 상태로 제시한다. 즉 새 코딩 에이전트를 만드는 프로젝트가 아니라, **기존 에이전트 CLI를 이슈 트래커의 담당자(assignee)로 올려 작업 이력과 감사 가능성을 확보하는 오케스트레이션 계층**이다. 이름은 시분할 OS Multics에서 따왔다(Multiplexed Information and Computing Agent).
+README가 지적하는 문제는 에이전트를 늘릴수록 관리할 일이 많아진다는 것이다. Claude Code, Codex 등 여러 에이전트를 쓰면 터미널 탭이 각각 필요하다. 세션이 끝나면 맥락이 사라져 같은 설명도 반복하게 된다.
+
+VISION.md는 이를 "AI 에이전트를 추가하면 관리할 인박스가 하나 늘어나는 상황"이라고 표현한다. 목표는 intent, run, decision, diff를 하나의 이슈에 연결하는 것이다. 누구도 맥락을 다시 구성할 필요가 없고, 사람이 승인하기 전에는 아무것도 배포되지 않는 상태를 지향한다.
+
+따라서 Multica는 **기존 에이전트 CLI를 이슈 트래커의 담당자(assignee)로 등록해 작업 이력과 감사 가능성을 확보하는 오케스트레이션 계층**이다. 새 코딩 에이전트를 만드는 프로젝트는 아니다. 이름은 시분할 OS Multics에서 따왔다(Multiplexed Information and Computing Agent).
 
 ## 동작 원리와 아키텍처
 
@@ -62,7 +70,14 @@ flowchart TB
 
 ### run 상태 머신
 
-docs/tasks에 정의된 상태: `deferred`(예약) -> `queued` -> `dispatched` -> (`waiting_local_directory`: 같은 로컬 디렉터리를 다른 run이 잡고 있을 때) -> `running` -> `completed` / `failed` / `cancelled`. 일시적 장애(런타임 오프라인, daemon 재시작, 타임아웃, 툴 네트워크 중단)는 자동 재시도하며 일반 run은 기본 최대 2회 실행, 툴 네트워크 중단은 3회까지 시도한다. 에이전트가 반환한 오류(만료된 자격증명, 쿼터 소진 등)는 원인 해결이 필요하므로 보통 재시도하지 않는다. 서버는 하트비트가 정상인 run을 오래 걸린다는 이유로 강제 종료하지 않고, 정체 판정은 런타임이 실제 활동 기준으로 한다. daemon heartbeat는 15초이며 비정상 종료 시 약 3분 안에 오프라인 표시된다.
+docs/tasks에 정의된 상태 전이는 다음과 같다.
+
+`deferred`(예약) → `queued` → `dispatched` → `waiting_local_directory`(해당하는 경우) → `running` → `completed` / `failed` / `cancelled`
+
+- **디렉터리 대기**: 같은 로컬 디렉터리를 다른 run이 사용 중이면 `waiting_local_directory`에 머문다.
+- **자동 재시도**: 런타임 오프라인, daemon 재시작, 타임아웃, 툴 네트워크 중단 같은 일시적 장애가 대상이다. 일반 run은 기본 최대 2회 실행하고, 툴 네트워크 중단은 3회까지 시도한다.
+- **원인 해결이 필요한 오류**: 만료된 자격증명이나 쿼터 소진 등 에이전트가 반환한 오류는 보통 재시도하지 않는다.
+- **활동 확인**: 서버는 하트비트가 정상인 run을 오래 걸린다는 이유만으로 강제 종료하지 않는다. 정체 여부는 런타임이 실제 활동을 기준으로 판단한다. daemon heartbeat는 15초이며, 비정상 종료 시 약 3분 안에 오프라인으로 표시된다.
 
 ### daemon 내부 (server/pkg/agent, server/internal/daemon)
 
@@ -105,7 +120,11 @@ multica daemon logs -f
 
 헤드리스는 `multica login --token <mul_...>`. 워크디렉터리 루트는 `multica config set workspaces_root <path>`. 셀프호스트는 `make selfhost`가 `.env`와 임의 `JWT_SECRET`을 생성(문서상 필수 값)하고 docker compose로 올린다. Helm 차트는 `deploy/helm/`에 있다. 개발은 Node 22, pnpm 10.28.2, Go 1.26.6, Docker가 필요하고 `make dev` 한 번으로 환경 구성/마이그레이션/서비스 기동을 한다.
 
-첫 에이전트까지의 흐름(README): 1) Runtimes에서 Add a computer 후 표시된 두 명령을 대상 머신에서 실행, 2) Agents -> New agent에서 런타임/프로바이더/이름 선택(또는 Build with AI), 3) 이슈를 만들고 assignee로 에이전트 지정.
+첫 에이전트까지의 흐름(README):
+
+1. Runtimes에서 Add a computer를 선택하고, 표시된 두 명령을 대상 머신에서 실행한다.
+2. Agents → New agent에서 런타임·프로바이더·이름을 선택한다. 또는 Build with AI를 사용한다.
+3. 이슈를 만들고 assignee로 에이전트를 지정한다.
 
 ## 코드·디렉터리 구조에서 확인한 것
 
@@ -132,7 +151,13 @@ multica daemon logs -f
 
 장점: 활동성과 테스트 밀도(Go 테스트 파일 1,160개)가 높고, 데이터/실행 경계가 문서에 명확하며(보안 모델 문서가 한계를 숨기지 않음), 에이전트 CLI 추상화 범위가 넓다. 약관상 사내 단일 조직 사용은 허용된다.
 
-한계: (1) 변화 속도가 빨라 호환성·안정성 점검이 필요하고(이슈/PR 1,700건대), (2) 문서에 모바일 iOS는 소스 빌드만 가능(App Store 미출시)이라 명시, (3) Feishu/Lark 신규 연결은 중국 본토 Feishu만, DingTalk·WeCom·Telegram은 커뮤니티 유지, (4) 에이전트 품질은 결국 연결한 CLI/모델에 종속, (5) entitlement 등 클라우드 상업 코드가 섞여 있어 셀프호스트에서 불필요한 복잡도가 있을 수 있다(관찰).
+한계는 다음과 같다.
+
+- **호환성과 안정성**: 변화 속도가 빠르고 이슈/PR이 1,700건대여서 지속적인 점검이 필요하다.
+- **모바일 배포**: 문서에 따르면 iOS는 소스 빌드만 가능하다. App Store에는 출시되지 않았다.
+- **채널 지원**: Feishu/Lark 신규 연결은 중국 본토 Feishu만 지원한다. DingTalk·WeCom·Telegram은 커뮤니티가 유지한다.
+- **작업 품질**: 연결한 CLI와 모델에 종속된다.
+- **셀프호스트 복잡도**: entitlement 등 클라우드 상업 코드가 섞여 있어 불필요한 복잡도가 생길 수 있다. 이는 코드 구성에 대한 관찰이다.
 
 ## 보안·라이선스·운영 리스크
 

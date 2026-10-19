@@ -13,6 +13,8 @@ tags:
 
 ## Grounding Agent Memory: CLBench
 
+CLBench를 고른 이유는 기억이 낡는 상황을 직접 만들 수 있기 때문이다. 전반 20문항을 풀며 배운 DB 지식이, 스키마가 바뀐 후반 20문항에도 유효한지 시험한다. 정답률은 문제 해결 여부를, SQL 호출 수는 그 답에 도달하기 위해 얼마나 탐색했는지를 보여 준다. 적은 호출만으로 좋은 시스템이라고 할 수 없으므로 둘을 함께 기록한다.
+
 Grounding 논문의 primary experiment에 맞춰 Continual Learning Bench의 공식
 `database_exploration` task를 사용한다.
 
@@ -56,6 +58,10 @@ named tool choice를 건너뛴 사례가 있어 canonical run은 solver 전에 q
 APEX 재현이라고 부르지 않는다. 현재 공개적으로 검증 가능한 Grounding benchmark는 CLBench다.
 
 ## Procedural Graph: MultiChallenge
+
+MultiChallenge는 앞 대화의 지시와 제약을 유지하며 답해야 하는 과제다. 여기서는 DB 사실을 기억하는 능력보다 ‘문맥 확인 → 제약 정리 → 답 검토’ 같은 실행 절차가 도움이 되는지 본다. train은 수정할 재료, validation은 수정안을 고르는 기준, test는 선택이 끝난 뒤의 평가다. 이 역할을 섞으면 그래프가 평가 문항에 맞춰져도 학습 효과처럼 보일 수 있다.
+
+이 문서는 초기 저비용 subset 프로토콜을 기록한다. 이후 전체 100/100/56 분할과 텍스트 ReAct로 바꾼 실행은 [[메모리-연구/procedural-graphs/results/EXPERIMENT_REPORT_KO|종합 보고서]]에 따로 있다. 아래 required action 설정을 후속 실행에도 그대로 적용한 것으로 읽지 않는다.
 
 PG 논문의 benchmark suite 중 public dataset과 criterion을 직접 확보할 수 있는
 `ScaleAI/MultiChallenge`를 사용한다.
@@ -134,6 +140,8 @@ make combined-paper-audit
 ```
 
 ## Statistical interpretation
+
+같은 문항을 두 조건으로 풀었을 때는 총점만큼 ‘어느 문항에서 승패가 바뀌었나’가 중요하다. paired 비교는 한쪽만 맞힌 문항들을 대응시켜 본다. 작은 표본에서 한두 문항 차이가 나거나 검정이 비유의하다는 결과는, 그 방법이 언제나 좋다거나 효과가 전혀 없다는 결론과 다르다.
 
 Grounding paper는 GPT-5.4 기반 다섯 paired run을 사용한다. 현재 canonical CLBench 결과는 더 싼
 DeepSeek 모델의 run index 0 한 번이다. PG run도 test 16개의 cost-controlled subset이다. 따라서
