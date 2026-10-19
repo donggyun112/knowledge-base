@@ -116,6 +116,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 - [[에이전트-스킬/ag-ui-docs|AG-UI (Agent-User Interaction Protocol) 공식 문서]]
 - [[에이전트-스킬/agency-agents|agency-agents (msitarzewski)]]
 - [[에이전트-스킬/agent-skills|addyosmani/agent-skills]]
+- [[에이전트-스킬/agent-status-protocol|ASP — 에이전트의 상태를 누가 보고하고, 누가 판단하는가]]
 - [[에이전트-스킬/agentspace|AgentSpace (HKUDS)]]
 - [[에이전트-스킬/ai-engineering-from-scratch|AI Engineering from Scratch (rohitg00)]]
 - [[에이전트-스킬/claude-code-best-practice|claude-code-best-practice]]
