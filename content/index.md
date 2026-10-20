@@ -183,6 +183,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 - [[논문-아티클/new-sdlc-with-vibe-coding|The New SDLC with Vibe Coding]]
 - [[논문-아티클/probe-process-based-hallucination-benchmark|PROBE: PROcess-Based BEnchmark for Hallucination Detection]]
 - [[논문-아티클/procedural-graphs-self-evolving|Procedural Graphs: Self-Evolving Execution Structures for LLM Agents]]
+- [[논문-아티클/reasoning-models-control-chains-of-thought|Reasoning Models Can Control Their Chains of Thought — 자기지시와 CoT 통제]]
 - [[논문-아티클/skillzip-pro|SkillZip Pro: Execution-Aware Dynamic Compression of Progressively Loaded Skills for Self-Evolving Agents]]
 - [[논문-아티클/unclejobs-llm-wiki-fork|LLM Wiki (unclejobs-ai fork, Korean addendum)]]
 - [[논문-아티클/wikiskill|WikiSkill: Compiling Agent Experience into Persistent Knowledge for Skill Evolution]]
