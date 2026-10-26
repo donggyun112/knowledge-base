@@ -144,6 +144,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 - [[에이전트-스킬/pytorchkr-ag-ui-copilotkit|AG-UI feat. CopilotKit (PyTorchKR 포스트)]]
 - [[에이전트-스킬/sanglard-agent-md|Agent.md for LLM-assisted code quality (Fabien Sanglard)]]
 - [[에이전트-스킬/weknora|WeKnora (Tencent)]]
+- [[에이전트-스킬/working-with-agents-code-review|우리는 어떻게 에이전트와 일해야 하는가]]
 
 <span id="inference"></span>
 
