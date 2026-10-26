@@ -122,6 +122,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 - [[에이전트-스킬/claude-code-best-practice|claude-code-best-practice]]
 - [[에이전트-스킬/claw-code|Claw Code]]
 - [[에이전트-스킬/copilotkit-openbot|OpenBot (CopilotKit)]]
+- [[에이전트-스킬/dashi-ppt-skill|Dashi PPT Skill — 브라우저에서 편집하는 프레젠테이션]]
 - [[에이전트-스킬/diagram-design|diagram-design]]
 - [[에이전트-스킬/firecrawl-web-agent|Firecrawl Web Agent]]
 - [[에이전트-스킬/generic-agent|GenericAgent]]
