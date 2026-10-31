@@ -5,6 +5,7 @@ title: Donggyun의 지식베이스
 AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 - **특정 자료를 찾을 때**: 아래 주제별 목차에서 제목을 선택합니다.
+- **자료의 검토·채택 단계를 볼 때**: [[TECHNOLOGY-RADAR|기술 레이더 운영 기준]]을 참고합니다.
 - **읽는 순서를 정할 때**: [[READING-GUIDE|주제별 읽기 가이드]]를 참고합니다.
 - **직접 수행한 실험을 볼 때**: [[메모리-연구/연구-안내|메모리 연구 안내]]에서 연구별 질문과 결과 해석 범위를 확인합니다.
 
@@ -112,6 +113,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 에이전트 런타임, 도구 실행, 스킬과 개발 워크플로.
 
+- [[에이전트-스킬/langgraph-persistence|LangGraph의 실행 상태와 장기 메모리]]
 - [[에이전트-스킬/actguard|ActGuard (binzhwang)]]
 - [[에이전트-스킬/ag-ui-docs|AG-UI (Agent-User Interaction Protocol) 공식 문서]]
 - [[에이전트-스킬/agency-agents|agency-agents (msitarzewski)]]
@@ -152,6 +154,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 모델 구조, 로컬 추론, 서빙과 격리·운영 사례.
 
+- [[LLM-추론-인프라/claude-code-sandboxing|에이전트 샌드박스의 파일과 네트워크 경계]]
 - [[LLM-추론-인프라/apertus-v1-5-70b|Apertus v1.5 70B]]
 - [[LLM-추론-인프라/inflab-ai-gateway|인프랩 AI Gateway 도입기]]
 - [[LLM-추론-인프라/lucebox-hub|Lucebox Hub]]
