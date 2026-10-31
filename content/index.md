@@ -121,6 +121,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 에이전트 런타임, 도구 실행, 스킬과 개발 워크플로.
 
 - [[에이전트-스킬/langgraph-persistence|LangGraph의 실행 상태와 장기 메모리]]
+- [[에이전트-스킬/agent-desktop|Agent Desktop — 접근성 트리와 재시도 계약]]
 - [[에이전트-스킬/actguard|ActGuard (binzhwang)]]
 - [[에이전트-스킬/ag-ui-docs|AG-UI (Agent-User Interaction Protocol) 공식 문서]]
 - [[에이전트-스킬/agency-agents|agency-agents (msitarzewski)]]

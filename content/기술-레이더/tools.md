@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-10-31
+researched: 2026-11-01
 ---
 
 # 도구
@@ -22,7 +22,16 @@ researched: 2026-10-31
 
 ## Assess
 
-현재 등록된 항목이 없다. 자료 수를 맞추려고 후보를 추가하지 않는다.
+### [Agent Desktop](../에이전트-스킬/agent-desktop)
+
+OS 접근성 트리에서 대상을 식별하고, 전달 상태와 재시도 가능성을 구분하는 데스크톱 조작 도구.
+
+- **수집일**: 2026-11-01 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서와 관련 구현 검토. 설치·실행 및 OS별 재현은 하지 않음
+- **다음 질문**: 오래된 ref 거부와 전달 불확실성 처리를 실제 앱에서 어떻게 검증할 것인가?
+
+[상세 노트에서 원문과 한계 읽기](../에이전트-스킬/agent-desktop)
 
 ## Caution
 
