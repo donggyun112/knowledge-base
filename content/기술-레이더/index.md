@@ -15,7 +15,7 @@ researched: 2026-11-01
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-01
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact) | 기법 | 읽기 전 | 재수정과 강제 권한 검사를 어떻게 분리하고 시뮬레이터 의존성을 검증할 것인가? |
 | [임베딩 모델 병합](../RAG-검색-문서/embedding-model-merging) | 기법 | 읽기 전 | 병합 호환성과 도메인별 검색 품질을 어떻게 따로 검증할 것인가? |
 | [Lightpanda](../에이전트-스킬/lightpanda-browser) | 도구 | 읽기 전 | 목표 사이트의 호환성과 HTTP 오류·세션 상태를 어떻게 검증할 것인가? |
 | [Agent Desktop](../에이전트-스킬/agent-desktop) | 도구 | 읽기 전 | 오래된 ref와 전달 불확실성을 하네스에서 어떻게 처리할 것인가? |
@@ -56,6 +57,7 @@ researched: 2026-11-01
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-01 | [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact) | 실행 전 검증·예산 소진 시 무검사 실행·혼합 평가 결과 |
 | 2026-11-01 | [임베딩 모델 병합](../RAG-검색-문서/embedding-model-merging) | 공통 기반·입력 규칙·검색 회귀 평가 |
 | 2026-11-01 | [Lightpanda](../에이전트-스킬/lightpanda-browser) | DOM·JavaScript 자동화와 렌더링·세션·성능 해석의 경계 |
 | 2026-11-01 | [Agent Desktop](../에이전트-스킬/agent-desktop) | 접근성 트리 기반 대상 식별과 전달 증거에 따른 재시도 |
@@ -63,6 +65,8 @@ researched: 2026-11-01
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-01**: 요청받은 Decision Gate 논문 v1을 Techniques / Assess로 등록했다. 본문·부록 검토이며 실행·재현은 하지 않았다. 사용자 읽기 상태는 읽기 전이다.
 
 - **2026-11-01**: 임베딩 모델 병합을 Techniques / Assess로 등록했다. 공식 문서와 예제 검토이며 병합·성능 실험은 하지 않았다. 사용자 읽기 상태는 읽기 전이다.
 
