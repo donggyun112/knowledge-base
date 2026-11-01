@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-10-31
+researched: 2026-11-01
 ---
 
 # 기법
@@ -22,7 +22,16 @@ researched: 2026-10-31
 
 ## Assess
 
-현재 등록된 항목이 없다. 자료 수를 맞추려고 후보를 추가하지 않는다.
+### [임베딩 모델 병합](../RAG-검색-문서/embedding-model-merging)
+
+같은 기반 모델의 체크포인트를 결합할 때 구조적 호환성과 실제 검색 품질을 분리해 판단하는 기법.
+
+- **수집일**: 2026-11-01 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서와 예제 검토. 설치·병합·성능 실험은 하지 않음
+- **다음 질문**: 도메인별 이득과 회귀를 어떤 기준으로 비교할 것인가?
+
+[상세 노트에서 원문과 한계 읽기](../RAG-검색-문서/embedding-model-merging)
 
 ## Caution
 
