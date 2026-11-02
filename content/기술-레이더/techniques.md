@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-01
+researched: 2026-11-02
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-01
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [MCP 보안 경계](../에이전트-스킬/mcp-authorization-boundaries)
+
+토큰 대상, 클라이언트별 위임 동의와 세션 소유자를 구분하는 인증·인가 설계.
+
+- **수집일**: 2026-11-02 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 가이드 본문 검토. 서버 설치·보안 실험은 하지 않음
+- **다음 질문**: 요청 주체나 위임이 바뀌면 어느 상태를 무효화하고 실행을 거부할 것인가?
+
+[상세 노트에서 해석 범위와 검증 제안 읽기](../에이전트-스킬/mcp-authorization-boundaries)
 
 ### [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact)
 
