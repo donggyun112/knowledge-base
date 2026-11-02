@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-11-01
+researched: 2026-11-02
 ---
 
 # 도구
@@ -21,6 +21,18 @@ researched: 2026-11-01
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [stack-diagram](../에이전트-스킬/stack-diagram)
+
+로고·그룹·연결선을 가진 아키텍처 그림을 HTML로 만들고 PNG·TSX로 전달하는 에이전트 스킬.
+
+- **수집일**: 2026-11-02 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 고정 커밋의 문서·구현 검토. 설치·생성·렌더링은 하지 않음
+- **한계**: 좌표와 관계는 에이전트가 설계하며 실제 토폴로지나 로고 정확성을 보증하지 않음
+- **다음 질문**: 추론한 연결, 자산 출처와 렌더링 권한을 어떻게 검토할 것인가?
+
+[상세 노트에서 구현과 사용조건 읽기](../에이전트-스킬/stack-diagram)
 
 ### [Lightpanda](../에이전트-스킬/lightpanda-browser)
 

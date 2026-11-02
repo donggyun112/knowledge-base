@@ -17,7 +17,7 @@ researched: 2026-11-02
 | --- | --- | --- |
 | [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
-| [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | Agent Desktop, Lightpanda |
+| [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph의 실행 상태와 장기 메모리 |
 
 빈 영역은 검토할 자료가 생기면 채운다. 기존 자료를 읽거나 채택한 것으로 추정해 일괄 등록하지 않는다.
@@ -40,6 +40,7 @@ researched: 2026-11-02
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [stack-diagram](../에이전트-스킬/stack-diagram) | 도구 | 읽기 전 | 로고 출처와 추론된 토폴로지를 어떻게 검증할 것인가? |
 | [MCP 보안 경계](../에이전트-스킬/mcp-authorization-boundaries) | 기법 | 읽기 전 | 요청 주체·위임 동의·세션 소유자를 어느 계층에서 검증할 것인가? |
 | [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact) | 기법 | 읽기 전 | 재수정과 강제 권한 검사를 어떻게 분리하고 시뮬레이터 의존성을 검증할 것인가? |
 | [임베딩 모델 병합](../RAG-검색-문서/embedding-model-merging) | 기법 | 읽기 전 | 병합 호환성과 도메인별 검색 품질을 어떻게 따로 검증할 것인가? |
@@ -58,6 +59,7 @@ researched: 2026-11-02
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-02 | [stack-diagram](../에이전트-스킬/stack-diagram) | HTML 단일 원본·좌표 설계·로고와 렌더링 신뢰 경계 |
 | 2026-11-02 | [MCP 보안 경계](../에이전트-스킬/mcp-authorization-boundaries) | 토큰 대상·클라이언트별 동의·세션과 인증의 분리 |
 | 2026-11-01 | [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact) | 실행 전 검증·예산 소진 시 무검사 실행·혼합 평가 결과 |
 | 2026-11-01 | [임베딩 모델 병합](../RAG-검색-문서/embedding-model-merging) | 공통 기반·입력 규칙·검색 회귀 평가 |
@@ -67,6 +69,8 @@ researched: 2026-11-02
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-02**: 요청받은 stack-diagram을 Tools / Assess로 등록했다. 고정 커밋의 문서·구현 검토이며 설치·생성·렌더링은 하지 않았다. 사용자 읽기 상태는 읽기 전이다.
 
 - **2026-11-02**: MCP 공식 보안 가이드를 Techniques / Assess로 등록했다. 본문 검토이며 서버 설치·보안 실험은 하지 않았다. 사용자 읽기 상태는 읽기 전이다.
 
