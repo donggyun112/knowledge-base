@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-02
+researched: 2026-11-03
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-02
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [멱등 API 재시도](../에이전트-스킬/idempotent-api-retries)
+
+재시도와 새로운 의도를 구별하고 외부 효과의 복구 계약을 검토하는 기법.
+
+- **수집일**: 2026-11-03 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 경험 글 본문 검토. API 호출·장애 실험은 하지 않음
+- **다음 질문**: 복구할 실행 상태와 외부 작업의 성공 증거를 어떻게 연결할 것인가?
+
+[상세 노트에서 계약과 검증 제안 읽기](../에이전트-스킬/idempotent-api-retries)
 
 ### [MCP 보안 경계](../에이전트-스킬/mcp-authorization-boundaries)
 

@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-02
+researched: 2026-11-03
 ---
 
 # 기술 레이더
@@ -15,7 +15,7 @@ researched: 2026-11-02
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-02
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [멱등 API 재시도](../에이전트-스킬/idempotent-api-retries) | 기법 | 읽기 전 | 재시도할 작업의 정체성과 외부 효과의 성공 증거를 어디에 보관할 것인가? |
 | [stack-diagram](../에이전트-스킬/stack-diagram) | 도구 | 읽기 전 | 로고 출처와 추론된 토폴로지를 어떻게 검증할 것인가? |
 | [MCP 보안 경계](../에이전트-스킬/mcp-authorization-boundaries) | 기법 | 읽기 전 | 요청 주체·위임 동의·세션 소유자를 어느 계층에서 검증할 것인가? |
 | [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact) | 기법 | 읽기 전 | 재수정과 강제 권한 검사를 어떻게 분리하고 시뮬레이터 의존성을 검증할 것인가? |
@@ -59,6 +60,7 @@ researched: 2026-11-02
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-03 | [멱등 API 재시도](../에이전트-스킬/idempotent-api-retries) | 요청 의도·원자성·의미상 동등한 응답·지연 요청 계약 |
 | 2026-11-02 | [stack-diagram](../에이전트-스킬/stack-diagram) | HTML 단일 원본·좌표 설계·로고와 렌더링 신뢰 경계 |
 | 2026-11-02 | [MCP 보안 경계](../에이전트-스킬/mcp-authorization-boundaries) | 토큰 대상·클라이언트별 동의·세션과 인증의 분리 |
 | 2026-11-01 | [Decision Gate / JevAct](../논문-아티클/decision-gate-jevact) | 실행 전 검증·예산 소진 시 무검사 실행·혼합 평가 결과 |
@@ -69,6 +71,8 @@ researched: 2026-11-02
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-03**: AWS Builders’ Library의 멱등 API 설계를 Techniques / Assess로 등록했다. 본문 검토이며 API 호출·장애 실험은 하지 않았다. 사용자 읽기 상태는 읽기 전이다.
 
 - **2026-11-02**: 요청받은 stack-diagram을 Tools / Assess로 등록했다. 고정 커밋의 문서·구현 검토이며 설치·생성·렌더링은 하지 않았다. 사용자 읽기 상태는 읽기 전이다.
 
