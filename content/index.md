@@ -190,6 +190,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 메모리·스킬 진화, 신뢰성, 평가 방법과 연구 관점.
 
+- [[논문-아티클/paretosaddler|ParetoSaddler — 품질과 비용을 함께 보는 하네스 최적화]]
 - [[논문-아티클/decision-gate-jevact|Decision Gate — 실행 전 검증과 제한된 재수정]]
 - [[논문-아티클/aces-agentic-continuous-evaluation-of-skills|Evaluating Skills, Not Just Agents: Agentic Continuous Evaluation of Skills (ACES)]]
 - [[논문-아티클/algorithmically-establishing-trust-in-evaluators|Algorithmically Establishing Trust in Evaluators]]

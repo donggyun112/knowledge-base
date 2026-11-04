@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-03
+researched: 2026-11-04
 ---
 
 # 기법
@@ -21,6 +21,18 @@ researched: 2026-11-03
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [ParetoSaddler](../논문-아티클/paretosaddler)
+
+품질·비용을 함께 평가하되 탐색 후보의 승격과 최종 배포 선택을 분리하는 하네스 최적화 기법.
+
+- **수집일**: 2026-11-04 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 논문 본문·부록 검토. 실행·재현은 하지 않음
+- **한계**: 실행 토큰 비용 절감과 오프라인 최적화 총비용은 다름. 소수 반복과 두 벤치마크의 결과
+- **다음 질문**: 평가·재최적화 비용을 회수할 실행량과 허용할 품질 하한은 무엇인가?
+
+[상세 노트에서 절차·실험 조건·비용 범위 읽기](../논문-아티클/paretosaddler)
 
 ### [멱등 API 재시도](../에이전트-스킬/idempotent-api-retries)
 

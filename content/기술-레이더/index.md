@@ -15,7 +15,7 @@ researched: 2026-11-04
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-04
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [ParetoSaddler](../논문-아티클/paretosaddler) | 기법 | 읽기 전 | 탐색 비용까지 포함하면 어느 실행량에서 이득인가? |
 | [DSH Superagent](../에이전트-스킬/dsh-superagent-prototype) | 도구 | 읽기 전 | 상태 저장과 외부 효과 사이의 중단·재시도를 어떻게 검증할 것인가? |
 | [멱등 API 재시도](../에이전트-스킬/idempotent-api-retries) | 기법 | 읽기 전 | 재시도할 작업의 정체성과 외부 효과의 성공 증거를 어디에 보관할 것인가? |
 | [stack-diagram](../에이전트-스킬/stack-diagram) | 도구 | 읽기 전 | 로고 출처와 추론된 토폴로지를 어떻게 검증할 것인가? |
@@ -61,6 +62,7 @@ researched: 2026-11-04
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-04 | [ParetoSaddler](../논문-아티클/paretosaddler) | 중간 후보 승격·최종 배포 선택·품질과 총비용의 분리 |
 | 2026-11-04 | [DSH Superagent](../에이전트-스킬/dsh-superagent-prototype) | Ticket/Assignment·트랜잭션·영속 Effects·복구 경계 |
 | 2026-11-03 | [멱등 API 재시도](../에이전트-스킬/idempotent-api-retries) | 요청 의도·원자성·의미상 동등한 응답·지연 요청 계약 |
 | 2026-11-02 | [stack-diagram](../에이전트-스킬/stack-diagram) | HTML 단일 원본·좌표 설계·로고와 렌더링 신뢰 경계 |
@@ -73,6 +75,8 @@ researched: 2026-11-04
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-04**: ParetoSaddler 논문 v1을 Techniques / Assess로 등록했다. 본문·부록 검토이며 최적화·재현 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-04**: DSH Superagent 공개 구현을 Tools / Assess로 등록했다. 정적 검토이며 설치·실행은 하지 않았다. 읽기 상태는 읽기 전이다.
 
