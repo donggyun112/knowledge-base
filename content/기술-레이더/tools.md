@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-11-02
+researched: 2026-11-04
 ---
 
 # 도구
@@ -21,6 +21,18 @@ researched: 2026-11-02
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [DSH Superagent](../에이전트-스킬/dsh-superagent-prototype)
+
+작업 상태와 외부 효과를 분리하는 연구용 코딩 에이전트 구현.
+
+- **수집일**: 2026-11-04 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 고정 커밋의 문서·코드 정적 검토. 설치·실행은 하지 않음
+- **한계**: 운영자 OS 권한으로 실행하며 디렉터리와 wrapper는 보안 격리가 아님
+- **다음 질문**: 재시작 시 저장된 의도와 외부 실행 결과를 어떻게 대조할 것인가?
+
+[상세 노트에서 상태·큐·복구 경계 읽기](../에이전트-스킬/dsh-superagent-prototype)
 
 ### [stack-diagram](../에이전트-스킬/stack-diagram)
 

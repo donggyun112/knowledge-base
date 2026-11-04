@@ -121,6 +121,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 에이전트 런타임, 도구 실행, 스킬과 개발 워크플로.
 
+- [[에이전트-스킬/dsh-superagent-prototype|DSH Superagent — 작업 상태와 외부 실행을 분리하는 구조]]
 - [[에이전트-스킬/idempotent-api-retries|멱등 API — 재시도에서 같은 의도를 식별하는 계약]]
 - [[에이전트-스킬/stack-diagram|stack-diagram — 로고 기반 HTML 아키텍처 다이어그램]]
 - [[에이전트-스킬/mcp-authorization-boundaries|MCP 보안 경계 — 토큰·동의·세션]]
