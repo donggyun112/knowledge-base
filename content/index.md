@@ -168,6 +168,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 모델 구조, 로컬 추론, 서빙과 격리·운영 사례.
 
+- [[LLM-추론-인프라/llm-architecture-gallery|LLM Architecture Gallery — 모델 구조와 추론 메모리의 비교 기준]]
 - [[LLM-추론-인프라/claude-code-sandboxing|에이전트 샌드박스의 파일과 네트워크 경계]]
 - [[LLM-추론-인프라/apertus-v1-5-70b|Apertus v1.5 70B]]
 - [[LLM-추론-인프라/inflab-ai-gateway|인프랩 AI Gateway 도입기]]

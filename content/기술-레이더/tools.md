@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-11-04
+researched: 2026-11-05
 ---
 
 # 도구
@@ -21,6 +21,18 @@ researched: 2026-11-04
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [LLM Architecture Gallery](../LLM-추론-인프라/llm-architecture-gallery)
+
+모델 구조와 가중치·KV 캐시 메모리를 구별해서 비교하는 참고 도구.
+
+- **수집일**: 2026-11-05 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 제작자 페이지·계산식 설명 검토. 설치·추론·메모리 실측은 하지 않음
+- **한계**: 논리적 메모리 추정이며 실제 GPU 적재·속도·품질을 보장하지 않음
+- **다음 질문**: 목표 컨텍스트·동시 요청 조건에서 추정과 실측의 차이를 어떻게 분해할 것인가?
+
+[상세 노트에서 범위·가정·검증 제안 읽기](../LLM-추론-인프라/llm-architecture-gallery)
 
 ### [DSH Superagent](../에이전트-스킬/dsh-superagent-prototype)
 
