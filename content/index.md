@@ -99,6 +99,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 희소·벡터·그래프 검색, 문서 색인과 파싱, 검색 품질 평가.
 
+- [[RAG-검색-문서/context-as-infrastructure|Context as Infrastructure — 검색과 읽기 비용을 분리하기]]
 - [[RAG-검색-문서/embedding-model-merging|임베딩 모델 병합 — 호환성 검사와 검색 평가]]
 - [[RAG-검색-문서/anydoc|anydoc (Firecrawl)]]
 - [[RAG-검색-문서/cerebras-knowledge-base-pgvector-rrf-mcp|Cerebras 사내 지식 베이스 설계 (PyTorchKR 해설)]]

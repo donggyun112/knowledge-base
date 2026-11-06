@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-04
+researched: 2026-11-06
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-04
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Context as Infrastructure](../RAG-검색-문서/context-as-infrastructure)
+
+검색 품질과 전달 컨텍스트의 비용을 분리해서 검토할 자료.
+
+- **수집일**: 2026-11-06 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 논문 v1 본문 검토. 실행·재현·운영비 실측은 하지 않음
+- **다음 질문**: 품질·지연을 유지하며 가공·갱신 비용을 회수할 만큼 재사용되는가?
+
+[상세 노트에서 흐름·측정 범위·검증 제안 읽기](../RAG-검색-문서/context-as-infrastructure)
 
 ### [ParetoSaddler](../논문-아티클/paretosaddler)
 
