@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-06
+researched: 2026-11-07
 ---
 
 # 기술 레이더
@@ -15,7 +15,7 @@ researched: 2026-11-06
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-06
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle) | 기법 | 읽기 전 | 재구독과 메시지 재시도의 복구 계약을 어떻게 구분할 것인가? |
 | [Context as Infrastructure](../RAG-검색-문서/context-as-infrastructure) | 기법 | 읽기 전 | 품질·지연을 유지하며 가공·갱신 비용을 회수할 수 있는가? |
 | [LLM Architecture Gallery](../LLM-추론-인프라/llm-architecture-gallery) | 도구 | 읽기 전 | 가중치·KV 추정과 실제 메모리의 차이를 어떻게 설명할 것인가? |
 | [ParetoSaddler](../논문-아티클/paretosaddler) | 기법 | 읽기 전 | 탐색 비용까지 포함하면 어느 실행량에서 이득인가? |
@@ -64,6 +65,7 @@ researched: 2026-11-06
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-07 | [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle) | 종료 상태·현재 상태 스냅샷·선택적 멱등성의 구분 |
 | 2026-11-06 | [Context as Infrastructure](../RAG-검색-문서/context-as-infrastructure) | 검색·읽기 표현·전처리 포함 총비용을 구분하는 검토 |
 | 2026-11-05 | [LLM Architecture Gallery](../LLM-추론-인프라/llm-architecture-gallery) | 모델 구조·전체/활성 파라미터·KV 캐시 추정의 한계 |
 | 2026-11-04 | [ParetoSaddler](../논문-아티클/paretosaddler) | 중간 후보 승격·최종 배포 선택·품질과 총비용의 분리 |
@@ -79,6 +81,8 @@ researched: 2026-11-06
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-07**: A2A 공식 작업 수명주기·스트리밍 계약을 Techniques / Assess로 등록했다. 문서 검토이며 SDK 실행·장애 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-06**: Context as Infrastructure 논문 v1을 Techniques / Assess로 등록했다. 본문 검토이며 실행·비용 실측은 하지 않았다. 읽기 상태는 읽기 전이다.
 

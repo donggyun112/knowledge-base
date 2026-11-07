@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-06
+researched: 2026-11-07
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-06
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle)
+
+작업 상태와 연결 상태를 분리하고 재구독·재실행의 복구 계약을 검토하는 자료.
+
+- **수집일**: 2026-11-07 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서·명세 검토. SDK 실행·장애 실험은 하지 않음
+- **다음 질문**: 현재 상태 재조회와 중복 실행 방지를 각각 어느 계약으로 보장할 것인가?
+
+[상세 노트에서 상태·전달 경로·검증 제안 읽기](../에이전트-스킬/a2a-task-lifecycle)
 
 ### [Context as Infrastructure](../RAG-검색-문서/context-as-infrastructure)
 
