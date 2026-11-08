@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-11-05
+researched: 2026-11-08
 ---
 
 # 도구
@@ -21,6 +21,17 @@ researched: 2026-11-05
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [pgvector 필터 검색](../RAG-검색-문서/pgvector-filtered-ann)
+
+필터가 있는 근사 검색에서 결과 개수·정렬·recall과 탐색 자원을 구분할 자료.
+
+- **수집일**: 2026-11-08 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서·HNSW 코드 일부 정적 검토. DB 실행·성능 실험은 하지 않음
+- **다음 질문**: 필터 분포별로 충분한 결과와 recall을 얻는 데 드는 지연·메모리는 얼마인가?
+
+[상세 노트에서 검색 계약·한계·검증 제안 읽기](../RAG-검색-문서/pgvector-filtered-ann)
 
 ### [LLM Architecture Gallery](../LLM-추론-인프라/llm-architecture-gallery)
 

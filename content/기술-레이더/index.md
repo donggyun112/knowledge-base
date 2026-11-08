@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-07
+researched: 2026-11-08
 ---
 
 # 기술 레이더
@@ -17,7 +17,7 @@ researched: 2026-11-07
 | --- | --- | --- |
 | [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
-| [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
+| [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph의 실행 상태와 장기 메모리 |
 
 빈 영역은 검토할 자료가 생기면 채운다. 기존 자료를 읽거나 채택한 것으로 추정해 일괄 등록하지 않는다.
@@ -40,6 +40,7 @@ researched: 2026-11-07
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [pgvector 필터 검색](../RAG-검색-문서/pgvector-filtered-ann) | 도구 | 읽기 전 | 결과 개수·정렬·recall을 어떤 비용으로 함께 보장할 것인가? |
 | [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle) | 기법 | 읽기 전 | 재구독과 메시지 재시도의 복구 계약을 어떻게 구분할 것인가? |
 | [Context as Infrastructure](../RAG-검색-문서/context-as-infrastructure) | 기법 | 읽기 전 | 품질·지연을 유지하며 가공·갱신 비용을 회수할 수 있는가? |
 | [LLM Architecture Gallery](../LLM-추론-인프라/llm-architecture-gallery) | 도구 | 읽기 전 | 가중치·KV 추정과 실제 메모리의 차이를 어떻게 설명할 것인가? |
@@ -65,6 +66,7 @@ researched: 2026-11-07
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-08 | [pgvector 필터 검색](../RAG-검색-문서/pgvector-filtered-ann) | 필터 후 후보 부족·반복 탐색·정렬과 recall·자원 상한의 구분 |
 | 2026-11-07 | [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle) | 종료 상태·현재 상태 스냅샷·선택적 멱등성의 구분 |
 | 2026-11-06 | [Context as Infrastructure](../RAG-검색-문서/context-as-infrastructure) | 검색·읽기 표현·전처리 포함 총비용을 구분하는 검토 |
 | 2026-11-05 | [LLM Architecture Gallery](../LLM-추론-인프라/llm-architecture-gallery) | 모델 구조·전체/활성 파라미터·KV 캐시 추정의 한계 |
@@ -81,6 +83,8 @@ researched: 2026-11-07
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-08**: pgvector 공식 필터링·반복 스캔 문서를 Tools / Assess로 등록했다. 정적 문서·코드 검토이며 DB 실행·성능 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-07**: A2A 공식 작업 수명주기·스트리밍 계약을 Techniques / Assess로 등록했다. 문서 검토이며 SDK 실행·장애 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
