@@ -3,7 +3,7 @@ title: 기술 레이더 언어와 프레임워크
 type: radar-quadrant
 radar_quadrant: Languages and frameworks
 tags: [technology-radar]
-researched: 2026-10-31
+researched: 2026-11-09
 ---
 
 # 언어와 프레임워크
@@ -21,6 +21,16 @@ researched: 2026-10-31
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [txtai](../RAG-검색-문서/txtai-search-workflows)
+
+유사도 후보와 SQL 필터의 결합, 문서 추출 접근 경계와 워크플로 완료 조건을 살펴본다.
+
+- **수집일**: 2026-11-09 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 자료 정적 검토이며 설치·모델 호출·검색 실험은 하지 않음
+
+원문, 요약, 한계와 다음 질문은 [상세 노트](../RAG-검색-문서/txtai-search-workflows)에서 읽는다.
 
 ### [LangGraph의 실행 상태와 장기 메모리](../에이전트-스킬/langgraph-persistence)
 
