@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-09
+researched: 2026-11-10
 ---
 
 # 기술 레이더
@@ -16,7 +16,7 @@ researched: 2026-11-09
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
 | [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
-| [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | 샌드박스의 파일과 네트워크 경계 |
+| [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | gVisor 보안 경계, 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | txtai, LangGraph의 실행 상태와 장기 메모리 |
 
@@ -40,6 +40,7 @@ researched: 2026-11-09
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [gVisor 보안 경계](../LLM-추론-인프라/gvisor-security-boundaries) | 플랫폼 | 읽기 전 | 커널 격리와 허용 데이터·목적지 정책을 어떻게 따로 검증할 것인가? |
 | [txtai](../RAG-검색-문서/txtai-search-workflows) | 언어와 프레임워크 | 읽기 전 | 후보 검색·콘텐츠 필터·워크플로 완료 경계를 어떻게 검증할 것인가? |
 | [pgvector 필터 검색](../RAG-검색-문서/pgvector-filtered-ann) | 도구 | 읽기 전 | 결과 개수·정렬·recall을 어떤 비용으로 함께 보장할 것인가? |
 | [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle) | 기법 | 읽기 전 | 재구독과 메시지 재시도의 복구 계약을 어떻게 구분할 것인가? |
@@ -67,6 +68,7 @@ researched: 2026-11-09
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-10 | [gVisor 보안 경계](../LLM-추론-인프라/gvisor-security-boundaries) | Sentry·호스트 경계와 테스트 명령의 파일 접근 기본값 |
 | 2026-11-09 | [txtai](../RAG-검색-문서/txtai-search-workflows) | 유사도 후보와 SQL 결합·입력 접근 기본값·스트리밍 실행의 경계 |
 | 2026-11-08 | [pgvector 필터 검색](../RAG-검색-문서/pgvector-filtered-ann) | 필터 후 후보 부족·반복 탐색·정렬과 recall·자원 상한의 구분 |
 | 2026-11-07 | [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle) | 종료 상태·현재 상태 스냅샷·선택적 멱등성의 구분 |
@@ -85,6 +87,8 @@ researched: 2026-11-09
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-10**: gVisor 공식 보안 소개·모델 문서를 Platforms / Assess로 등록했다. 문서 검토이며 설치·실행·보안 시험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-09**: txtai 공식 문서를 Languages and frameworks / Assess로 등록했다. 정적 자료 검토이며 설치·모델 호출·검색 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 

@@ -3,7 +3,7 @@ title: 기술 레이더 플랫폼
 type: radar-quadrant
 radar_quadrant: Platforms
 tags: [technology-radar]
-researched: 2026-10-31
+researched: 2026-11-10
 ---
 
 # 플랫폼
@@ -21,6 +21,17 @@ researched: 2026-10-31
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [gVisor 보안 경계](../LLM-추론-인프라/gvisor-security-boundaries)
+
+애플리케이션 커널 격리와 파일·네트워크 접근 정책을 구분해 검토할 자료.
+
+- **수집일**: 2026-11-10 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서 본문 검토. 설치·실행·보안 시험은 하지 않음
+- **다음 질문**: 최소 노출과 워크로드 호환성을 각각 어떤 검사로 확인할 것인가?
+
+[상세 노트에서 구조·접근 기본값·검증 제안 읽기](../LLM-추론-인프라/gvisor-security-boundaries)
 
 ### [에이전트 샌드박스의 파일과 네트워크 경계](../LLM-추론-인프라/claude-code-sandboxing)
 
