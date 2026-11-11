@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-07
+researched: 2026-11-11
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-07
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [재시도 예산과 지터](../에이전트-스킬/retry-budget-and-jitter)
+
+중복 효과 방지와 별도로 재시도가 만드는 추가 부하를 검토할 자료.
+
+- **수집일**: 2026-11-11 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: AWS 원문 검토. SDK 호출·부하 실험은 하지 않음
+- **다음 질문**: 각 계층의 시도 횟수와 전체 시간 예산을 어디서 제한할 것인가?
+
+[상세 노트에서 타임아웃·지터의 근거와 검증 제안 읽기](../에이전트-스킬/retry-budget-and-jitter)
 
 ### [A2A 작업 수명주기](../에이전트-스킬/a2a-task-lifecycle)
 
