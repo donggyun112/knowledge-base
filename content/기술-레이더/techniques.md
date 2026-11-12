@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-11
+researched: 2026-11-12
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-11
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [에이전트 평가 설계](../논문-아티클/agent-eval-outcomes-and-trials)
+
+완료 주장, 실제 상태 변화와 반복 실행의 신뢰성을 나눠 검토할 자료.
+
+- **수집일**: 2026-11-12 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 원문 본문 검토. 모델 호출·평가 실험은 하지 않음
+- **다음 질문**: 필수 조건과 허용할 실행 경로를 어떻게 나누고 trial 간 상태를 격리할 것인가?
+
+[상세 노트에서 평가 구조·한계·검증 제안 읽기](../논문-아티클/agent-eval-outcomes-and-trials)
 
 ### [재시도 예산과 지터](../에이전트-스킬/retry-budget-and-jitter)
 
