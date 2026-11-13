@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-12
+researched: 2026-11-13
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-12
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [MCP Tasks](../에이전트-스킬/mcp-tasks-cancellation-contract)
+
+비동기 작업의 완료·취소·보존 계약과 버전별 의미 차이를 검토할 자료.
+
+- **수집일**: 2026-11-13 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 명세·스키마 정적 검토. SDK 실행·도구 호출·장애 실험은 하지 않음
+- **다음 질문**: 취소 접수와 실제 실행 종료를 구분해 어떤 증거를 보존할 것인가?
+
+[상세 노트에서 상태·버전 차이·검증 제안 읽기](../에이전트-스킬/mcp-tasks-cancellation-contract)
 
 ### [에이전트 평가 설계](../논문-아티클/agent-eval-outcomes-and-trials)
 

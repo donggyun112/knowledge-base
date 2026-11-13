@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-12
+researched: 2026-11-13
 ---
 
 # 기술 레이더
@@ -15,7 +15,7 @@ researched: 2026-11-12
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | gVisor 보안 경계, 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | txtai, LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-12
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [MCP Tasks](../에이전트-스킬/mcp-tasks-cancellation-contract) | 기법 | 읽기 전 | 취소 접수·작업 상태·실제 외부 효과를 어떻게 구분할 것인가? |
 | [에이전트 평가 설계](../논문-아티클/agent-eval-outcomes-and-trials) | 기법 | 읽기 전 | 완료 주장·외부 상태·반복 신뢰성을 어떤 증거로 구분할 것인가? |
 | [재시도 예산과 지터](../에이전트-스킬/retry-budget-and-jitter) | 기법 | 읽기 전 | 중첩 재시도의 하위 부하를 어디서 제한할 것인가? |
 | [gVisor 보안 경계](../LLM-추론-인프라/gvisor-security-boundaries) | 플랫폼 | 읽기 전 | 커널 격리와 허용 데이터·목적지 정책을 어떻게 따로 검증할 것인가? |
@@ -70,6 +71,7 @@ researched: 2026-11-12
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-13 | [MCP Tasks](../에이전트-스킬/mcp-tasks-cancellation-contract) | 비동기 생성·완료와 도구 오류·취소 접수·TTL의 경계 |
 | 2026-11-12 | [에이전트 평가 설계](../논문-아티클/agent-eval-outcomes-and-trials) | 상태 검사·trial 격리·pass@k와 pass^k의 구분 |
 | 2026-11-11 | [재시도 예산과 지터](../에이전트-스킬/retry-budget-and-jitter) | 타임아웃 범위·재시도 책임·부하 증폭과 지터의 한계 |
 | 2026-11-10 | [gVisor 보안 경계](../LLM-추론-인프라/gvisor-security-boundaries) | Sentry·호스트 경계와 테스트 명령의 파일 접근 기본값 |
@@ -91,6 +93,8 @@ researched: 2026-11-12
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-13**: MCP Tasks 확장의 공식 명세·스키마를 Techniques / Assess로 등록했다. 정적 검토이며 SDK 실행·도구 호출·장애 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-12**: Anthropic의 에이전트 평가 실무 가이드를 Techniques / Assess로 등록했다. 공개 원문 검토이며 모델 호출·평가 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 
