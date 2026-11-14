@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-13
+researched: 2026-11-14
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-13
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [OpticalRAG](../RAG-검색-문서/opticalrag)
+
+검색 결과의 시각 표현 압축과 정확도·운영비의 관계를 검토할 자료.
+
+- **수집일**: 2026-11-14 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 논문 v1 본문·부록 정적 검토. 학습·모델 호출·재현 실험은 하지 않음
+- **다음 질문**: 압축률과 별도로 답변 품질·근거 추적·전체 지연을 어떻게 측정할 것인가?
+
+[상세 노트에서 흐름·비교 조건·검증 제안 읽기](../RAG-검색-문서/opticalrag)
 
 ### [MCP Tasks](../에이전트-스킬/mcp-tasks-cancellation-contract)
 

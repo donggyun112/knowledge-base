@@ -99,6 +99,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 희소·벡터·그래프 검색, 문서 색인과 파싱, 검색 품질 평가.
 
+- [[RAG-검색-문서/opticalrag|OpticalRAG — 시각 토큰 압축과 전체 비용의 구분]]
 - [[RAG-검색-문서/txtai-search-workflows|txtai — 검색 후보와 콘텐츠 저장소를 결합하는 프레임워크]]
 - [[RAG-검색-문서/pgvector-filtered-ann|pgvector 필터 검색 — 결과 개수·정렬·recall은 다른 계약]]
 - [[RAG-검색-문서/context-as-infrastructure|Context as Infrastructure — 검색과 읽기 비용을 분리하기]]
