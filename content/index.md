@@ -127,6 +127,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 - [[에이전트-스킬/mcp-tasks-cancellation-contract|MCP Tasks — 비동기 작업의 완료·취소·보존 계약]]
 - [[에이전트-스킬/retry-budget-and-jitter|재시도 예산과 지터 — 복구가 과부하를 키우지 않게 하기]]
+- [[에이전트-스킬/a2a-python-cluster-recovery|A2A Python 클러스터 — 상태 공유와 장애 복구의 경계]]
 - [[에이전트-스킬/a2a-task-lifecycle|A2A 작업 수명주기 — 스트림 재연결과 실행 재시도의 경계]]
 - [[에이전트-스킬/dsh-superagent-prototype|DSH Superagent — 작업 상태와 외부 실행을 분리하는 구조]]
 - [[에이전트-스킬/idempotent-api-retries|멱등 API — 재시도에서 같은 의도를 식별하는 계약]]
