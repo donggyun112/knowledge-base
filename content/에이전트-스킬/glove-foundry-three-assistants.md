@@ -11,6 +11,27 @@ researched: 2026-11-15
 
 Glove Foundry의 세 예제는 같은 런타임을 쓰면서 개인 업무, 지속적인 책임 업무, 대화와 작업의 분리에 각각 초점을 둔다. 특히 **같은 에이전트의 별도 실행**, **다른 에이전트에 대한 위임**, **진행 중인 실행에 새 지시를 반영하는 것**은 서로 다른 계약이다.
 
+```mermaid
+flowchart TB
+    subgraph M["Muse 재현"]
+      MU["사용자"] --> MA["Muse 에이전트"]
+      MA --> MB["브라우저 + Sentinel"]
+      MA --> MC["Gmail / Calendar / WhatsApp"]
+    end
+    subgraph D["Dots 재현"]
+      DU["사용자 / Slack"] --> DA["Dot 에이전트"]
+      DA --> DB["Builder 서브에이전트"]
+      DA --> DC["책임 업무 / 일정 / 연결 앱"]
+    end
+    subgraph L["Layered Assistant"]
+      LU["사용자"] --> LA["대화 담당 Interactor"]
+      LA --> LC["Coder 워커"]
+      LA --> LR["Researcher 워커"]
+      LC --> LA
+      LR --> LA
+    end
+```
+
 ## 자료와 검토 범위
 
 - 원본: [Glove 저장소](https://github.com/porkytheblack/glove), MIT 라이선스. 아래 소스 링크는 [검토한 커밋 `0e6c0ad`](https://github.com/porkytheblack/glove/tree/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc)에 고정한다.
@@ -47,11 +68,19 @@ Foundry의 `ConversationGate`는 같은 conversation의 run을 직렬화한다. 
 
 ## 1. Personal Agent — 개인 업무와 브라우저 경계
 
-```text
-웹 채팅 / WhatsApp → Muse → Gmail / Calendar
-                       ├→ 메모리 / 계획 / 일정
-                       └→ Kuiper 브라우저 → Sentinel → 웹사이트
-                                                └→ 필요 시 사용자 승인
+```mermaid
+flowchart LR
+    U["사용자"] --> W["웹 채팅"]
+    U --> WA["WhatsApp"]
+    W --> M["Muse 에이전트"]
+    WA --> M
+    M --> MEM["개인 메모리 / 계획"]
+    M --> APPS["Gmail / Calendar"]
+    M --> B["Kuiper 브라우저"]
+    B --> S["Sentinel 요청 검사"]
+    S --> NET["웹사이트"]
+    S -->|"판단 필요"| APPROVE["사용자 승인"]
+    CLOCK["일정 / 새 메일 이벤트"] --> M
 ```
 
 Muse 정의는 모델, 앱, 개인 메모리, 계획, 도구, 일정과 이벤트 playbook을 조합한다. WhatsApp 수신과 새 Gmail을 각각 대응하는 playbook으로 연결하며 하루 간격 제안 일정도 정의한다. [에이전트 정의](https://github.com/porkytheblack/glove/blob/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc/examples/foundry-personal-agent/agents/muse/agent.ts), [playbook](https://github.com/porkytheblack/glove/blob/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc/examples/foundry-personal-agent/agents/muse/playbook.ts)
@@ -60,10 +89,17 @@ Kuiper가 설정된 경우 브라우저를 마운트하고 프로필·세션 식
 
 ## 2. Standing Agents — 지속 업무, 권한 분리, Builder
 
-```text
-앱 / Slack / 일정·메일 이벤트 → Dot → 메모리 / 책임 업무
-                                      ├→ 규칙·검토 → 앱 작업 또는 승인
-                                      └→ Builder → 결과·질문 → Dot
+```mermaid
+flowchart TB
+    U["사용자"] --> APP["앱 / Slack"]
+    APP --> DOT["Dot: Pip"]
+    TIMER["주기적 리서치 / 새 메일"] --> DOT
+    DOT --> NOTES["메모리 / 업무 노트"]
+    DOT --> RULES["Custom Rules / 자동 검토"]
+    RULES --> ACTION["허용된 앱 작업"]
+    RULES --> ASK["사용자 승인 또는 이관"]
+    DOT -->|"코딩 / 큰 빌드 작업"| BUILDER["Builder 서브에이전트"]
+    BUILDER -->|"결과 / 질문"| DOT
 ```
 
 Dot 인스턴스에는 이름, 책임 업무, 사용자 규칙, 전달 경로가 데이터로 들어간다. 서로 다른 채널은 각 대화 기록을 가지면서 사용자 메모리를 공유하도록 구성된다. Dot은 작업 환경을 사용할 수 있고, 코딩·큰 빌드 작업은 소유한 durable `builder` 서브에이전트에 위임할 수 있다. builder는 처음 필요할 때 생성되며 Dot의 개인 메모리나 연결 앱을 그대로 상속하지 않는다. [Dot 정의](https://github.com/porkytheblack/glove/blob/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc/examples/foundry-standing-agents/agents/dot/agent.ts), [builder 정의](https://github.com/porkytheblack/glove/blob/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc/examples/foundry-standing-agents/agents/builder/agent.ts)
@@ -74,12 +110,20 @@ Builder의 가상 작업 환경은 에이전트 인스턴스 범위로 보존한
 
 ## 3. Layered Assistant — 대화와 작업 위임
 
-```text
-사용자 ↔ Interactor ──delegate──→ Coder
-          │                      └→ 격리된 코드 작업 환경
-          └──────────delegate──→ Researcher
-                                 └→ 공개 웹 접근 환경
-          ←── 결과 또는 질문 ─────── worker
+```mermaid
+sequenceDiagram
+    participant U as 사용자
+    participant I as Interactor
+    participant F as Foundry
+    participant C as Coder / Researcher
+
+    U->>I: 코드 작성 또는 조사 요청
+    I->>F: glove_foundry_delegate(작업 내용)
+    F-->>I: delegation ID
+    F->>C: 별도 작업 대화에서 실행
+    I-->>U: 작업 중이라고 답변하고 대화 계속
+    C-->>I: 질문 또는 결과
+    I-->>U: 질문 전달 또는 결과 설명
 ```
 
 Interactor는 사용자와 대화하고 개인 메모리를 관리한다. 프롬프트는 직접 코딩·웹 탐색을 하기보다 목표와 제약을 담아 워커에 위임하고 대화를 계속하라고 지시한다. worker는 원래 대화를 자동으로 볼 수 없으므로 위임 메시지에 필요한 맥락을 넣어야 한다. [Interactor 정의](https://github.com/porkytheblack/glove/blob/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc/examples/foundry-layered-assistant/agents/assistant/agent.ts), [프롬프트](https://github.com/porkytheblack/glove/blob/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc/examples/foundry-layered-assistant/agents/assistant/prompt.ts)
@@ -99,11 +143,17 @@ Coder는 답변을 같은 run에서 최대 2분 기다리도록 지정한다. �
 
 다음은 **원본 기능이 아니라 로컬 실험에서 추가한 구현**이다. Muse와 Dot의 웹 채팅 API에서 새 메시지를 처리하기 전에 최근 대화와 기존 작업 후보를 LLM에 보내 `modify`, `question`, `task`, `clarify` 중 하나로 분류했다. 기본 분류 모델은 OpenRouter의 `deepseek/deepseek-v3.2`였다.
 
-```text
-웹 입력 → 분류기 ─→ modify   → 기존 conversation의 후속 run
-                ├→ question → 새 conversation + run
-                ├→ task     → 새 conversation + run
-                └→ clarify  → 실행 없이 재질문
+```mermaid
+flowchart TD
+    U["사용자 메시지"] --> API["Muse / Dot 채팅 API"]
+    API --> R["의도 분류기<br/>최근 대화 + 기존 작업 목록"]
+    R -->|"기존 작업 수정"| M["기존 conversation에 후속 run 추가"]
+    R -->|"별도 질문 / 작업"| N["새 conversation + 새 run 생성"]
+    R -->|"불명확"| C["실행하지 않고 구체화 요청"]
+    M --> Q["기존 run 종료 후 순서대로 실행"]
+    N --> P["기존 작업과 독립 실행 가능"]
+    Q --> S["결과를 하나의 채팅 화면에 합침"]
+    P --> S
 ```
 
 `question`과 `task`는 표시 이름만 다르고 둘 다 같은 에이전트의 독립 conversation에서 실행했다. 즉 분류기가 직접 별도 worker에 위임한 것은 아니다. Dot의 새 run이 이후 자체 판단으로 builder를 사용할 수는 있다. `modify`는 대상 conversation의 큐에 추가했기 때문에 **현재 실행에 조건을 실시간 주입하지 않는다**. 이미 실행된 도구나 외부 효과를 되돌리지도 않는다.
