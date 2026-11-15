@@ -32,6 +32,8 @@ flowchart TB
     end
 ```
 
+> **새 run과 답변 병합을 보려면:** [새 run 생성](#새-conversation과-run을-만드는-순서) · [수정 요청 연결](#수정-요청은-어떻게-연결하나) · [답변 병합](#여러-run의-답변을-한-화면에-병합)
+
 ## 자료와 검토 범위
 
 - 원본: [Glove 저장소](https://github.com/porkytheblack/glove), MIT 라이선스. 아래 소스 링크는 [검토한 커밋 `0e6c0ad`](https://github.com/porkytheblack/glove/tree/0e6c0ad24e6062d52fd8d8a1ed0d2933c1f5e2bc)에 고정한다.
@@ -159,6 +161,71 @@ flowchart TD
 `question`과 `task`는 표시 이름만 다르고 둘 다 같은 에이전트의 독립 conversation에서 실행했다. 즉 분류기가 직접 별도 worker에 위임한 것은 아니다. Dot의 새 run이 이후 자체 판단으로 builder를 사용할 수는 있다. `modify`는 대상 conversation의 큐에 추가했기 때문에 **현재 실행에 조건을 실시간 주입하지 않는다**. 이미 실행된 도구나 외부 효과를 되돌리지도 않는다.
 
 분류기가 내놓은 confidence가 0.7 미만이거나 수정 대상 ID가 후보에 없으면 다시 구체화하도록 했다. 모델이 낸 confidence는 정확도의 보장이 아니다. 독립 실행들은 같은 에이전트와 자원을 공유하므로 파일·외부 자원 충돌도 별도로 해결하지 않았다. 분류와 답변에 대화 일부가 모델 제공자에게 전달된다. 라우팅은 두 앱의 **웹 채팅 경로에만** 추가했으며 Slack·WhatsApp·Layered에는 적용하지 않았다.
+
+### 새 conversation과 run을 만드는 순서
+
+`question` 또는 `task`로 분류되면 다음 순서로 처리했다.
+
+1. 같은 화면의 부모 conversation ID를 `parallelParent`로 저장하면서 **새 branch conversation**을 만든다. 이 branch에는 원래 사용자 메시지와 분류 종류도 기록한다.
+2. 현재 화면에 보이던 대화에서 이벤트 표시를 제외하고 최근 최대 20개 메시지를 골라 스냅샷을 만든다. 각 메시지는 최대 4,000자로 제한한다.
+3. 스냅샷을 배경 맥락으로, 새 입력을 별도 요청으로 묶어 **같은 에이전트에** `client.send(agentId, branchConversationId, message)`를 호출한다.
+4. Foundry가 이 branch conversation에 대한 새 run을 만든다. 원래 작업과 conversation ID가 다르므로 같은 conversation의 직렬화 대기열에 묶이지 않는다. 다만 실행 슬롯이 확보돼야 실제로 시작된다.
+
+```mermaid
+flowchart LR
+    USER["하나의 채팅 화면"] --> P["부모 conversation"]
+    P -. "parallelParent로 연결" .-> A["branch A<br/>conversation A"]
+    P -. "parallelParent로 연결" .-> B["branch B<br/>conversation B"]
+    A --> RA["run A<br/>긴 작업"]
+    B --> RB["run B<br/>별도 질문"]
+    RA --> SAME["같은 에이전트 / 공유 자원"]
+    RB --> SAME
+```
+
+이 경로는 사용자 채팅을 물리적으로 같은 transcript에 추가하며 여러 run을 동시에 실행하는 방식이 아니다. **부모 ID로 연결된 별도 conversation을 만들고 나중에 표시를 합치는 방식**이다. 새 run은 이전 대화 전체를 실시간 공유하는 대신 생성 시점의 제한된 스냅샷을 받는다. 이후 다른 run에서 완성된 답변이 이미 실행 중인 run의 맥락에 자동으로 삽입되지는 않는다.
+
+### 수정 요청은 어떻게 연결하나
+
+`modify`는 새 독립 작업이 아니라 분류기가 선택한 **기존 branch conversation**에 보낸다. 단, 화면에서 해당 요청과 그 결과를 별도 메시지처럼 보여 주기 위해 표시용 marker conversation을 하나 더 만든다.
+
+```mermaid
+sequenceDiagram
+    participant U as 사용자
+    participant R as 추가한 라우터
+    participant G as ConversationGate
+    participant A as 기존 작업 대화 A
+    participant V as 화면 병합
+    U->>R: A에 조건 추가
+    R->>R: modify 대상 A 선택
+    R->>R: 표시용 marker 생성
+    R->>A: 같은 conversation에 후속 run 전달
+    A->>G: A가 진행 중이면 대기
+    Note over G,A: A가 종료된 뒤 후속 run 시작
+    A-->>V: 결과를 marker ID로 연결
+```
+
+marker ID는 후속 run의 입력 context에 기록한다. 나중에 상태를 읽을 때 이 ID로 run을 찾아 수정 요청과 답변을 연결한다. 이 방식은 **현재 실행 중인 A를 중단하거나 변경하지 않는다**. A가 외부 작업을 먼저 완료했을 수 있다.
+
+### 여러 run의 답변을 한 화면에 병합
+
+웹 화면은 보이는 동안 약 1.5초마다 서버에서 채팅 상태를 조회한다. 서버의 `parallelState`는 부모 ID로 branch와 marker들을 찾고, 각 conversation의 transcript 또는 marker에 연결된 run 결과를 읽어 화면용 메시지로 바꾼다.
+
+- 사용자 메시지는 branch 또는 marker의 **생성 시각**을 사용한다.
+- 답변은 연결된 run의 **완료 시각**을 사용한다.
+- 분류 표시는 요청 시각에 붙이고, 실패·취소는 상태 메시지로 표시한다.
+- 완료 시각·상태를 branch context에 기록하며, 수정 marker는 답변도 함께 기록한다.
+- 이렇게 만든 branch 메시지를 시각순으로 정렬한 뒤 기존 부모 대화 메시지와 함께 화면에 제공한다.
+
+예를 들어 A가 긴 작업이고 B가 독립 질문이면, 입력은 A 다음 B여도 답변은 B가 먼저 나타날 수 있다.
+
+| 시각 | 이벤트 | 화면에 보이는 순서 |
+| --- | --- | --- |
+| 10:00:01 | 긴 작업 A 요청 | A 요청 |
+| 10:00:02 | 별도 질문 B 요청 | A 요청 → B 요청 |
+| 10:00:05 | B 완료 | A 요청 → B 요청 → **B 답변** |
+| 10:00:30 | A 완료 | A 요청 → B 요청 → B 답변 → **A 답변** |
+
+이 정렬은 추가한 branch 메시지 내부의 규칙이다. 기존 부모 transcript와 branch 메시지 전체를 하나의 전역 이벤트 로그로 재정렬하는 구현은 아니다. 조회 기반이므로 화면 반영에 주기만큼의 지연이 생길 수 있으며, 동시에 여러 branch의 토큰을 각각 실시간 스트리밍하는 구조도 아니다. 병합 상태가 재시작·장애·대량 동시 입력에서도 완전하게 복구되는지는 검증하지 않았다.
 
 ### 확인한 결과와 범위
 
