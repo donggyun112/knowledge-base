@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-14
+researched: 2026-11-16
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-14
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [실행 중 지시 변경](../에이전트-스킬/steering-execution-boundaries)
+
+입력 접수와 실행 제어가 만나는 경계를 검토할 자료.
+
+- **수집일**: 2026-11-16 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서 정적 검토. 런타임 실행·모델 호출·실험은 하지 않음
+- **다음 질문**: 새 지시가 반영된 시점과 실제 도구 중단을 어떤 증거로 구별할 것인가?
+
+[상세 노트에서 계약 비교·한계·검증 제안 읽기](../에이전트-스킬/steering-execution-boundaries)
 
 ### [OpticalRAG](../RAG-검색-문서/opticalrag)
 
