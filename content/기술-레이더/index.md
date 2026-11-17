@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-16
+researched: 2026-11-17
 ---
 
 # 기술 레이더
@@ -17,7 +17,7 @@ researched: 2026-11-16
 | --- | --- | --- |
 | [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | gVisor 보안 경계, 샌드박스의 파일과 네트워크 경계 |
-| [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
+| [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | Miroir, pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | A2A Python 클러스터, txtai, LangGraph의 실행 상태와 장기 메모리 |
 
 빈 영역은 검토할 자료가 생기면 채운다. 기존 자료를 읽거나 채택한 것으로 추정해 일괄 등록하지 않는다.
@@ -40,6 +40,7 @@ researched: 2026-11-16
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [Miroir](../논문-아티클/miroir-agent-evaluation) | 도구 | 읽기 전 | 같은 시작 상태에서 목표 달성·범위 위반·외부 효과를 어떻게 따로 채점할 것인가? |
 | [실행 중 지시 변경](../에이전트-스킬/steering-execution-boundaries) | 기법 | 읽기 전 | 큐 접수·모델 반영·도구 중단·외부 효과를 어떻게 구분할 것인가? |
 | [A2A Python 클러스터](../에이전트-스킬/a2a-python-cluster-recovery) | 언어와 프레임워크 | 읽기 전 | 상태 공유·실행 소유권·장애 판정·외부 효과를 어떻게 구분할 것인가? |
 | [OpticalRAG](../RAG-검색-문서/opticalrag) | 기법 | 읽기 전 | 압축 예산·답변 품질·출처 추적·총비용을 어떻게 따로 평가할 것인가? |
@@ -74,6 +75,7 @@ researched: 2026-11-16
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-17 | [Miroir](../논문-아티클/miroir-agent-evaluation) | 에피소드 리셋·DB 순변화·외부 효과·허용 범위 채점 |
 | 2026-11-16 | [실행 중 지시 변경](../에이전트-스킬/steering-execution-boundaries) | 순차·병렬 도구의 입력 반영 경계와 후속 응답 추적 |
 | 2026-11-15 | [A2A Python 클러스터](../에이전트-스킬/a2a-python-cluster-recovery) | 출시된 상태 공유와 미병합 lease 복구·실패 확정의 경계 |
 | 2026-11-14 | [OpticalRAG](../RAG-검색-문서/opticalrag) | 시각 prefix와 전체 토큰·객관식 조건·CAP의 구분 |
@@ -99,6 +101,8 @@ researched: 2026-11-16
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-17**: Miroir를 Tools / Assess로 등록했다. 공개 문서·Gitea 예제 정적 검토이며 설치·실행·모델 호출은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-16**: OpenClaw·Responses API의 steering 계약 비교를 Techniques / Assess로 등록했다. 공식 문서 정적 검토이며 런타임 실행·모델 호출·실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 

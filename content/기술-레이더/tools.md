@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-11-08
+researched: 2026-11-17
 ---
 
 # 도구
@@ -21,6 +21,17 @@ researched: 2026-11-08
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Miroir](../논문-아티클/miroir-agent-evaluation)
+
+시드 상태를 복원하고 실제 DB 변경과 로컬로 수집한 외부 효과를 채점하는 에이전트 평가 도구.
+
+- **수집일**: 2026-11-17 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서·공개 예제 정적 검토. 설치·실행은 하지 않음
+- **다음 질문**: 같은 시작 상태에서 목표 달성·범위 위반·외부 효과를 어떻게 따로 채점할 것인가?
+
+[상세 노트에서 초기화·채점 계약 읽기](../논문-아티클/miroir-agent-evaluation)
 
 ### [pgvector 필터 검색](../RAG-검색-문서/pgvector-filtered-ann)
 
