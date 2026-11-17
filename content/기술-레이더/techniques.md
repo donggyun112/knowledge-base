@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-16
+researched: 2026-11-18
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-16
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [큰 표의 QA](../RAG-검색-문서/table-qa-evidence-scope)
+
+셀 조회의 근거 범위와 집계의 행 커버리지를 분리해 검토할 자료.
+
+- **수집일**: 2026-11-18 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 논문과 비용 부록 정적 검토. 모델 호출·재현은 하지 않음
+- **다음 질문**: 표 전체를 모델에 넣지 않고 조건에 맞는 행을 빠짐없이 다룰 수 있는가?
+
+[상세 노트에서 두 접근과 검증 제안 읽기](../RAG-검색-문서/table-qa-evidence-scope)
 
 ### [실행 중 지시 변경](../에이전트-스킬/steering-execution-boundaries)
 
