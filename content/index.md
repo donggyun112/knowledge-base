@@ -99,6 +99,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 희소·벡터·그래프 검색, 문서 색인과 파싱, 검색 품질 평가.
 
+- [[RAG-검색-문서/korean-table-ocr-routing|한국어 표 OCR — 언제 다시 읽을지 평가하기]]
 - [[RAG-검색-문서/table-qa-evidence-scope|큰 표의 QA — 필요한 셀과 빠짐없는 행 집합]]
 - [[RAG-검색-문서/opticalrag|OpticalRAG — 시각 토큰 압축과 전체 비용의 구분]]
 - [[RAG-검색-문서/txtai-search-workflows|txtai — 검색 후보와 콘텐츠 저장소를 결합하는 프레임워크]]

@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-18
+researched: 2026-11-19
 ---
 
 # 기법
@@ -21,6 +21,15 @@ researched: 2026-11-18
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [한국어 표 OCR](../RAG-검색-문서/korean-table-ocr-routing)
+
+OCR 재실행이 필요한 조건과 구조 복원 효과를 나눠 평가할 자료.
+
+- **수집일**: 2026-11-19 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 데이터셋과 채점 규칙 정적 검토. 엔진 실행·재현은 하지 않음
+- **다음 질문**: OCR이 셀과 헤더의 연결을 실제로 복구하는 경우를 어떻게 가려낼 것인가?
 
 ### [큰 표의 QA](../RAG-검색-문서/table-qa-evidence-scope)
 
