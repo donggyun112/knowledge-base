@@ -3,7 +3,7 @@ title: 기술 레이더 플랫폼
 type: radar-quadrant
 radar_quadrant: Platforms
 tags: [technology-radar]
-researched: 2026-11-10
+researched: 2026-11-20
 ---
 
 # 플랫폼
@@ -21,6 +21,17 @@ researched: 2026-11-10
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [OpenRouter 관리 키](../LLM-추론-인프라/openrouter-management-key-scopes)
+
+LLM 게이트웨이의 자원 범위, 동작 권한, 사용량 집계 범위를 나눠 보는 운영 사례.
+
+- **수집일**: 2026-11-20 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 공지와 API 문서 본문 검토. 실제 호출이나 설정 변경은 하지 않음
+- **다음 질문**: 조회와 상태 변경을 어떻게 구분하고, 집계에서 빠지는 데이터는 어떻게 표시할 것인가?
+
+[상세 노트에서 권한 경계와 검증 제안 읽기](../LLM-추론-인프라/openrouter-management-key-scopes)
 
 ### [gVisor 보안 경계](../LLM-추론-인프라/gvisor-security-boundaries)
 
