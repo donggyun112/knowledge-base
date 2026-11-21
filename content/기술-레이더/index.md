@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-20
+researched: 2026-11-21
 ---
 
 # 기술 레이더
@@ -15,7 +15,7 @@ researched: 2026-11-20
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 한국어 표 OCR, 큰 표의 QA, 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | MCP Skills, 한국어 표 OCR, 큰 표의 QA, 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | OpenRouter 관리 키, gVisor 보안 경계, 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | Miroir, pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | A2A Python 클러스터, txtai, LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-20
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [MCP Skills](../에이전트-스킬/mcp-skills-lazy-loading) | 기법 | 읽기 전 | 목록 조회·본문 로드·승인된 실행을 어디서 분리할 것인가? |
 | [OpenRouter 관리 키](../LLM-추론-인프라/openrouter-management-key-scopes) | 플랫폼 | 읽기 전 | 조회와 상태 변경을 어떻게 구분하고, 집계에서 빠지는 데이터는 어떻게 표시할 것인가? |
 | [한국어 표 OCR](../RAG-검색-문서/korean-table-ocr-routing) | 기법 | 읽기 전 | OCR이 셀과 헤더의 연결을 복구하는 경우를 어떻게 가려낼 것인가? |
 | [큰 표의 QA](../RAG-검색-문서/table-qa-evidence-scope) | 기법 | 읽기 전 | 조회는 필요한 셀만 읽고, 집계는 대상 행 누락을 어떻게 막을 것인가? |
@@ -78,6 +79,7 @@ researched: 2026-11-20
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-21 | [MCP Skills](../에이전트-스킬/mcp-skills-lazy-loading) | 목록과 필요 시 파일 읽기, 출처 검증, 실행 승인의 구분 |
 | 2026-11-20 | [OpenRouter 관리 키](../LLM-추론-인프라/openrouter-management-key-scopes) | 워크스페이스 범위·읽기 전용 권한·사용량 집계 범위의 구분 |
 | 2026-11-19 | [한국어 표 OCR](../RAG-검색-문서/korean-table-ocr-routing) | 셀과 헤더 연결, 병합 격자, 불필요한 OCR 호출 분리 |
 | 2026-11-18 | [큰 표의 QA](../RAG-검색-문서/table-qa-evidence-scope) | 하위 질의별 경로 선택과 집계 근거의 완전성 |
@@ -107,6 +109,8 @@ researched: 2026-11-20
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-21**: MCP Skills Beta를 Techniques / Assess에 등록했다. 공개 명세의 정적 검토이며 클라이언트 연동·실행·측정은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-18**: ATR과 TRACE를 큰 표의 QA 검토 자료로 묶어 Techniques / Assess에 등록했다. 공개 논문 정적 검토이며 재현·모델 호출은 하지 않았다. 읽기 상태는 읽기 전이다.
 

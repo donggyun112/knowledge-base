@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-19
+researched: 2026-11-21
 ---
 
 # 기법
@@ -21,6 +21,15 @@ researched: 2026-11-19
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [MCP Skills](../에이전트-스킬/mcp-skills-lazy-loading)
+
+목록에서 스킬을 발견하고 본문과 참조 파일은 필요할 때만 읽는 계약.
+
+- **수집일**: 2026-11-21 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 Beta 명세 정적 검토. 클라이언트 연동·실행·측정은 하지 않음
+- **다음 질문**: 목록 조회·본문 로드·승인된 실행을 어디서 분리할 것인가?
 
 ### [한국어 표 OCR](../RAG-검색-문서/korean-table-ocr-routing)
 
