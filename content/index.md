@@ -182,6 +182,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 모델 구조, 로컬 추론, 서빙과 격리·운영 사례.
 
+- [[LLM-추론-인프라/toss-snap-selective-routing|토스 SNAP — 소형 모델이 맡을 요청을 검증으로 고르기]]
 - [[LLM-추론-인프라/openrouter-management-key-scopes|OpenRouter 관리 키 — 접근 범위와 쓰기 권한은 다른 축이다]]
 - [[LLM-추론-인프라/gvisor-security-boundaries|gVisor — 커널 격리와 데이터 접근 정책의 경계]]
 - [[LLM-추론-인프라/llm-architecture-gallery|LLM Architecture Gallery — 모델 구조와 추론 메모리의 비교 기준]]

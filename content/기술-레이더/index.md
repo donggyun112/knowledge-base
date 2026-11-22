@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-22
+researched: 2026-11-23
 ---
 
 # 기술 레이더
@@ -15,7 +15,7 @@ researched: 2026-11-22
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | Dify 도구 호출 ID, MCP Skills, 한국어 표 OCR, 큰 표의 QA, 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | 토스 SNAP, Dify 도구 호출 ID, MCP Skills, 한국어 표 OCR, 큰 표의 QA, 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | OpenRouter 관리 키, gVisor 보안 경계, 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | Miroir, pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
 | [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | A2A Python 클러스터, txtai, LangGraph의 실행 상태와 장기 메모리 |
@@ -40,6 +40,7 @@ researched: 2026-11-22
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [토스 SNAP](../LLM-추론-인프라/toss-snap-selective-routing) | 기법 | 읽기 전 | 어느 일치율과 채택률에서 폴백 포함 순비용이 줄어드는가? |
 | [Dify 도구 호출 ID](../에이전트-스킬/dify-tool-call-identity) | 기법 | 읽기 전 | 병렬 호출을 구별하면서 스트림 갱신과 이력 재생을 어떻게 보존할 것인가? |
 | [MCP Skills](../에이전트-스킬/mcp-skills-lazy-loading) | 기법 | 읽기 전 | 목록 조회·본문 로드·승인된 실행을 어디서 분리할 것인가? |
 | [OpenRouter 관리 키](../LLM-추론-인프라/openrouter-management-key-scopes) | 플랫폼 | 읽기 전 | 조회와 상태 변경을 어떻게 구분하고, 집계에서 빠지는 데이터는 어떻게 표시할 것인가? |
@@ -80,6 +81,7 @@ researched: 2026-11-22
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-23 | [토스 SNAP](../LLM-추론-인프라/toss-snap-selective-routing) | 기존 LLM과의 일치율, 소형 모델 채택률, 폴백 비용의 구분 |
 | 2026-11-22 | [Dify 도구 호출 ID](../에이전트-스킬/dify-tool-call-identity) | 청크 슬롯, 턴 간 이력 ID, 공급자 ID 복원의 구분 |
 | 2026-11-21 | [MCP Skills](../에이전트-스킬/mcp-skills-lazy-loading) | 목록과 필요 시 파일 읽기, 출처 검증, 실행 승인의 구분 |
 | 2026-11-20 | [OpenRouter 관리 키](../LLM-추론-인프라/openrouter-management-key-scopes) | 워크스페이스 범위·읽기 전용 권한·사용량 집계 범위의 구분 |
@@ -111,6 +113,8 @@ researched: 2026-11-22
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-23**: 토스 SNAP을 Techniques / Assess에 등록했다. 공개 운영 사례 정적 검토이며 재현·모델 호출은 하지 않았다. 읽기 상태는 읽기 전이다.
 
 - **2026-11-22**: Dify 도구 호출 ID를 Techniques / Assess에 등록했다. 병합된 변경과 공개 릴리스 정적 검토이며 재현·실행은 하지 않았다. 읽기 상태는 읽기 전이다.
 

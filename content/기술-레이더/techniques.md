@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-22
+researched: 2026-11-23
 ---
 
 # 기법
@@ -21,6 +21,15 @@ researched: 2026-11-22
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [토스 SNAP](../LLM-추론-인프라/toss-snap-selective-routing)
+
+일치율과 채택률로 소형 모델의 적용 범위를 정하고, 폴백 비용을 따로 살펴볼 사례.
+
+- **수집일**: 2026-11-23 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 운영 사례 정적 검토. 재현·모델 호출은 하지 않음
+- **다음 질문**: 어느 일치율과 채택률에서 폴백 포함 순비용이 줄어드는가?
 
 ### [Dify 도구 호출 ID](../에이전트-스킬/dify-tool-call-identity)
 
