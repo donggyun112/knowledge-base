@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-21
+researched: 2026-11-22
 ---
 
 # 기법
@@ -21,6 +21,15 @@ researched: 2026-11-21
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Dify 도구 호출 ID](../에이전트-스킬/dify-tool-call-identity)
+
+병렬 호출과 스트림 갱신을 구별하고 대화 이력에서 공급자 식별자를 복원하는 사례.
+
+- **수집일**: 2026-11-22 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 최종 병합 변경·회귀 테스트 코드와 릴리스 노트 정적 검토. 실행·재현은 하지 않음
+- **다음 질문**: 병렬 호출을 구별하면서 스트림 갱신과 이력 재생을 어떻게 보존할 것인가?
 
 ### [MCP Skills](../에이전트-스킬/mcp-skills-lazy-loading)
 
