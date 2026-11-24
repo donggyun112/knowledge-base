@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-23
+researched: 2026-11-24
 ---
 
 # 기법
@@ -21,6 +21,15 @@ researched: 2026-11-23
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Safe Personal RSI](../에이전트-스킬/safe-personal-rsi-admission)
+
+현재 채택본과 후보의 권한 경계 및 정상 작업 성능을 비교한다.
+
+- **수집일**: 2026-11-24 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: arXiv v2 본문·표 정적 검토. 실행·재현은 하지 않음
+- **다음 질문**: 현재 지시문 대비 어떤 권한 회귀와 정상 작업 실패가 새 버전 채택을 막아야 하는가?
 
 ### [토스 SNAP](../LLM-추론-인프라/toss-snap-selective-routing)
 
