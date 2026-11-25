@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-24
+researched: 2026-11-25
 ---
 
 # 기법
@@ -21,6 +21,15 @@ researched: 2026-11-24
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Nod 요청–작업 연결](../에이전트-스킬/nod-task-source-message)
+
+동일 채팅 턴에서 여러 원본 요청을 구분하고, 입력이 몰리는 타이밍을 회귀 테스트로 고정한다.
+
+- **수집일**: 2026-11-25 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 릴리스·태그 코드와 테스트 정적 검토. 실행·재현은 하지 않음
+- **다음 질문**: 한 턴에 여러 요청이 들어오면 각 작업이 어느 메시지에 답하는지 어떻게 검증할 것인가?
 
 ### [Safe Personal RSI](../에이전트-스킬/safe-personal-rsi-admission)
 
