@@ -128,6 +128,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 에이전트 런타임, 도구 실행, 스킬과 개발 워크플로.
 
 - [[에이전트-스킬/glove-foundry-three-assistants|Glove Foundry 세 가지 보조 에이전트 — 대화, 위임, 실행 경계]]
+- [[에이전트-스킬/univer-worktree-review|Univer Worktree와 Compare — 문서 검토본과 실제 반영의 구분]]
 - [[에이전트-스킬/nod-task-source-message|Nod — 동시에 들어온 요청을 각 작업에 묶기]]
 - [[에이전트-스킬/safe-personal-rsi-admission|Safe Personal RSI — 에이전트 지시문 변경의 채택 기준]]
 - [[에이전트-스킬/dify-tool-call-identity|Dify 도구 호출 ID — 스트림 슬롯과 이력의 식별자를 구분하기]]

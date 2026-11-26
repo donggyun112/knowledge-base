@@ -3,7 +3,7 @@ title: 기술 레이더 언어와 프레임워크
 type: radar-quadrant
 radar_quadrant: Languages and frameworks
 tags: [technology-radar]
-researched: 2026-11-15
+researched: 2026-11-26
 ---
 
 # 언어와 프레임워크
@@ -21,6 +21,16 @@ researched: 2026-11-15
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Univer Worktree와 Compare](../에이전트-스킬/univer-worktree-review)
+
+Office 문서 작업본의 동결, 구조화 diff, 원본 병합과 최종 파일 검사를 구분한다.
+
+- **수집일**: 2026-11-26 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공식 문서·고정 CLI 계약·검사 코드 정적 검토이며 병합·변환 실험은 하지 않음
+
+원문, 요약, 한계와 다음 질문은 [상세 노트](../에이전트-스킬/univer-worktree-review)에서 읽는다.
 
 ### [A2A Python 클러스터](../에이전트-스킬/a2a-python-cluster-recovery)
 
