@@ -99,6 +99,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 희소·벡터·그래프 검색, 문서 색인과 파싱, 검색 품질 평가.
 
+- [[RAG-검색-문서/naver-care-ai-current-evidence|NAVER Care AI — 과거 장애는 후보, 현재 상태는 판정 근거]]
 - [[RAG-검색-문서/korean-table-ocr-routing|한국어 표 OCR — 언제 다시 읽을지 평가하기]]
 - [[RAG-검색-문서/table-qa-evidence-scope|큰 표의 QA — 필요한 셀과 빠짐없는 행 집합]]
 - [[RAG-검색-문서/opticalrag|OpticalRAG — 시각 토큰 압축과 전체 비용의 구분]]
@@ -127,6 +128,7 @@ AI 기술 조사와 직접 수행한 연구를 주제별로 모았습니다.
 
 에이전트 런타임, 도구 실행, 스킬과 개발 워크플로.
 
+- [[에이전트-스킬/langgraph-live-tool-events|LangGraph tools 스트림 — 도구가 끝나기 전에 진행 이벤트를 받기]]
 - [[에이전트-스킬/glove-foundry-three-assistants|Glove Foundry 세 가지 보조 에이전트 — 대화, 위임, 실행 경계]]
 - [[에이전트-스킬/univer-worktree-review|Univer Worktree와 Compare — 문서 검토본과 실제 반영의 구분]]
 - [[에이전트-스킬/nod-task-source-message|Nod — 동시에 들어온 요청을 각 작업에 묶기]]

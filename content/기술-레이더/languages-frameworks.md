@@ -3,7 +3,7 @@ title: 기술 레이더 언어와 프레임워크
 type: radar-quadrant
 radar_quadrant: Languages and frameworks
 tags: [technology-radar]
-researched: 2026-11-26
+researched: 2026-11-27
 ---
 
 # 언어와 프레임워크
@@ -21,6 +21,17 @@ researched: 2026-11-26
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [LangGraph tools 스트림](../에이전트-스킬/langgraph-live-tool-events)
+
+도구 이벤트의 생산과 실행 중 소비를 구분하는 프레임워크 변경.
+
+- **수집일**: 2026-11-27 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 병합 PR·회귀 테스트와 릴리스 이력 정적 검토. 실행·지연 측정은 하지 않음
+- **다음 질문**: 실행 중 청크 전달과 종료 후 일괄 전달을 어떻게 구분할 것인가?
+
+원문, 요약, 한계와 다음 질문은 [상세 노트](../에이전트-스킬/langgraph-live-tool-events)에서 읽는다.
 
 ### [Univer Worktree와 Compare](../에이전트-스킬/univer-worktree-review)
 

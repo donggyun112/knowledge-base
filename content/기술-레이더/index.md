@@ -2,7 +2,7 @@
 title: 기술 레이더
 type: radar
 tags: [technology-radar]
-researched: 2026-11-26
+researched: 2026-11-27
 ---
 
 # 기술 레이더
@@ -15,10 +15,10 @@ researched: 2026-11-26
 
 | 영역 | 다루는 질문 | 현재 등록 |
 | --- | --- | --- |
-| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | Nod 요청–작업 연결, Safe Personal RSI, 토스 SNAP, Dify 도구 호출 ID, MCP Skills, 한국어 표 OCR, 큰 표의 QA, 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
+| [기법](techniques) | 어떤 평가·설계·복구 방식을 쓸 것인가? | NAVER Care AI, Nod 요청–작업 연결, Safe Personal RSI, 토스 SNAP, Dify 도구 호출 ID, MCP Skills, 한국어 표 OCR, 큰 표의 QA, 실행 중 지시 변경, OpticalRAG, MCP Tasks, 에이전트 평가 설계, 재시도 예산과 지터, A2A 작업 수명주기, Context as Infrastructure, ParetoSaddler, 멱등 API 재시도, MCP 보안 경계, Decision Gate, 임베딩 모델 병합 |
 | [플랫폼](platforms) | 어떤 실행·격리·배포 환경을 쓸 것인가? | OpenRouter 관리 키, gVisor 보안 경계, 샌드박스의 파일과 네트워크 경계 |
 | [도구](tools) | 어떤 개발·평가·운영 도구를 쓸 것인가? | Miroir, pgvector 필터 검색, LLM Architecture Gallery, DSH Superagent, stack-diagram, Agent Desktop, Lightpanda |
-| [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | Univer Worktree와 Compare, A2A Python 클러스터, txtai, LangGraph의 실행 상태와 장기 메모리 |
+| [언어와 프레임워크](languages-frameworks) | 어떤 언어·SDK·런타임을 쓸 것인가? | LangGraph tools 스트림, Univer Worktree와 Compare, A2A Python 클러스터, txtai, LangGraph의 실행 상태와 장기 메모리 |
 
 빈 영역은 검토할 자료가 생기면 채운다. 기존 자료를 읽거나 채택한 것으로 추정해 일괄 등록하지 않는다.
 
@@ -40,6 +40,8 @@ researched: 2026-11-26
 
 | 자료 | 영역 | 읽기 상태 | 다음 질문 |
 | --- | --- | --- | --- |
+| [LangGraph tools 스트림](../에이전트-스킬/langgraph-live-tool-events) | 언어와 프레임워크 | 읽기 전 | 실행 중 청크 전달과 종료 후 일괄 전달을 어떻게 구분할 것인가? |
+| [NAVER Care AI](../RAG-검색-문서/naver-care-ai-current-evidence) | 기법 | 읽기 전 | 과거 장애가 비슷해도 현재 근거 없이는 어떻게 판정을 보류할 것인가? |
 | [Univer Worktree와 Compare](../에이전트-스킬/univer-worktree-review) | 언어와 프레임워크 | 읽기 전 | 고정 검토본, 실제 병합 결과와 최종 파일을 어떻게 따로 검증할 것인가? |
 | [Nod 요청–작업 연결](../에이전트-스킬/nod-task-source-message) | 기법 | 읽기 전 | 한 턴에 여러 요청이 들어오면 각 작업이 어느 메시지에 답하는지 어떻게 검증할 것인가? |
 | [Safe Personal RSI](../에이전트-스킬/safe-personal-rsi-admission) | 기법 | 읽기 전 | 현재 지시문 대비 어떤 권한 회귀와 정상 작업 실패가 새 버전 채택을 막아야 하는가? |
@@ -84,6 +86,8 @@ researched: 2026-11-26
 
 | 수집일 | 자료 | 살펴볼 점 |
 | --- | --- | --- |
+| 2026-11-27 | [LangGraph tools 스트림](../에이전트-스킬/langgraph-live-tool-events) | 큐 대기기, v2 공개 타입, 반환 전 소비 테스트 |
+| 2026-11-27 | [NAVER Care AI](../RAG-검색-문서/naver-care-ai-current-evidence) | 과거 사례 후보, 현재 상태, 코드 판정의 구분 |
 | 2026-11-26 | [Univer Worktree와 Compare](../에이전트-스킬/univer-worktree-review) | 문서 초안 격리, 구조화 diff, Unit별 반영과 XLSX 인도 검사 |
 | 2026-11-25 | [Nod 요청–작업 연결](../에이전트-스킬/nod-task-source-message) | 원본 요청 ID, 작업별 수정·중단, 입력이 몰리는 회귀 테스트 |
 | 2026-11-24 | [Safe Personal RSI](../에이전트-스킬/safe-personal-rsi-admission) | 현재 채택본 비교, 정상 승인 대조군, 독립 홀드아웃의 구분 |
@@ -119,6 +123,10 @@ researched: 2026-11-26
 | 2026-10-31 | [Claude Code sandboxing](../LLM-추론-인프라/claude-code-sandboxing) | 운영체제 수준의 파일·네트워크 경계와 자격 증명 분리 |
 
 ## 결정 이력
+
+- **2026-11-27**: LangGraph tools 스트림 항목을 Languages and frameworks / Assess에 등록했다. 병합 PR·회귀 테스트와 릴리스 이력 정적 검토. 실행·지연 측정은 하지 않음. 읽기 상태는 읽기 전이다.
+
+- **2026-11-27**: NAVER Care AI 항목을 Techniques / Assess에 등록했다. 공개 발표 요약 정적 검토. 재현·모델 호출은 하지 않음. 읽기 상태는 읽기 전이다.
 
 - **2026-11-26**: Univer Worktree와 Compare를 Languages and frameworks / Assess에 등록했다. 공식 문서·고정 CLI 계약·검사 코드의 정적 검토이며 병합·변환 실험은 하지 않았다. 읽기 상태는 읽기 전이다.
 

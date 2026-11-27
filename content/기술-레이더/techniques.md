@@ -3,7 +3,7 @@ title: 기술 레이더 기법
 type: radar-quadrant
 radar_quadrant: Techniques
 tags: [technology-radar]
-researched: 2026-11-25
+researched: 2026-11-27
 ---
 
 # 기법
@@ -21,6 +21,17 @@ researched: 2026-11-25
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [NAVER Care AI](../RAG-검색-문서/naver-care-ai-current-evidence)
+
+과거 장애 검색, 현재 증거 확인, 코드 판정을 분리한 운영 사례.
+
+- **수집일**: 2026-11-27 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 발표 요약 정적 검토. 재현·모델 호출은 하지 않음
+- **다음 질문**: 과거 장애가 비슷해도 현재 근거 없이는 어떻게 판정을 보류할 것인가?
+
+원문, 요약, 한계와 다음 질문은 [상세 노트](../RAG-검색-문서/naver-care-ai-current-evidence)에서 읽는다.
 
 ### [Nod 요청–작업 연결](../에이전트-스킬/nod-task-source-message)
 
