@@ -3,7 +3,7 @@ title: 기술 레이더 도구
 type: radar-quadrant
 radar_quadrant: Tools
 tags: [technology-radar]
-researched: 2026-11-17
+researched: 2026-11-28
 ---
 
 # 도구
@@ -21,6 +21,28 @@ researched: 2026-11-17
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [OpenSearch 하이브리드 필터](../RAG-검색-문서/opensearch-hybrid-fusion-filter-window)
+
+하위 쿼리 후보 윈도, 필터 위치, 두 번째 검색과 0점 기여을 살펴볼 자료.
+
+- **수집일**: 2026-11-28 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 1차 자료 정적 검토. 실행은 하지 않음
+- **다음 질문**: 같은 필터로도 후보가 빠지는 조건을 어떻게 검증할 것인가?
+
+[상세 노트에서 원문과 한계 읽기](../RAG-검색-문서/opensearch-hybrid-fusion-filter-window)
+
+### [Docling PDF 페이지 무결성](../RAG-검색-문서/docling-pdf-source-page-integrity)
+
+Native 페이지 누락과 VLM 중첩 출처의 원본 번호을 살펴볼 자료.
+
+- **수집일**: 2026-11-28 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 1차 자료 정적 검토. 실행은 하지 않음
+- **다음 질문**: 출력 성공, 페이지 완전성, 인용 정확도를 어떻게 따로 검사할 것인가?
+
+[상세 노트에서 원문과 한계 읽기](../RAG-검색-문서/docling-pdf-source-page-integrity)
 
 ### [Miroir](../논문-아티클/miroir-agent-evaluation)
 

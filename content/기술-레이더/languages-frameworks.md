@@ -3,7 +3,7 @@ title: 기술 레이더 언어와 프레임워크
 type: radar-quadrant
 radar_quadrant: Languages and frameworks
 tags: [technology-radar]
-researched: 2026-11-27
+researched: 2026-11-28
 ---
 
 # 언어와 프레임워크
@@ -21,6 +21,17 @@ researched: 2026-11-27
 현재 등록된 항목이 없다.
 
 ## Assess
+
+### [Pydantic AI Harness](../에이전트-스킬/pydantic-harness-instruction-authority)
+
+운영자 지시와 파일·MCP 데이터의 출처, 로드와 재생의 구분을 살펴볼 자료.
+
+- **수집일**: 2026-11-28 KST
+- **읽기 상태**: 읽기 전
+- **검증 상태**: 공개 1차 자료 정적 검토. 실행은 하지 않음
+- **다음 질문**: 모델 요청에서 지시 역할과 출처를 어떻게 독립 확인할 것인가?
+
+[상세 노트에서 원문과 한계 읽기](../에이전트-스킬/pydantic-harness-instruction-authority)
 
 ### [LangGraph tools 스트림](../에이전트-스킬/langgraph-live-tool-events)
 
